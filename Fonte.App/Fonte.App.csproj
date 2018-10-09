@@ -142,7 +142,7 @@
       <Version>6.1.7</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.0.180724003-prerelease</Version>
+      <Version>2.0.180916002-prerelease</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>

@@ -28,7 +28,6 @@ namespace Fonte.App.Controls
         private Visual _contentVisual;
         private Matrix3x2 _matrix;
         private Visual _rootVisual;
-        private float? _scale;
         private VisualInteractionSource _source;
         private InteractionTracker _tracker;
 
@@ -120,10 +119,9 @@ namespace Fonte.App.Controls
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
         {
-            Debug.WriteLine("START DRAWING!");
             foreach (var region in args.InvalidatedRegions)
             {
-                using (var ds = sender.CreateDrawingSession(args.VisibleRegion))
+                using (var ds = sender.CreateDrawingSession(region))
                 {
                     ds.Transform = _matrix;
 
@@ -134,7 +132,6 @@ namespace Fonte.App.Controls
                     Tool.OnDraw(this, ds);
                 }
             }
-            Debug.WriteLine("STOP DRAWING!");
         }
 
         void OnPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -182,25 +179,10 @@ namespace Fonte.App.Controls
 
         public void ValuesChanged(InteractionTracker sender, InteractionTrackerValuesChangedArgs args)
         {
-#if true
-            Debug.WriteLine("ValuesChanged! " + args.Scale);
-            var ratio = Canvas.DpiScale / args.Scale;
-
-            if (ratio <= 0.8 || ratio >= 1.25)
-            {
-                Debug.WriteLine("APPLIED!");
-                Canvas.DpiScale = args.Scale;
-            }
-            else
-            {
-                _scale = args.Scale;
-            }
-#else
             if (args.Scale != Canvas.DpiScale)
             {
                 Canvas.DpiScale = args.Scale;
             }
-#endif
         }
 
         public void InertiaStateEntered(InteractionTracker sender, InteractionTrackerInertiaStateEnteredArgs args)
@@ -209,13 +191,6 @@ namespace Fonte.App.Controls
 
         public void IdleStateEntered(InteractionTracker sender, InteractionTrackerIdleStateEnteredArgs args)
         {
-            Debug.WriteLine("IdleStateEntered! " + _scale);
-            if (_scale.HasValue)
-            {
-                Debug.WriteLine("APPLIED!");
-                Canvas.DpiScale = _scale.Value;
-                _scale = null;
-            }
         }
 
         public void CustomAnimationStateEntered(InteractionTracker sender, InteractionTrackerCustomAnimationStateEnteredArgs args)
