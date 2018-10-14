@@ -125,6 +125,8 @@ namespace Fonte.App.Controls
                 {
                     ds.Transform = _matrix;
 
+                    Tool.OnDrawBackground(this, ds);
+
                     var rescale = 1 / sender.DpiScale;
                     Drawing.DrawPoints(Layer, ds, rescale);
                     Drawing.DrawStroke(Layer, ds, rescale);

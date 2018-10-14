@@ -179,18 +179,22 @@ namespace Fonte.App.Utilities
             // handles
             ds.DrawGeometry(CanvasGeometry.CreatePath(handlePathB), otherColor, strokeWidth: rescale);
             // on curves
+            selectedOnPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             ds.FillGeometry(CanvasGeometry.CreatePath(selectedOnPathB), onColor);
+            selectedSmoothPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             ds.FillGeometry(CanvasGeometry.CreatePath(selectedSmoothPathB), smoothColor);
             ds.DrawGeometry(CanvasGeometry.CreatePath(onPathB), onColor, strokeWidth: 1.3f * rescale);
             ds.DrawGeometry(CanvasGeometry.CreatePath(smoothPathB), smoothColor, strokeWidth: 1.3f * rescale);
             // notch
             ds.DrawGeometry(CanvasGeometry.CreatePath(notchPathB), notchColor, strokeWidth: rescale);
             // off curves
+            offPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             using (var offPath = CanvasGeometry.CreatePath(offPathB))
             {
                 ds.FillGeometry(offPath, backgroundColor);
                 ds.DrawGeometry(offPath, offColor, strokeWidth: 1.3f * rescale);
             }
+            selectedOffPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             ds.FillGeometry(CanvasGeometry.CreatePath(selectedOffPathB), offColor);
         }
 

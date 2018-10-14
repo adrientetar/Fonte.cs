@@ -8,5 +8,12 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-	<controls:DesignCanvas/>
+	<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition />
+		</Grid.RowDefinitions>
+		<controls:TopBar Grid.Row="0"/>
+		<controls:DesignCanvas Grid.Row="1"/>
+	</Grid>
 </Page>

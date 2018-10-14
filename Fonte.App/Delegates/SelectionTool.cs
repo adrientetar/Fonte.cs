@@ -64,7 +64,7 @@ namespace Fonte.App.Delegates
             _origin = null;
         }
 
-        public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds)
+        public override void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds)
         {
             if (_origin.HasValue)
             {

@@ -13,6 +13,7 @@ namespace Fonte.App.Delegates
     {
         bool HandleEvent(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds);
+        void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds);
         void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e);

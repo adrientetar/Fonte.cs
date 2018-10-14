@@ -51,6 +51,10 @@ namespace Fonte.App.Delegates
             _previousPoint = null;
         }
 
+        public virtual void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds)
+        {
+        }
+
         public virtual void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds)
         {
         }
