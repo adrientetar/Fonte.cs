@@ -9,11 +9,17 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
-    using System.Globalization;
 
     public partial class Glyph
     {
         [JsonProperty("layers")]
-        public Layer[] Layers { get; set; }
+        public List<Layer> Layers { get; set; }
+
+        public long? LastModified { get; internal set; }
+
+        internal void ApplyChange()
+        {
+            LastModified = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
     }
 }

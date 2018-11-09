@@ -111,11 +111,15 @@
     <Compile Include="Point.cs" />
     <Compile Include="Glyph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Common.cs" />
+    <Compile Include="Utilities\ListExtensions.cs" />
+    <Compile Include="Utilities\ObservableDictionary.cs" />
+    <Compile Include="Utilities\ObservableList.cs" />
     <EmbeddedResource Include="Properties\Fonte.Data.rd.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.1.7</Version>
+      <Version>6.1.9</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>11.0.2</Version>

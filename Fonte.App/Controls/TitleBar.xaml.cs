@@ -4,8 +4,7 @@
 
 namespace Fonte.App.Controls
 {
-    using System;
-    using System.Diagnostics;
+    using Windows.ApplicationModel;
     using Windows.ApplicationModel.Core;
     using Windows.UI;
     using Windows.UI.Core;
@@ -13,37 +12,30 @@ namespace Fonte.App.Controls
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
 
-    public sealed partial class TopBar : UserControl
+    public partial class TitleBar : UserControl
     {
-        public TopBar()
+        public TitleBar()
         {
             InitializeComponent();
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
-            // Hide default title bar.
-            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
-            coreTitleBar.ExtendViewIntoTitleBar = true;
-            UpdateTitleBarLayout(coreTitleBar);
+            if (!DesignMode.DesignModeEnabled)
+            {
+                var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+                coreTitleBar.ExtendViewIntoTitleBar = true;
+                UpdateTitleBarLayout(coreTitleBar);
 
-            // Transparent buttons for acrylic brush.
-            var titleBar = ApplicationView.GetForCurrentView().TitleBar;
-            titleBar.ButtonBackgroundColor = Colors.Transparent;
-            titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+                var titleBar = ApplicationView.GetForCurrentView().TitleBar;
+                titleBar.ButtonBackgroundColor = Colors.Transparent;
+                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
 
-            // Set XAML element as a draggable region.
-            var window = Window.Current;
-            window.SetTitleBar(AppTitleBar);
-            window.Activated += OnCurrentWindowActivated;
+                coreTitleBar.IsVisibleChanged += OnTitleBarIsVisibleChanged;
+                coreTitleBar.LayoutMetricsChanged += OnTitleBarLayoutMetricsChanged;
+            }
 
-            // Register a handler for when the size of the overlaid caption control changes.
-            // For example, when the app moves to a screen with a different DPI.
-            coreTitleBar.LayoutMetricsChanged += OnTitleBarLayoutMetricsChanged;
-
-            // Register a handler for when the title bar visibility changes.
-            // For example, when the title bar is invoked in full screen mode.
-            coreTitleBar.IsVisibleChanged += OnTitleBarIsVisibleChanged;
+            Window.Current.Activated += OnCurrentWindowActivated;
         }
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
@@ -90,14 +82,13 @@ namespace Fonte.App.Controls
             AppTitleBar.Height = coreTitleBar.Height;
 
             // Adjust title bar margin for current DPI
-            var topMargin = (int)(.5 * (coreTitleBar.Height - TitleBlock.ActualHeight));
-            //Debug.WriteLine($"topMargin: {topMargin} titleBarH: {coreTitleBar.Height} aH: {TitleBlock.ActualHeight}");
+            var topMargin = (int)(.5 * (coreTitleBar.Height - AppTitle.ActualHeight));
 
-            var margin = TitleBlock.Margin;
+            var margin = AppTitle.Margin;
             if (topMargin != margin.Top)
             {
                 margin.Top = topMargin;
-                TitleBlock.Margin = margin;
+                AppTitle.Margin = margin;
             }
         }
     }

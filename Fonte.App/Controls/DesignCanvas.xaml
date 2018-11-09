@@ -1,9 +1,9 @@
 ﻿<UserControl
     x:Class="Fonte.App.Controls.DesignCanvas"
-	x:Name="Control"
+    x:Name="Control"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
+    xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:local="using:Fonte.App.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -13,7 +13,10 @@
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
 
-	<Grid x:Name="Root" Background="White" PointerPressed="OnPointerPressed" PointerMoved="OnPointerMoved" PointerReleased="OnPointerReleased" SizeChanged="OnRootSizeChanged">
-		<canvas:CanvasVirtualControl x:Name="Canvas" RegionsInvalidated="OnRegionsInvalidated"/>
-	</Grid>
+    <Grid x:Name="Grid" Background="White" SizeChanged="OnRootSizeChanged">
+        <canvas:CanvasVirtualControl x:Name="Canvas" IsTabStop="True" RegionsInvalidated="OnRegionsInvalidated"
+                                     KeyDown="OnKeyDown" KeyUp="OnKeyUp"
+                                     PointerEntered="OnPointerEntered" PointerExited="OnPointerExited"
+                                     PointerPressed="OnPointerPressed" PointerMoved="OnPointerMoved" PointerReleased="OnPointerReleased"/>
+    </Grid>
 </UserControl>

@@ -9,46 +9,176 @@ namespace Fonte.Data
     using Newtonsoft.Json.Linq;
 
     using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Numerics;
     using System.Reflection;
+    using System.Runtime.Serialization;
 
     [JsonConverter(typeof(StringEnumConverter))]
     public enum PointType
     {
         None = 0,
-        [JsonProperty("move")]
+        [EnumMember(Value = "move")]
         Move,
-        [JsonProperty("line")]
+        [EnumMember(Value = "line")]
         Line,
-        [JsonProperty("curve")]
+        [EnumMember(Value = "curve")]
         Curve,
     };
 
     [JsonConverter(typeof(PointConverter))]
     public partial class Point
     {
-        public Vector2 Position;
+        private float _x;
+        private float _y;
+        private PointType _type;
+        private bool _smooth;
 
-        public PointType Type;
+        private ObservableDictionary<string, object> _extraData;
 
-        public bool Smooth;
+        private bool _selected;
 
-        public bool Selected;
-
-        public float X => Position.X;
-
-        public float Y => Position.Y;
-
-        public Point(Vector2 position, PointType type = PointType.None, bool smooth = false)
+        public float X
         {
-            Position = position;
-            Type = type;
-            Smooth = smooth;
+            get { return _x; }
+            set
+            {
+                if (value != _x)
+                {
+                    _x = value;
+                    Parent?.ApplyChange(ChangeFlags.Outline, this);
+                }
+            }
         }
 
-        public Point(float x, float y, PointType type = PointType.None, bool smooth = false) :
-            this(new Vector2(x, y), type, smooth)
+        public float Y
         {
+            get { return _y; }
+            set
+            {
+                if (value != _y)
+                {
+                    _y = value;
+                    Parent?.ApplyChange(ChangeFlags.Outline, this);
+                }
+            }
+        }
+
+        public PointType Type
+        {
+            get { return _type; }
+            set
+            {
+                if (value != _type)
+                {
+                    _type = value;
+                    Parent?.ApplyChange(ChangeFlags.None);
+                }
+            }
+        }
+
+        public bool Smooth
+        {
+            get { return _smooth; }
+            set
+            {
+                if (value != _smooth)
+                {
+                    _smooth = value;
+                    Parent?.ApplyChange(ChangeFlags.None);
+                }
+            }
+        }
+
+        public IDictionary<string, object> ExtraData {
+            get
+            {
+                if (_extraData == null)
+                {
+                    _extraData = new ObservableDictionary<string, object>();
+                    _watchExtraData();
+                }
+                return _extraData;
+            }
+        }
+
+        public Path Parent { get; internal set; }
+
+        public bool Selected
+        {
+            get
+            {
+                return _selected;
+            }
+            set
+            {
+                if (value != _selected)
+                {
+                    _selected = value;
+                    Parent?.ApplyChange(ChangeFlags.Selection, this);
+                }
+            }
+        }
+
+        /**/
+
+        public string UniqueId
+        {
+            get
+            {
+                if (ExtraData.TryGetValue("id", out object value) && (value as string != null))
+                {
+                    return (string)value;
+                }
+                ExtraData["id"] = Guid.NewGuid().ToString();
+                return (string)ExtraData["id"];
+            }
+        }
+
+        public Point(float x, float y, PointType type = PointType.None, bool smooth = false, IDictionary<string, object> extraData = null)
+        {
+            _x = x;
+            _y = y;
+            _type = type;
+            _smooth = smooth;
+
+            if (extraData != null)
+            {
+                _extraData = new ObservableDictionary<string, object>(extraData, copy: false);
+                _watchExtraData();
+            }
+        }
+
+        public override string ToString()
+        {
+            string more;
+            if (_type != PointType.None)
+            {
+                more = $", {_type}";
+                if (_smooth)
+                {
+                    more += $", smooth: {_smooth}";
+                }
+            }
+            else
+            {
+                more = string.Empty;
+            }
+            return $"{nameof(Point)}({_x}, {_y}{more})";
+        }
+
+        public Vector2 ToVector2()
+        {
+            return new Vector2(_x, _y);
+        }
+
+        private void _watchExtraData()
+        {
+            _extraData.CollectionChanged += (sender, e) =>
+            {
+                Parent?.ApplyChange(ChangeFlags.None);
+            };
         }
     }
 
@@ -63,28 +193,52 @@ namespace Fonte.Data
         {
             var array = JArray.Load(reader);
 
+            var size = array.Count;
+            var last = array[size - 1];
+            Dictionary<string, object> extraData = null;
+            if (last.Type == JTokenType.Object)
+            {
+                extraData = last.ToObject<Dictionary<string, object>>();
+                --size;
+            }
+
             return new Point(
-                    new Vector2(array[0].ToObject<float>(),
-                                array[1].ToObject<float>()),
-                    array.Count > 2 ? array[2].ToObject<PointType>() : PointType.None,
-                    array.Count > 3 ? array[3].ToObject<bool>() : false
+                    array[0].ToObject<float>(),
+                    array[1].ToObject<float>(),
+                    size > 2 ? array[2].ToObject<PointType>() : PointType.None,
+                    size > 3 ? array[3].ToObject<bool>() : false,
+                    extraData
                 );
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var point = value as Point;
+            var point = (Point)value;
 
+            var formatting = writer.Formatting;
             writer.WriteStartArray();
-            WriteSingle(writer, point.Position.X);
-            WriteSingle(writer, point.Position.Y);
-            if (point.Type != PointType.None) {
-                writer.WriteValue(point.Type);
-                if (point.Smooth) {
-                    writer.WriteValue(point.Smooth);
+            try
+            {
+                writer.Formatting = Formatting.None;
+
+                WriteSingle(writer, point.X);
+                WriteSingle(writer, point.Y);
+                if (point.Type != PointType.None) {
+                    serializer.Serialize(writer, point.Type);
+                    if (point.Smooth) {
+                        writer.WriteValue(point.Smooth);
+                    }
+                }
+                if (point.ExtraData != null && point.ExtraData.Count > 0)
+                {
+                    serializer.Serialize(writer, point.ExtraData);
                 }
             }
-            writer.WriteEndArray();
+            finally
+            {
+                writer.WriteEndArray();
+                writer.Formatting = formatting;
+            }
         }
 
         private void WriteSingle(JsonWriter writer, float number)

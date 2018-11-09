@@ -5,6 +5,7 @@
 namespace Fonte.App.Controls
 {
     using Fonte.App.Delegates;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Microsoft.Graphics.Canvas.UI.Xaml;
     using Newtonsoft.Json;
@@ -16,24 +17,40 @@ namespace Fonte.App.Controls
     using Windows.Foundation;
     using Windows.UI.Composition;
     using Windows.UI.Composition.Interactions;
+    using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Hosting;
     using Windows.UI.Xaml.Input;
+    using Windows.UI.Xaml.Media;
 
-    public sealed partial class DesignCanvas : UserControl, IInteractionTrackerOwner
+    public partial class DesignCanvas : UserControl, IInteractionTrackerOwner
     {
         private const string _layerContents = @"{""masterName"":""Regular"",""width"":520,""paths"":[[[65,388],[78,331],[124,331,""curve"",true],[152,331],[177,348],[177,376,""curve"",true],[177,405],[167,429],[157,448,""curve""],[180,471],[212,481],[239,481,""curve"",true],[307,481],[335,434],[335,356,""curve"",true],[335,286,""line""],[250,265,""line"",true],[93,229],[45,189],[45,110,""curve"",true],[45,46],[97,-6],[187,-6,""curve"",true],[253,-6],[310,34],[335,101,""curve""],[335,73,""line"",true],[335,29],[354,-2],[396,-5,""curve"",true],[453,-9],[484,25],[501,64,""curve""],[487,73,""line""],[475,48],[461,38],[446,38,""curve"",true],[427,38],[421,63],[421,95,""curve"",true],[421,351,""line"",true],[421,472],[358,510],[265,510,""curve"",true],[197,510],[128,476],[89,420,""curve"",true]],[[310,57],[259,35],[214,35,""curve"",true],[169,35],[133,68],[133,126,""curve"",true],[133,167],[157,218],[257,243,""curve"",true],[335,263,""line""],[335,131,""line""]]]}";
 
+        private CoreCursor _previousCursor;
         private Visual _contentVisual;
         private Matrix3x2 _matrix;
         private Visual _rootVisual;
         private VisualInteractionSource _source;
+        private ICanvasDelegate _tool;
         private InteractionTracker _tracker;
 
         public Data.Layer Layer { get; set; }
 
-        public ICanvasDelegate Tool { get; set; }
+        public ICanvasDelegate Tool
+        {
+            get => _tool;
+            set
+            {
+                _tool = value;
+
+                if (_previousCursor != null)
+                {
+                    Window.Current.CoreWindow.PointerCursor = _tool.Cursor;
+                }
+            }
+        }
 
         public DesignCanvas()
         {
@@ -42,7 +59,7 @@ namespace Fonte.App.Controls
             // later we'll only do this if we're in design mode
             Layer = JsonConvert.DeserializeObject<Data.Layer>(_layerContents);
 
-            Tool = new SelectionTool();//BaseTool();
+            Tool = new BaseTool();
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
@@ -50,9 +67,12 @@ namespace Fonte.App.Controls
             _matrix = Matrix3x2.CreateScale(1, -1);
             // should be based on metrics, not bounds
             _matrix.Translation = new Vector2(
-                .5f * ((float)Root.ActualWidth - Layer.Width),
-                .5f * (float)(Root.ActualHeight + Layer.Bounds.Height)
+                .5f * ((float)Canvas.ActualWidth - Layer.Width),
+                .5f * (float)(Canvas.ActualHeight + Layer.Bounds.Height)
             );
+
+            RegisterAsScrollPort(Grid);
+            _clipToBounds(Grid);
 
             InitializeInteractionTracker();
         }
@@ -68,8 +88,8 @@ namespace Fonte.App.Controls
 
         void InitializeInteractionTracker()
         {
-            _rootVisual = ElementCompositionPreview.GetElementVisual(Root);
-            _rootVisual.Size = new Vector2((float)Root.ActualWidth, (float)Root.ActualHeight);
+            _rootVisual = ElementCompositionPreview.GetElementVisual(Grid);
+            _rootVisual.Size = new Vector2((float)Grid.ActualWidth, (float)Grid.ActualHeight);
 
             _contentVisual = ElementCompositionPreview.GetElementVisual(Canvas);
             _contentVisual.Size = _rootVisual.Size;
@@ -117,6 +137,20 @@ namespace Fonte.App.Controls
             contentVisual.StartAnimation("Scale", scaleExpression);
         }
 
+        void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            _previousCursor = Window.Current.CoreWindow.PointerCursor;
+
+            Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
+        }
+
+        void OnPointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            Window.Current.CoreWindow.PointerCursor = _previousCursor;
+
+            _previousCursor = null;
+        }
+
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
         {
             foreach (var region in args.InvalidatedRegions)
@@ -125,25 +159,38 @@ namespace Fonte.App.Controls
                 {
                     ds.Transform = _matrix;
 
-                    Tool.OnDrawBackground(this, ds);
-
                     var rescale = 1 / sender.DpiScale;
+
+                    Tool.OnDrawBackground(this, ds, rescale);
+
                     Drawing.DrawPoints(Layer, ds, rescale);
                     Drawing.DrawStroke(Layer, ds, rescale);
 
-                    Tool.OnDraw(this, ds);
+                    Tool.OnDraw(this, ds, rescale);
                 }
             }
         }
 
+        void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            Tool.OnKeyDown(this, e);
+        }
+
+        void OnKeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            Tool.OnKeyUp(this, e);
+        }
+
         void OnPointerPressed(object sender, PointerRoutedEventArgs e)
         {
+            ((UIElement)sender).CapturePointer(e.Pointer);
+
             if (e.Pointer.PointerDeviceType == PointerDeviceType.Touch)
             {
-                _source.TryRedirectForManipulation(e.GetCurrentPoint(Root));
+                _source.TryRedirectForManipulation(e.GetCurrentPoint(Grid));
             }
             
-            if (Tool.HandleEvent(this, e))
+            if (Tool.HandlePointerEvent(this, e))
             {
                 Tool.OnPointerPressed(this, e);
             }
@@ -151,7 +198,7 @@ namespace Fonte.App.Controls
 
         void OnPointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            if (Tool.HandleEvent(this, e))
+            if (Tool.HandlePointerEvent(this, e))
             {
                 Tool.OnPointerMoved(this, e);
             }
@@ -159,17 +206,21 @@ namespace Fonte.App.Controls
 
         void OnPointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            if (Tool.HandleEvent(this, e))
+            if (Tool.HandlePointerEvent(this, e))
             {
                 Tool.OnPointerReleased(this, e);
             }
+
+            ((UIElement)sender).ReleasePointerCapture(e.Pointer);
         }
 
         void OnRootSizeChanged(object sender, SizeChangedEventArgs e)
         {
+            _clipToBounds(Grid);
+
             if (_rootVisual == null || _contentVisual == null) return;
 
-            var rootSize = new Vector2((float)Root.ActualWidth, (float)Root.ActualHeight);
+            var rootSize = new Vector2((float)Grid.ActualWidth, (float)Grid.ActualHeight);
             _rootVisual.Size = _contentVisual.Size = rootSize;
         }
 
@@ -203,7 +254,7 @@ namespace Fonte.App.Controls
         {
         }
 
-#endregion
+        #endregion
 
         Matrix3x2 GetInverseMatrix()
         {
@@ -240,6 +291,14 @@ namespace Fonte.App.Controls
                     0
                 ));
             Canvas.Invalidate();
+        }
+
+        private void _clipToBounds(FrameworkElement element)
+        {
+            element.Clip = new RectangleGeometry
+            {
+                Rect = new Rect(0, 0, element.ActualWidth, element.ActualHeight)
+            };
         }
     }
 }

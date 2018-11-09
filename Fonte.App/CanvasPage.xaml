@@ -2,18 +2,31 @@
     x:Class="Fonte.App.CanvasPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:controls="using:Fonte.App.Controls"
+    xmlns:controls="using:Fonte.App.Controls"
+    xmlns:interfaces="using:Fonte.App.Interfaces"
     xmlns:local="using:Fonte.App"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-	<Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
-			<RowDefinition />
+			<RowDefinition/>
 		</Grid.RowDefinitions>
-		<controls:TopBar Grid.Row="0"/>
-		<controls:DesignCanvas Grid.Row="1"/>
+		<Grid Grid.Row="0" Background="{ThemeResource SystemControlChromeMediumLowAcrylicWindowMediumBrush}">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition/>
+				<ColumnDefinition Width="Auto"/>
+				<ColumnDefinition/>
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<controls:TitleBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"/>
+			<controls:ToolBar x:Name="ToolBar" Grid.Row="1" Grid.Column="1" CurrentItemChanged="OnToolBarItemChanged"/>
+		</Grid>
+		<controls:DesignCanvas x:Name="Canvas" Grid.Row="1"/>
 	</Grid>
 </Page>

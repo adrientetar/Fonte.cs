@@ -10,7 +10,9 @@ namespace Fonte.App.Delegates
     using System.Diagnostics;
     using System.Numerics;
     using Windows.Foundation;
+    using Windows.System;
     using Windows.UI;
+    using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
     public class SelectionTool : BaseTool
@@ -55,7 +57,7 @@ namespace Fonte.App.Delegates
                 {
                     foreach (var point in path.Points)
                     {
-                        point.Selected = rect.Contains(point.Position.ToPoint());
+                        point.Selected = rect.Contains(point.ToVector2().ToPoint());
                     }
                 }
 
@@ -64,12 +66,22 @@ namespace Fonte.App.Delegates
             _origin = null;
         }
 
-        public override void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds)
+        public override void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (_origin.HasValue)
             {
                 ds.FillRectangle(new Rect(_origin.Value, _anchor), Color.FromArgb(51, 0, 120, 215));
             }
         }
+
+        #region IToolBarEntry implementation
+
+        public override IconElement Icon { get; } = new FontIcon() { Glyph = "\ue8b0" };
+
+        public override string Name => "Selection";
+
+        public override KeyboardAccelerator Shortcut { get; } = new KeyboardAccelerator() { Key = VirtualKey.V };
+
+        #endregion
     }
 }

@@ -11,67 +11,18 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Diagnostics;
-    using System.Globalization;
-    using System.Numerics;
     using Windows.Foundation;
 
     public partial class Layer
     {
-        // TODO caching
-
-        public Rect Bounds
-        {
-            get
-            {
-                return CanvasPath.ComputeBounds();
-            }
-        }
-
-        public CanvasGeometry CanvasPath
-        {
-            get
-            {
-                var device = CanvasDevice.GetSharedDevice();
-                var builder = new CanvasPathBuilder(device);
-
-                var stack = new Vector2[2];
-                var stackIndex = 0;
-                foreach (var path in Paths) {
-                    var start = path.Points[0];
-                    var skip = start.Type == PointType.Move;
-                    if (!skip) {
-                        start = path.Points[path.Points.Count - 1];
-                    }
-                    builder.BeginFigure(start.Position);
-
-                    foreach (var point in path.Points)
-                    {
-                        if (skip) {
-                            skip = false;
-                            continue;
-                        }
-                        switch (point.Type) {
-                            case PointType.Curve:
-                                Debug.Assert(stackIndex == 2);
-                                builder.AddCubicBezier(stack[0], stack[1], point.Position);
-                                stackIndex = 0;
-                                break;
-                            case PointType.Line:
-                                builder.AddLine(point.Position);
-                                break;
-                            case PointType.None:
-                                stack[stackIndex++] = point.Position;
-                                break;
-                        }
-                    }
-
-                    builder.EndFigure(start.Type == PointType.Move? CanvasFigureLoop.Open : CanvasFigureLoop.Closed);
-                }
-
-                return CanvasGeometry.CreatePath(builder);
-            }
-        }
+        private Rect _bounds = Rect.Empty;
+        private CanvasGeometry _closedCanvasPath;
+        private CanvasGeometry _openCanvasPath;
+        private List<Path> _selectedPaths;
+        private HashSet<Point> _selection;
+        private Rect _selectionBounds = Rect.Empty;
 
         // could just store an actual reference to the master,
         // and serialize as masterName
@@ -79,9 +30,184 @@ namespace Fonte.Data
         public string MasterName { get; set; }
 
         [JsonProperty("width")]
-        public long Width { get; set; }
+        public int Width { get; set; }
 
         [JsonProperty("paths")]
-        public Path[] Paths { get; set; }
+        public ObservableList<Path> Paths { get; }
+
+        /**/
+
+        [JsonIgnore]
+        public Rect Bounds
+        {
+            get
+            {
+                if (_bounds.IsEmpty)
+                {
+                    foreach (Path path in Paths)
+                    {
+                        _bounds.Union(path.Bounds);
+                    }
+                }
+                return _bounds;
+            }
+        }
+
+        [JsonIgnore]
+        public CanvasGeometry ClosedCanvasPath
+        {
+            get
+            {
+                if (_closedCanvasPath == null)
+                {
+                    _closedCanvasPath = _collectPaths(path => !path.IsOpen);
+                }
+                return _closedCanvasPath;
+            }
+        }
+
+        [JsonIgnore]
+        public CanvasGeometry OpenCanvasPath
+        {
+            get
+            {
+                if (_openCanvasPath == null)
+                {
+                    _closedCanvasPath = _collectPaths(path => path.IsOpen);
+                }
+                return _openCanvasPath;
+            }
+        }
+
+        [JsonIgnore]
+        public Glyph Parent { get; internal set; }
+
+        [JsonIgnore]
+        public IReadOnlyList<Path> SelectedPaths
+        {
+            get
+            {
+                if (_selectedPaths == null)
+                {
+                    throw new NotImplementedException();
+                }
+                return _selectedPaths;
+            }
+        }
+
+        [JsonIgnore]
+        public IReadOnlyCollection<Point> Selection
+        {
+            get
+            {
+                return _selection;
+            }
+        }
+
+        [JsonIgnore]
+        public Rect SelectionBounds
+        {
+            get
+            {
+                if (_selectionBounds.IsEmpty)
+                {
+                    throw new NotImplementedException();
+                }
+                return _selectionBounds;
+            }
+        }
+
+        [JsonConstructor]
+        public Layer(List<Path> paths = null, string masterName = null, int width = 600)
+        {
+            Paths = paths != null ?
+                new ObservableList<Path>(paths, copy: false) :
+                new ObservableList<Path>();
+            _watchPaths();
+            MasterName = masterName ?? string.Empty;
+            Width = width;
+
+            _selection = new HashSet<Point>();
+
+            foreach (Path path in Paths)
+            {
+                path.Parent = this;
+            }
+        }
+
+        internal void ApplyChange(ChangeFlags flags, Point point = null)
+        {
+            if (flags.HasFlag(ChangeFlags.Outline))
+            {
+                if (point != null && point.Selected)
+                {
+                    _selectedPaths = null;
+                    _selectionBounds = Rect.Empty;
+                }
+                _bounds = Rect.Empty;
+                _closedCanvasPath = _openCanvasPath = null;
+            }
+
+            if (flags.HasFlag(ChangeFlags.Selection))
+            {
+                if (point.Selected != flags.HasFlag(ChangeFlags.SelectionRemove))
+                {
+                    _selection.Add(point);
+                }
+                else
+                {
+                    _selection.Remove(point);
+                }
+                _selectedPaths = null;
+                _selectionBounds = Rect.Empty;
+            }
+
+            // XXX null-check is temporary
+            Parent?.ApplyChange();
+        }
+
+        private CanvasGeometry _collectPaths(Func<Path, bool> predicate)
+        {
+            var device = CanvasDevice.GetSharedDevice();
+            var builder = new CanvasPathBuilder(device);
+
+            foreach (var path in Paths)
+            {
+                if (predicate.Invoke(path))
+                {
+                    builder.AddGeometry(path.CanvasPath);
+                }
+            }
+
+            return CanvasGeometry.CreatePath(builder);
+        }
+
+        private void _watchPaths()
+        {
+            Paths.CollectionChanged += (sender, e) =>
+            {
+                if (e.OldItems != null)
+                    foreach (Path path in e.OldItems)
+                    {
+                        path.Parent = null;
+
+                        /*if (point.Selected)
+                        {
+                            Parent?.ApplyChange(ChangeFlags.SelectionRemove, point);
+                        }*/
+                    }
+
+                if (e.NewItems != null)
+                    foreach (Path path in e.NewItems)
+                    {
+                        Debug.Assert(path.Parent == null);
+
+                        //path.Selected = false;
+                        path.Parent = this;
+                    }
+
+                ApplyChange(ChangeFlags.Outline);
+            };
+        }
     }
 }

@@ -13,23 +13,23 @@ namespace Fonte.App.Utilities
 
     class Drawing
     {
-        public static CanvasGeometry CreateTriangle(CanvasDrawingSession ds, Vector2 pos, double angle, float size)
+        public static CanvasGeometry CreateTriangle(CanvasDrawingSession ds, float x, float y, double angle, float size)
         {
             var thirdSize = .33f * size;
             var cos = (float)Math.Cos(angle);
             var sin = (float)Math.Sin(angle);
             var builder = new CanvasPathBuilder(ds);
             builder.BeginFigure(new Vector2(
-                pos.X - cos * thirdSize - sin * size, // -thirdSize
-                pos.Y + cos * size - sin * thirdSize  //  size
+                x - cos * thirdSize - sin * size, // -thirdSize
+                y + cos * size - sin * thirdSize  //  size
             ));
             builder.AddLine(new Vector2(
-                pos.X - cos * thirdSize + sin * size, // -thirdSize
-                pos.Y - cos * size - sin * thirdSize  // -size
+                x - cos * thirdSize + sin * size, // -thirdSize
+                y - cos * size - sin * thirdSize  // -size
             ));
             builder.AddLine(new Vector2(
-                pos.X + 2 * cos * thirdSize,          //  thirdSize * 2
-                pos.Y + 2 * sin * thirdSize           //  0
+                x + 2 * cos * thirdSize,          //  thirdSize * 2
+                y + 2 * sin * thirdSize           //  0
             ));
             builder.EndFigure(CanvasFigureLoop.Closed);
             return CanvasGeometry.CreatePath(builder);
@@ -74,13 +74,13 @@ namespace Fonte.App.Utilities
                     if (start.Selected)
                     {
                         (start.Smooth ? selectedSmoothPathB : selectedOnPathB).AddGeometry(
-                            CreateTriangle(ds, start.Position, angle, 9 * rescale)
+                            CreateTriangle(ds, start.X, start.Y, angle, 9 * rescale)
                         );
                     }
                     else
                     {
                         (start.Smooth ? smoothPathB : onPathB).AddGeometry(
-                            CreateTriangle(ds, start.Position, angle, 7 * rescale)
+                            CreateTriangle(ds, start.X, start.Y, angle, 7 * rescale)
                         );
                     }
                 }
@@ -89,15 +89,15 @@ namespace Fonte.App.Utilities
                     start = null;
                 }
 
-                var breakHandle = path.Open;
+                var breakHandle = path.IsOpen;
                 Data.Point prev = points[points.Count - 1];
                 foreach (var point in path.Points)
                 {
                     var isOffCurve = point.Type == Data.PointType.None;
                     if (!breakHandle && prev.Type == Data.PointType.None != isOffCurve)
                     {
-                        handlePathB.BeginFigure(prev.Position);
-                        handlePathB.AddLine(point.Position);
+                        handlePathB.BeginFigure(prev.X, prev.Y);
+                        handlePathB.AddLine(point.X, point.Y);
                         handlePathB.EndFigure(CanvasFigureLoop.Open);
                     }
                     breakHandle = false;
@@ -107,13 +107,13 @@ namespace Fonte.App.Utilities
                         if (point.Selected)
                         {
                             selectedOffPathB.AddGeometry(
-                                CanvasGeometry.CreateEllipse(ds, point.Position, 4 * rescale, 4 * rescale)
+                                CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
                             );
                         }
                         else
                         {
                             offPathB.AddGeometry(
-                                CanvasGeometry.CreateEllipse(ds, point.Position, 3 * rescale, 3 * rescale)
+                                CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 3 * rescale, 3 * rescale)
                             );
                         }
                     }
@@ -139,13 +139,13 @@ namespace Fonte.App.Utilities
                             else if (point.Selected)
                             {
                                 selectedSmoothPathB.AddGeometry(
-                                    CanvasGeometry.CreateEllipse(ds, point.Position, 5.15f * rescale, 5.15f * rescale)
+                                    CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 5.15f * rescale, 5.15f * rescale)
                                 );
                             }
                             else
                             {
                                 smoothPathB.AddGeometry(
-                                    CanvasGeometry.CreateEllipse(ds, point.Position, 4 * rescale, 4 * rescale)
+                                    CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
                                 );
                             }
                         }
@@ -200,7 +200,8 @@ namespace Fonte.App.Utilities
 
         public static void DrawStroke(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
-            ds.DrawGeometry(layer.CanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
+            ds.DrawGeometry(layer.ClosedCanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
+            ds.DrawGeometry(layer.OpenCanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
         }
     }
 }
