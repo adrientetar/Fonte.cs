@@ -60,19 +60,21 @@ namespace Fonte.App.Controls
             Layer = JsonConvert.DeserializeObject<Data.Layer>(_layerContents);
 
             Tool = new BaseTool();
+
+            Canvas.Width = Canvas.Height = 6000;
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
+            _clipToBounds(Grid);
+            RegisterAsScrollPort(Grid);
+
             _matrix = Matrix3x2.CreateScale(1, -1);
             // should be based on metrics, not bounds
             _matrix.Translation = new Vector2(
-                .5f * ((float)Canvas.ActualWidth - Layer.Width),
-                .5f * (float)(Canvas.ActualHeight + Layer.Bounds.Height)
+                .5f * ((float)Grid.ActualWidth - Layer.Width),
+                .5f * (float)(Grid.ActualHeight + Layer.Bounds.Height)
             );
-
-            RegisterAsScrollPort(Grid);
-            _clipToBounds(Grid);
 
             InitializeInteractionTracker();
         }
@@ -92,12 +94,12 @@ namespace Fonte.App.Controls
             _rootVisual.Size = new Vector2((float)Grid.ActualWidth, (float)Grid.ActualHeight);
 
             _contentVisual = ElementCompositionPreview.GetElementVisual(Canvas);
-            _contentVisual.Size = _rootVisual.Size;
+            _contentVisual.Size = new Vector2((float)Canvas.ActualWidth, (float)Canvas.ActualHeight);
 
             SetupInteractionTracker(_rootVisual, _contentVisual);
         }
 
-        void SetupInteractionTracker(Visual rootVisual, Visual contentVisual)
+        void SetupInteractionTracker(Visual viewportVisual, Visual contentVisual)
         {
             //
             // Create the InteractionTracker and set its min/max position and scale.  These could 
@@ -105,16 +107,18 @@ namespace Fonte.App.Controls
             // the min or the max position to facilitate content updates/virtualization.
             //
 
-            var compositor = rootVisual.Compositor;
+            var compositor = viewportVisual.Compositor;
 
             _tracker = InteractionTracker.CreateWithOwner(compositor, this);
 
-            _tracker.MaxPosition = new Vector3(rootVisual.Size, 0.0f) * 300.0f;
-            _tracker.MinPosition = _tracker.MaxPosition * -1.0f;
+            _tracker.MaxPosition = new Vector3(contentVisual.Size - viewportVisual.Size, 0.0f);
+
             _tracker.MinScale = 1e-2f;
             _tracker.MaxScale = 1e3f;
 
-            _source = VisualInteractionSource.Create(rootVisual);
+            //_tracker.TryUpdatePosition(.5f * _tracker.MaxPosition);
+
+            _source = VisualInteractionSource.Create(viewportVisual);
 
             _source.PositionXSourceMode = InteractionSourceMode.EnabledWithoutInertia;
             _source.PositionYSourceMode = InteractionSourceMode.EnabledWithoutInertia;

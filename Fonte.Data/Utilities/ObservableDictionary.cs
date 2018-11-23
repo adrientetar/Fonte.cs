@@ -15,7 +15,7 @@ namespace System.Collections.ObjectModel
         private const string KeysName = "Keys";
         private const string ValuesName = "Values";
 
-        protected IDictionary<TKey, TValue> Dictionary { get; private set; }
+        internal IDictionary<TKey, TValue> Dictionary { get; private set; }
 
         #region Constructors
         public ObservableDictionary()

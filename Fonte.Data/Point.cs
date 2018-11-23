@@ -4,6 +4,7 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
     using Newtonsoft.Json.Linq;
@@ -28,7 +29,7 @@ namespace Fonte.Data
     };
 
     [JsonConverter(typeof(PointConverter))]
-    public partial class Point
+    public partial class Point : ISelectable
     {
         private float _x;
         private float _y;
@@ -41,33 +42,33 @@ namespace Fonte.Data
 
         public float X
         {
-            get { return _x; }
+            get => _x;
             set
             {
                 if (value != _x)
                 {
                     _x = value;
-                    Parent?.ApplyChange(ChangeFlags.Outline, this);
+                    Parent?.ApplyChange(ChangeFlags.ShapeOutline, this);
                 }
             }
         }
 
         public float Y
         {
-            get { return _y; }
+            get => _y;
             set
             {
                 if (value != _y)
                 {
                     _y = value;
-                    Parent?.ApplyChange(ChangeFlags.Outline, this);
+                    Parent?.ApplyChange(ChangeFlags.ShapeOutline, this);
                 }
             }
         }
 
         public PointType Type
         {
-            get { return _type; }
+            get => _type;
             set
             {
                 if (value != _type)
@@ -80,7 +81,7 @@ namespace Fonte.Data
 
         public bool Smooth
         {
-            get { return _smooth; }
+            get => _smooth;
             set
             {
                 if (value != _smooth)
@@ -107,10 +108,7 @@ namespace Fonte.Data
 
         public bool Selected
         {
-            get
-            {
-                return _selected;
-            }
+            get => _selected;
             set
             {
                 if (value != _selected)

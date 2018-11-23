@@ -10,8 +10,9 @@ namespace Fonte.Data
     public enum ChangeFlags
     {
         None = 0,
-        Outline = 0b001,
-        Selection = 0b010,
-        SelectionRemove = 0b110,
+        Shape = 0b0001,
+        ShapeOutline = 0b0011,
+        Selection = 0b0100,
+        Name = 0b1000,
     }
 }

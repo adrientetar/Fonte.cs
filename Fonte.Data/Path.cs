@@ -4,6 +4,7 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
@@ -18,7 +19,7 @@ namespace Fonte.Data
     using Windows.Foundation;
 
     [JsonConverter(typeof(PathConverter))]
-    public partial class Path
+    public partial class Path : ILayerItem, ISelectable
     {
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _canvasPath;
@@ -38,6 +39,8 @@ namespace Fonte.Data
         }
 
         public Layer Parent { get; internal set; }
+
+        /* internal */ Layer ILayerItem.Parent { get => Parent; set { Parent = value; } }
 
         public ObservableList<Point> Points { get; }
 
@@ -114,6 +117,25 @@ namespace Fonte.Data
             }
         }
 
+        public bool Selected
+        {
+            get
+            {
+                foreach (Point point in Points)
+                {
+                    if (!point.Selected) return false;
+                }
+                return true;
+            }
+            set
+            {
+                foreach (Point point in Points)
+                {
+                    point.Selected = value;
+                }
+            }
+        }
+
         public IEnumerable<Segment> Segments
         {
             get
@@ -154,6 +176,7 @@ namespace Fonte.Data
 
             foreach (Point point in Points)
             {
+                //point.Selected = false;
                 point.Parent = this;
             }
 
@@ -195,7 +218,7 @@ namespace Fonte.Data
                     Points.Reverse();
                 }
 
-                foreach(var point in Points)
+                foreach (var point in Points)
                 {
                     if (point.Type != PointType.None)
                     {
@@ -237,7 +260,7 @@ namespace Fonte.Data
 
         internal void ApplyChange(ChangeFlags flags, Point point = null)
         {
-            if (flags.HasFlag(ChangeFlags.Outline))
+            if (flags.HasFlag(ChangeFlags.Shape))
             {
                 _bounds = Rect.Empty;
                 _canvasPath = null;
@@ -261,12 +284,8 @@ namespace Fonte.Data
                 if (e.OldItems != null)
                     foreach (Point point in e.OldItems)
                     {
+                        point.Selected = false;
                         point.Parent = null;
-
-                        if (point.Selected)
-                        {
-                            Parent?.ApplyChange(ChangeFlags.SelectionRemove, point);
-                        }
                     }
 
                 if (e.NewItems != null)
@@ -274,16 +293,17 @@ namespace Fonte.Data
                     {
                         Debug.Assert(point.Parent == null);
 
+                        // or add to Layer.selection
                         point.Selected = false;
                         point.Parent = this;
                     }
 
-                ApplyChange(ChangeFlags.Outline);
+                ApplyChange(ChangeFlags.ShapeOutline);
             };
         }
     }
 
-    public class Segment
+    public struct Segment
     {
         private readonly int _count;
         private readonly int _index;
@@ -364,7 +384,7 @@ namespace Fonte.Data
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var path = value as Path;
+            var path = (Path)value;
 
             IEnumerable<object> data;
             if (path.ExtraData != null && path.ExtraData.Count > 0)

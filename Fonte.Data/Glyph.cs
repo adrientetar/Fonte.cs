@@ -15,6 +15,7 @@ namespace Fonte.Data
         [JsonProperty("layers")]
         public List<Layer> Layers { get; set; }
 
+        [JsonIgnore]
         public long? LastModified { get; internal set; }
 
         internal void ApplyChange()
