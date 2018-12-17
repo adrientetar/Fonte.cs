@@ -8,6 +8,7 @@ namespace Fonte.App.Controls
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Microsoft.Graphics.Canvas.UI.Xaml;
+    using mux = Microsoft.UI.Xaml.Controls;
     using Newtonsoft.Json;
 
     using System;
@@ -15,26 +16,19 @@ namespace Fonte.App.Controls
     using System.Numerics;
     using Windows.Devices.Input;
     using Windows.Foundation;
-    using Windows.UI.Composition;
-    using Windows.UI.Composition.Interactions;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Hosting;
     using Windows.UI.Xaml.Input;
-    using Windows.UI.Xaml.Media;
 
-    public partial class DesignCanvas : UserControl, IInteractionTrackerOwner
+    public partial class DesignCanvas : UserControl
     {
         private const string _layerContents = @"{""masterName"":""Regular"",""width"":520,""paths"":[[[65,388],[78,331],[124,331,""curve"",true],[152,331],[177,348],[177,376,""curve"",true],[177,405],[167,429],[157,448,""curve""],[180,471],[212,481],[239,481,""curve"",true],[307,481],[335,434],[335,356,""curve"",true],[335,286,""line""],[250,265,""line"",true],[93,229],[45,189],[45,110,""curve"",true],[45,46],[97,-6],[187,-6,""curve"",true],[253,-6],[310,34],[335,101,""curve""],[335,73,""line"",true],[335,29],[354,-2],[396,-5,""curve"",true],[453,-9],[484,25],[501,64,""curve""],[487,73,""line""],[475,48],[461,38],[446,38,""curve"",true],[427,38],[421,63],[421,95,""curve"",true],[421,351,""line"",true],[421,472],[358,510],[265,510,""curve"",true],[197,510],[128,476],[89,420,""curve"",true]],[[310,57],[259,35],[214,35,""curve"",true],[169,35],[133,68],[133,126,""curve"",true],[133,167],[157,218],[257,243,""curve"",true],[335,263,""line""],[335,131,""line""]]]}";
 
         private CoreCursor _previousCursor;
-        private Visual _contentVisual;
         private Matrix3x2 _matrix;
-        private Visual _rootVisual;
-        private VisualInteractionSource _source;
         private ICanvasDelegate _tool;
-        private InteractionTracker _tracker;
 
         public Data.Layer Layer { get; set; }
 
@@ -60,85 +54,42 @@ namespace Fonte.App.Controls
             Layer = JsonConvert.DeserializeObject<Data.Layer>(_layerContents);
 
             Tool = new BaseTool();
-
-            Canvas.Width = Canvas.Height = 6000;
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
-            _clipToBounds(Grid);
-            RegisterAsScrollPort(Grid);
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            mux.ScrollerChangeOffsetsOptions options = new mux.ScrollerChangeOffsetsOptions(
+                .5f * (Canvas.ActualWidth - Root.ActualWidth),
+                .5f * (Canvas.ActualHeight - Root.ActualHeight),
+                mux.ScrollerViewKind.Absolute, mux.ScrollerViewChangeKind.DisableAnimation, mux.ScrollerViewChangeSnapPointRespect.IgnoreSnapPoints);
+            Root.ChangeOffsets(options);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
             _matrix = Matrix3x2.CreateScale(1, -1);
             // should be based on metrics, not bounds
             _matrix.Translation = new Vector2(
-                .5f * ((float)Grid.ActualWidth - Layer.Width),
-                .5f * (float)(Grid.ActualHeight + Layer.Bounds.Height)
+                .5f * ((float)Canvas.ActualWidth - Layer.Width),
+                .5f * (float)(Canvas.ActualHeight + Layer.Bounds.Height)
             );
-
-            InitializeInteractionTracker();
         }
+
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        void Root_ViewChanged(mux.Scroller sender, object args)
+        {
+                if (sender.ZoomFactor != Canvas.DpiScale)
+                {
+                    Canvas.DpiScale = sender.ZoomFactor;
+                }
+                this.Invalidate();
+
+        }
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
         {
-            _tracker.Dispose();
-            _tracker = null;
-
             Canvas.RemoveFromVisualTree();
             Canvas = null;
-        }
-
-        void InitializeInteractionTracker()
-        {
-            _rootVisual = ElementCompositionPreview.GetElementVisual(Grid);
-            _rootVisual.Size = new Vector2((float)Grid.ActualWidth, (float)Grid.ActualHeight);
-
-            _contentVisual = ElementCompositionPreview.GetElementVisual(Canvas);
-            _contentVisual.Size = new Vector2((float)Canvas.ActualWidth, (float)Canvas.ActualHeight);
-
-            SetupInteractionTracker(_rootVisual, _contentVisual);
-        }
-
-        void SetupInteractionTracker(Visual viewportVisual, Visual contentVisual)
-        {
-            //
-            // Create the InteractionTracker and set its min/max position and scale.  These could 
-            // also be bound to expressions.  Note: The scrollable area can be changed from either 
-            // the min or the max position to facilitate content updates/virtualization.
-            //
-
-            var compositor = viewportVisual.Compositor;
-
-            _tracker = InteractionTracker.CreateWithOwner(compositor, this);
-
-            _tracker.MaxPosition = new Vector3(contentVisual.Size - viewportVisual.Size, 0.0f);
-
-            _tracker.MinScale = 1e-2f;
-            _tracker.MaxScale = 1e3f;
-
-            //_tracker.TryUpdatePosition(.5f * _tracker.MaxPosition);
-
-            _source = VisualInteractionSource.Create(viewportVisual);
-
-            _source.PositionXSourceMode = InteractionSourceMode.EnabledWithoutInertia;
-            _source.PositionYSourceMode = InteractionSourceMode.EnabledWithoutInertia;
-            _source.IsPositionXRailsEnabled = false;
-            _source.IsPositionYRailsEnabled = false;
-            _source.ScaleSourceMode = InteractionSourceMode.EnabledWithoutInertia;
-            // TODO: custom PointerWheel code
-            _source.ManipulationRedirectionMode = VisualInteractionSourceRedirectionMode.CapableTouchpadAndPointerWheel;
-
-            _tracker.InteractionSources.Add(_source);
-
-            var positionExpression = compositor.CreateExpressionAnimation("-tracker.Position");
-            positionExpression.SetReferenceParameter("tracker", _tracker);
-
-            contentVisual.StartAnimation("Offset", positionExpression);
-
-            var scaleExpression = compositor.CreateExpressionAnimation("Vector3(tracker.Scale, tracker.Scale, 1.0)");
-            scaleExpression.SetReferenceParameter("tracker", _tracker);
-
-            contentVisual.StartAnimation("Scale", scaleExpression);
         }
 
         void OnPointerEntered(object sender, PointerRoutedEventArgs e)
@@ -189,11 +140,6 @@ namespace Fonte.App.Controls
         {
             ((UIElement)sender).CapturePointer(e.Pointer);
 
-            if (e.Pointer.PointerDeviceType == PointerDeviceType.Touch)
-            {
-                _source.TryRedirectForManipulation(e.GetCurrentPoint(Grid));
-            }
-            
             if (Tool.HandlePointerEvent(this, e))
             {
                 Tool.OnPointerPressed(this, e);
@@ -218,54 +164,12 @@ namespace Fonte.App.Controls
             ((UIElement)sender).ReleasePointerCapture(e.Pointer);
         }
 
-        void OnRootSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            _clipToBounds(Grid);
-
-            if (_rootVisual == null || _contentVisual == null) return;
-
-            var rootSize = new Vector2((float)Grid.ActualWidth, (float)Grid.ActualHeight);
-            _rootVisual.Size = _contentVisual.Size = rootSize;
-        }
-
-        #region IInteractionTrackerOwner Implementation
-
-        public void InteractingStateEntered(InteractionTracker sender, InteractionTrackerInteractingStateEnteredArgs args)
-        {
-        }
-
-        public void ValuesChanged(InteractionTracker sender, InteractionTrackerValuesChangedArgs args)
-        {
-            if (args.Scale != Canvas.DpiScale)
-            {
-                Canvas.DpiScale = args.Scale;
-            }
-        }
-
-        public void InertiaStateEntered(InteractionTracker sender, InteractionTrackerInertiaStateEnteredArgs args)
-        {
-        }
-
-        public void IdleStateEntered(InteractionTracker sender, InteractionTrackerIdleStateEnteredArgs args)
-        {
-        }
-
-        public void CustomAnimationStateEntered(InteractionTracker sender, InteractionTrackerCustomAnimationStateEnteredArgs args)
-        {
-        }
-
-        public void RequestIgnored(InteractionTracker sender, InteractionTrackerRequestIgnoredArgs args)
-        {
-        }
-
-        #endregion
-
         Matrix3x2 GetInverseMatrix()
         {
             var m1 = Matrix3x2.CreateScale(1, -1);
             m1.Translation += _matrix.Translation;
-            var m2 = Matrix3x2.CreateScale(_tracker.Scale);
-            m2.Translation -= new Vector2(_tracker.Position.X, _tracker.Position.Y);
+            var m2 = Matrix3x2.CreateScale(Root.ZoomFactor);
+            m2.Translation -= new Vector2((float)Root.HorizontalOffset, (float)Root.VerticalOffset);
             m1 *= m2;
 
             if (!Matrix3x2.Invert(m1, out m2))
@@ -287,22 +191,26 @@ namespace Fonte.App.Controls
             Canvas.Invalidate();
         }
 
-        public void ScrollBy(double dx, double dy)
+        public void ScrollTo(double x, double y, bool animated = false)
         {
-            _tracker.TryUpdatePositionBy(new Vector3(
-                    -(float)dx,
-                    -(float)dy,
-                    0
-                ));
-            Canvas.Invalidate();
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            mux.ScrollerChangeOffsetsOptions options = new mux.ScrollerChangeOffsetsOptions(
+                x, y,
+                offsetsKind: mux.ScrollerViewKind.RelativeToCurrentView,
+                viewChangeKind: animated ? mux.ScrollerViewChangeKind.AllowAnimation : mux.ScrollerViewChangeKind.DisableAnimation,
+                snapPointRespect: mux.ScrollerViewChangeSnapPointRespect.IgnoreSnapPoints);
+            Root.ChangeOffsets(options);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
-        private void _clipToBounds(FrameworkElement element)
+        public void ScrollBy(double dx, double dy, bool animated = false)
         {
-            element.Clip = new RectangleGeometry
-            {
-                Rect = new Rect(0, 0, element.ActualWidth, element.ActualHeight)
-            };
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            var options = new mux.ScrollerChangeOffsetsWithAdditionalVelocityOptions(
+                new Vector2((float)dx, (float)dy),
+                new Vector2(0.9f, 0.9f));
+            Root.ChangeOffsetsWithAdditionalVelocity(options);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
     }
 }

@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:local="using:Fonte.App.Controls"
+    xmlns:mux="using:Microsoft.UI.Xaml.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -13,10 +14,29 @@
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
 
-    <Grid x:Name="Grid" Background="White" SizeChanged="OnRootSizeChanged">
-        <canvas:CanvasVirtualControl x:Name="Canvas" IsTabStop="True" RegionsInvalidated="OnRegionsInvalidated"
-                                     KeyDown="OnKeyDown" KeyUp="OnKeyUp"
-                                     PointerEntered="OnPointerEntered" PointerExited="OnPointerExited"
-                                     PointerPressed="OnPointerPressed" PointerMoved="OnPointerMoved" PointerReleased="OnPointerReleased"/>
-    </Grid>
+    <mux:Scroller x:Name="Root"
+                  HorizontalScrollRailingMode="Disabled"
+                  VerticalScrollRailingMode="Disabled"
+                  ZoomMode="Enabled"
+                  MinZoomFactor="0.01"
+                  MaxZoomFactor="10"
+                  ViewChanged="Root_ViewChanged">
+        <!-- Using a very large size to give an "infinite canvas" feel. If a truly infinite canvas is needed then extra work would be required to detect when a user approaches 
+             the current extent, waits for the Scroller state to hit Idle, and then rebase the content and viewport offset so that the user can continue.  Using 800k as the max 
+             physical size will avoid the strange rendering artifacts that can occur as things approach the precision of floats while also being large enough that rebasing will
+             be unnecessary in the vast majority of cases.
+             -->
+        <canvas:CanvasVirtualControl x:Name="Canvas"
+                                     Height="800000"
+                                     Width="800000"
+                                     RegionsInvalidated="OnRegionsInvalidated"
+                                     IsTabStop="True"
+                                     KeyDown="OnKeyDown"
+                                     KeyUp="OnKeyUp"
+                                     PointerEntered="OnPointerEntered"
+                                     PointerExited="OnPointerExited"
+                                     PointerPressed="OnPointerPressed"
+                                     PointerMoved="OnPointerMoved"
+                                     PointerReleased="OnPointerReleased"/>
+    </mux:Scroller>
 </UserControl>
