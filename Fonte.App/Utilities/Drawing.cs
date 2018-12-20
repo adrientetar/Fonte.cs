@@ -4,11 +4,11 @@
 
 namespace Fonte.App.Utilities
 {
-    using System;
-    using System.Numerics;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
+    using System;
+    using System.Numerics;
     using Windows.UI;
 
     class Drawing

@@ -14,12 +14,10 @@ namespace Fonte.App.Controls
     using System;
     using System.Diagnostics;
     using System.Numerics;
-    using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Hosting;
     using Windows.UI.Xaml.Input;
 
     public partial class DesignCanvas : UserControl
@@ -75,14 +73,13 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void Root_ViewChanged(mux.Scroller sender, object args)
+        void OnRootViewChanged(mux.Scroller sender, object args)
         {
-                if (sender.ZoomFactor != Canvas.DpiScale)
-                {
-                    Canvas.DpiScale = sender.ZoomFactor;
-                }
-                this.Invalidate();
-
+            if (sender.ZoomFactor != Canvas.DpiScale)
+            {
+                Canvas.DpiScale = sender.ZoomFactor;
+            }
+            Invalidate();
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
@@ -166,6 +163,7 @@ namespace Fonte.App.Controls
 
         Matrix3x2 GetInverseMatrix()
         {
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var m1 = Matrix3x2.CreateScale(1, -1);
             m1.Translation += _matrix.Translation;
             var m2 = Matrix3x2.CreateScale(Root.ZoomFactor);
@@ -178,6 +176,7 @@ namespace Fonte.App.Controls
             }
 
             return m2;
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
         public Point GetLocalPosition(PointerRoutedEventArgs e)
