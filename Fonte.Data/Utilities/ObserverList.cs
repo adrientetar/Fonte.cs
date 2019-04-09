@@ -2,37 +2,27 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace System.Collections.ObjectModel
+namespace Fonte.Data.Utilities
 {
+    using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Specialized;
     using System.ComponentModel;
 
-    public class ObservableList<T> : IList<T>, INotifyCollectionChanged, INotifyPropertyChanged
+    // could drop INotifyPropertyChanged ?
+    public class ObserverList<T> : IList<T>, INotifyCollectionChanged, INotifyPropertyChanged
     {
         private const string CountString = "Count";
         private const string IndexerName = "Item[]";
 
-        internal List<T> List { get; private set; }
+        // could make this an attr?
+        List<T> List { get; }
 
-        #region Constructors
-        public ObservableList()
+        public ObserverList(List<T> items)
         {
-            List = new List<T>();
+            List = items;
         }
-        public ObservableList(List<T> list, bool copy = true)
-        {
-            List = copy ? new List<T>(list) : list;
-        }
-        public ObservableList(IEnumerable<T> enumerable)
-        {
-            List = new List<T>(enumerable);
-        }
-        public ObservableList(int capacity)
-        {
-            List = new List<T>(capacity);
-        }
-        #endregion
 
         #region IList<T> Members
 
@@ -45,10 +35,8 @@ namespace System.Collections.ObjectModel
         {
             if (List.Count > 0)
             {
-                var removedItems = List.GetRange(0, List.Count);
-                List.Clear();
-                //OnCollectionChanged();
-                OnCollectionChanged(NotifyCollectionChangedAction.Reset, removedItems);
+                //List.Clear();
+                OnCollectionChanged();
             }
         }
 
@@ -74,7 +62,7 @@ namespace System.Collections.ObjectModel
 
         public void Insert(int index, T item)
         {
-            List.Insert(index, item);
+            //List.Insert(index, item);
 
             OnCollectionChanged(NotifyCollectionChangedAction.Add, item, index);
         }
@@ -83,7 +71,7 @@ namespace System.Collections.ObjectModel
         {
             int index = List.IndexOf(item);
             if (index < 0) return false;
-            List.RemoveAt(index);
+            //List.RemoveAt(index);
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
             return true;
         }
@@ -91,7 +79,7 @@ namespace System.Collections.ObjectModel
         public void RemoveAt(int index)
         {
             var item = List[index];
-            List.RemoveAt(index);
+            //List.RemoveAt(index);
 
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
         }
@@ -106,7 +94,7 @@ namespace System.Collections.ObjectModel
             set
             {
                 T originalItem = this[index];
-                List[index] = value;
+                //List[index] = value;
 
                 OnCollectionChanged(NotifyCollectionChangedAction.Replace, originalItem, value, index);
             }
@@ -137,10 +125,14 @@ namespace System.Collections.ObjectModel
             if (list.Count > 0)
             {
                 int index = List.Count;
-                List.AddRange(list);
+                //List.AddRange(list);
 
                 OnCollectionChanged(NotifyCollectionChangedAction.Add, list, index);
             }
+        }
+        public void AddRange(ObserverList<T> list)
+        {
+            AddRange(list.List);
         }
 
         public List<T> GetRange(int index, int count)
@@ -151,15 +143,46 @@ namespace System.Collections.ObjectModel
         public void RemoveRange(int index, int count)
         {
             var removedItems = List.GetRange(index, count);
-            List.RemoveRange(index, count);
+            //List.RemoveRange(index, count);
 
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, removedItems, index);
         }
 
         public void Reverse()
         {
-            List.Reverse();
-            OnCollectionChanged();
+            var replacedItems = List.GetRange(0, List.Count);
+            replacedItems.Reverse();
+            //List.Reverse();
+
+            OnCollectionChanged(NotifyCollectionChangedAction.Replace, List, replacedItems);
+        }
+
+        public T First()
+        {
+            if (Count == 0) throw new InvalidOperationException("List is empty");
+
+            return this[0];
+        }
+
+        public T Last()
+        {
+            if (Count == 0) throw new InvalidOperationException("List is empty");
+
+            return this[Count - 1];
+        }
+
+        public T Pop()
+        {
+            if (Count == 0) throw new InvalidOperationException("List is empty");
+
+            return PopAt(Count - 1);
+        }
+
+        public T PopAt(int index)
+        {
+            T r = this[index];
+            RemoveAt(index);
+            return r;
         }
 
         private void OnPropertyChanged()
@@ -196,6 +219,12 @@ namespace System.Collections.ObjectModel
         {
             OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems, index));
+        }
+
+        private void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems)
+        {
+            PropertyChanged?.Invoke(this, EventArgsCache.IndexerPropertyChanged);
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems));
         }
     }
 

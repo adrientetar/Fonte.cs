@@ -35,6 +35,22 @@ namespace Fonte.App.Utilities
             return CanvasGeometry.CreatePath(builder);
         }
 
+        public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static void DrawFill(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            ds.FillGeometry(layer.ClosedCanvasPath, Color.FromArgb(77, 244, 244, 244));
+            ds.FillGeometry(layer.OpenCanvasPath, Color.FromArgb(77, 244, 244, 244));
+        }
+
+        public static void DrawMetrics(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            throw new NotImplementedException();
+        }
+
         public static void DrawPoints(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
             // save these in the Drawing class state? or in a context class/struct
@@ -196,6 +212,19 @@ namespace Fonte.App.Utilities
             }
             selectedOffPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             ds.FillGeometry(CanvasGeometry.CreatePath(selectedOffPathB), offColor);
+        }
+
+        public static void DrawSelection(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            foreach (var path in layer.SelectedPaths)
+            {
+                ds.DrawGeometry(path.CanvasPath, Color.FromArgb(155, 145, 170, 196), strokeWidth: 3.5f * rescale);
+            }
+        }
+
+        public static void DrawSelectionBounds(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            throw new NotImplementedException();
         }
 
         public static void DrawStroke(Data.Layer layer, CanvasDrawingSession ds, float rescale)

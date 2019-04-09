@@ -8,7 +8,6 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
 
     using System.Collections.Generic;
-    using System.Diagnostics;
     using Windows.Foundation;
     using Windows.System;
     using Windows.UI;
@@ -27,6 +26,31 @@ namespace Fonte.App.Delegates
 
         public ShapesTool()
         {
+        }
+
+        public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        {
+            if (_origin.HasValue)
+            {
+                // XXX: need to fetch the strokeColor here
+                var color = Color.FromArgb(255, 34, 34, 34);
+                var rect = new Rect(_origin.Value, _anchor);
+                if (_drawRectangle)
+                {
+                    ds.DrawRectangle(rect, color, strokeWidth: rescale);
+                }
+                else
+                {
+                    ds.DrawEllipse(
+                        .5f * (float)(rect.Left + rect.Right),
+                        .5f * (float)(rect.Top + rect.Bottom),
+                        .5f * (float)rect.Width,
+                        .5f * (float)rect.Height,
+                        color,
+                        strokeWidth: rescale
+                    );
+                }
+            }
         }
 
         public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e)
@@ -130,31 +154,6 @@ namespace Fonte.App.Delegates
                 canvas.Invalidate();
             }
             _origin = null;
-        }
-
-        public override void OnDrawBackground(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
-        {
-            if (_origin.HasValue)
-            {
-                // XXX: need to fetch the strokeColor here
-                var color = Color.FromArgb(255, 34, 34, 34);
-                var rect = new Rect(_origin.Value, _anchor);
-                if (_drawRectangle)
-                {
-                    ds.DrawRectangle(rect, color, strokeWidth: rescale);
-                }
-                else
-                {
-                    ds.DrawEllipse(
-                        .5f * (float)(rect.Left + rect.Right),
-                        .5f * (float)(rect.Top + rect.Bottom),
-                        .5f * (float)rect.Width,
-                        .5f * (float)rect.Height,
-                        color,
-                        strokeWidth: rescale
-                    );
-                }                
-            }
         }
 
         #region IToolBarEntry implementation

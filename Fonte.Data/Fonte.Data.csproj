@@ -107,27 +107,55 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Anchor.cs" />
+    <Compile Include="Changes\ChangeGroup.cs" />
+    <Compile Include="Changes\LayerPathsChange.cs" />
+    <Compile Include="Changes\LayerPathsReplaceChange.cs" />
+    <Compile Include="Changes\LayerPathsRangeChange.cs" />
+    <Compile Include="Changes\PathPointsReplaceChange.cs" />
+    <Compile Include="Changes\PathPointsRangeChange.cs" />
+    <Compile Include="Changes\LayerPathsResetChange.cs" />
+    <Compile Include="Changes\PathPointsResetChange.cs" />
+    <Compile Include="Changes\PathPointsChange.cs" />
+    <Compile Include="Changes\GuidelineSelectedChange.cs" />
+    <Compile Include="Changes\GuidelineNameChange.cs" />
+    <Compile Include="Changes\GuidelineAngleChange.cs" />
+    <Compile Include="Changes\GuidelineYChange.cs" />
+    <Compile Include="Changes\GuidelineXChange.cs" />
+    <Compile Include="Changes\ComponentSelectedChange.cs" />
+    <Compile Include="Changes\ComponentTransformationChange.cs" />
+    <Compile Include="Changes\ComponentGlyphNameChange.cs" />
+    <Compile Include="Changes\AnchorNameChange.cs" />
+    <Compile Include="Changes\AnchorYChange.cs" />
+    <Compile Include="Changes\AnchorXChange.cs" />
+    <Compile Include="Changes\AnchorSelectedChange.cs" />
+    <Compile Include="Changes\PointSelectedChange.cs" />
+    <Compile Include="Changes\PointSmoothChange.cs" />
+    <Compile Include="Changes\PointTypeChange.cs" />
+    <Compile Include="Changes\PointYChange.cs" />
+    <Compile Include="Changes\PointXChange.cs" />
     <Compile Include="Component.cs" />
     <Compile Include="Guideline.cs" />
-    <Compile Include="Interfaces\ILayerItem.cs" />
+    <Compile Include="Interfaces\IUndoProvider.cs" />
+    <Compile Include="Interfaces\IChange.cs" />
     <Compile Include="Interfaces\ISelectable.cs" />
     <Compile Include="Layer.cs" />
     <Compile Include="Path.cs" />
     <Compile Include="Point.cs" />
     <Compile Include="Glyph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Common.cs" />
-    <Compile Include="Utilities\ListExtensions.cs" />
+    <Compile Include="Utilities\UndoStore.cs" />
+    <Compile Include="Utilities\Iterable.cs" />
+    <Compile Include="Utilities\Selection.cs" />
     <Compile Include="Utilities\ObservableDictionary.cs" />
-    <Compile Include="Utilities\ObservableList.cs" />
+    <Compile Include="Utilities\ObserverList.cs" />
     <EmbeddedResource Include="Properties\Fonte.Data.rd.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.2</Version>
+      <Version>6.2.8</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>11.0.2</Version>
+      <Version>12.0.1</Version>
     </PackageReference>
     <PackageReference Include="Win2D.uwp">
       <Version>1.23.0</Version>

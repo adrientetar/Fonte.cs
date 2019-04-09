@@ -4,19 +4,20 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
 
     using System.Numerics;
 
-    public partial class Guideline : ILayerItem, ISelectable
+    public partial class Guideline : ISelectable
     {
-        private float _x;
-        private float _y;
-        private float _angle;
-        private string _name;
+        internal float _x;
+        internal float _y;
+        internal float _angle;
+        internal string _name;
 
-        private bool _selected;
+        internal bool _selected;
 
         // XXX serialize to writesingle ; check that it's needed
         [JsonProperty("x")]
@@ -27,8 +28,7 @@ namespace Fonte.Data
             {
                 if (value != _x)
                 {
-                    _x = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new GuidelineXChange(this, value).Apply();
                 }
             }
         }
@@ -42,8 +42,7 @@ namespace Fonte.Data
             {
                 if (value != _y)
                 {
-                    _y = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new GuidelineYChange(this, value).Apply();
                 }
             }
         }
@@ -56,8 +55,7 @@ namespace Fonte.Data
             {
                 if (value != _angle)
                 {
-                    _angle = value;
-                    Parent?.ApplyChange(ChangeFlags.None, this);
+                    new GuidelineAngleChange(this, value).Apply();
                 }
             }
         }
@@ -70,18 +68,14 @@ namespace Fonte.Data
             {
                 if (value != _name)
                 {
-                    _name = value;
-                    //Parent?.ApplyChange(ChangeFlags.Key, this);
+                    new GuidelineNameChange(this, value).Apply();
                 }
             }
         }
 
-        // Parent can be either Layer or Master
+        // XXX: Parent can be either Layer or Master
         [JsonIgnore]
         public Layer Parent { get; internal set; }
-
-        [JsonIgnore]
-        /* internal */ Layer ILayerItem.Parent { get => Parent; set { Parent = value; } }
 
         [JsonIgnore]
         public bool Selected
@@ -91,8 +85,7 @@ namespace Fonte.Data
             {
                 if (value != _selected)
                 {
-                    _selected = value;
-                    Parent?.ApplyChange(ChangeFlags.Selection, this);
+                    new GuidelineSelectedChange(this, value).Apply();
                 }
             }
         }
@@ -108,12 +101,12 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            return $"{nameof(Guideline)}({_x}, {_y}, angle: {_angle})";
+            return $"{nameof(Guideline)}({X}, {Y}, angle: {Angle})";
         }
 
         public Vector2 ToVector2()
         {
-            return new Vector2(_x, _y);
+            return new Vector2(X, Y);
         }
     }
 }

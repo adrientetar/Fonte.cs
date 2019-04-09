@@ -4,21 +4,24 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
 
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Collections.Specialized;
     using System.Diagnostics;
+    using System.Linq;
     using Windows.Foundation;
 
     public partial class Layer
     {
+        internal List<Path> _paths;
+
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _closedCanvasPath;
         private CanvasGeometry _openCanvasPath;
@@ -26,20 +29,21 @@ namespace Fonte.Data
         private HashSet<ISelectable> _selection;
         private Rect _selectionBounds = Rect.Empty;
 
-        [JsonIgnore]
-        public ObservableDictionary<string, Anchor> Anchors { get; }
+        //[JsonIgnore]
+        //public IReadOnlyDictionary<string, Anchor> Anchors { get; }
 
         [JsonProperty("anchors")]
-        private List<Anchor> _anchorList
-        {
-            get => new List<Anchor>(Anchors.Values);
-        }
+        private IReadOnlyList<Anchor> Anchors { get; }
+        //private List<Anchor> _anchorList
+        //{
+        //    get => new List<Anchor>(Anchors.Values);
+        //}
 
         [JsonProperty("components")]
-        public ObservableList<Component> Components { get; }
+        public IReadOnlyList<Component> Components { get; }
 
         [JsonProperty("guidelines")]
-        public ObservableList<Guideline> Guidelines { get; }
+        public IReadOnlyList<Guideline> Guidelines { get; }
 
         // could just store an actual reference to the master,
         // and serialize as masterName
@@ -51,7 +55,49 @@ namespace Fonte.Data
         public int Width { get; set; }
 
         [JsonProperty("paths")]
-        public ObservableList<Path> Paths { get; }
+        public ObserverList<Path> Paths
+        {
+            get
+            {
+                var items = new ObserverList<Path>(_paths);
+                items.CollectionChanged += (sender, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        if (e.NewItems.Count > 1)
+                        {
+                            new LayerPathsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Path>().ToList(), true).Apply();
+                        }
+                        else
+                        {
+                            new LayerPathsChange(this, e.NewStartingIndex, (Path)e.NewItems[0]).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        if (e.OldItems.Count > 1)
+                        {
+                            new LayerPathsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Path>().ToList(), false).Apply();
+                        }
+                        else
+                        {
+                            new LayerPathsChange(this, e.OldStartingIndex, null).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    {
+                        Debug.Assert(e.NewItems.Count == 1);
+
+                        new LayerPathsReplaceChange(this, e.NewStartingIndex, (Path)e.NewItems[0]).Apply();
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        new LayerPathsResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
+        }
 
         /**/
 
@@ -62,7 +108,7 @@ namespace Fonte.Data
             {
                 if (_bounds.IsEmpty)
                 {
-                    foreach (Path path in Paths)
+                    foreach (var path in Paths)
                     {
                         _bounds.Union(path.Bounds);
                     }
@@ -98,7 +144,8 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
-        public Glyph Parent { get; internal set; }
+        public Glyph Parent
+        { get; /*internal*/ set; }  // XXX
 
         [JsonIgnore]
         public IReadOnlyList<Path> SelectedPaths
@@ -107,14 +154,57 @@ namespace Fonte.Data
             {
                 if (_selectedPaths == null)
                 {
-                    throw new NotImplementedException();
+                    _selectedPaths = Utilities.Selection.FilterSelection(_paths);
                 }
                 return _selectedPaths;
             }
         }
 
         [JsonIgnore]
-        public IReadOnlyCollection<ISelectable> Selection => _selection;
+        public IReadOnlyCollection<ISelectable> Selection
+        {
+            get
+            {
+                if (_selection == null)
+                {
+                    _selection = new HashSet<ISelectable>();
+
+                    foreach (var anchor in Anchors)
+                    {
+                        if (anchor.Selected)
+                        {
+                            _selection.Add(anchor);
+                        }
+                    }
+                    foreach (var component in Components)
+                    {
+                        if (component.Selected)
+                        {
+                            _selection.Add(component);
+                        }
+                    }
+                    foreach (var guideline in Guidelines)
+                    {
+                        if (guideline.Selected)
+                        {
+                            _selection.Add(guideline);
+                        }
+                    }
+                    foreach (var path in Paths)
+                    {
+                        foreach (var point in path.Points)
+                        {
+                            if (point.Selected)
+                            {
+                                _selection.Add(point);
+                            }
+                        }
+                    }
+                }
+
+                return _selection;
+            }
+        }
 
         [JsonIgnore]
         public Rect SelectionBounds
@@ -132,62 +222,50 @@ namespace Fonte.Data
         [JsonConstructor]
         public Layer(List<Anchor> anchors = null, List<Component> components = null, List<Guideline> guidelines = null, List<Path> paths = null, string masterName = null, int width = 600)
         {
-            // we could do all this work + set parent in getter
-            Anchors = _watchAnchors(anchors);
-            Components = _watchItems(components); // ChangeFlags.ShapeOutline ?
-            Guidelines = _watchItems(guidelines);
-            Paths = _watchItems(paths, flags: ChangeFlags.ShapeOutline);
+            Anchors = anchors ?? new List<Anchor>();//anchors != null ? _makeAnchorDict(anchors) : new Dictionary<string, Anchor>();
+            Components = components ?? new List<Component>();
+            Guidelines = guidelines ?? new List<Guideline>();
+            _paths = paths ?? new List<Path>();
 
             MasterName = masterName ?? string.Empty;
             Width = width;
 
-            _selection = new HashSet<ISelectable>();
+            foreach (var path in _paths)
+            {
+                path.Parent = this;
+            }
         }
 
-        internal void ApplyChange(ChangeFlags flags, object obj = null)
+        public void ClearSelection()
         {
-            if (flags.HasFlag(ChangeFlags.Selection))
+            foreach (var item in Selection)
             {
-                var item = (ISelectable)obj;
-                if (item.Selected)
-                {
-                    _selection.Add(item);
-                }
-                else
-                {
-                    _selection.Remove(item);
-                }
-                _selectionBounds = Rect.Empty;
-                if (item is Point) _selectedPaths = null;
+                item.Selected = false;
             }
-            else
+            //foreach (var guideline in Master.Guidelines)
+            //{
+            //    guideline.Selected = false;
+            //}
+        }
+
+        public IChangeGroup CreateUndoGroup()
+        {
+            return Parent.UndoStore.CreateUndoGroup();
+        }
+
+        internal void OnChange(IChange change)
+        {
+            _selectionBounds = Rect.Empty;
+            _selectedPaths = null;
+            _bounds = Rect.Empty;
+            _closedCanvasPath = _openCanvasPath = null;
+
+            if (change.ClearSelection)  // .AffectsSelection ?
             {
-                if (flags.HasFlag(ChangeFlags.Shape))
-                {
-                    var item = (ISelectable)obj;
-                    var outline = flags.HasFlag(ChangeFlags.ShapeOutline);
-
-                    if (item != null && item.Selected)
-                    {
-                        _selectionBounds = Rect.Empty;
-                        if (outline) _selectedPaths = null;
-                    }
-                    _bounds = Rect.Empty;
-                    if (outline) _closedCanvasPath = _openCanvasPath = null;
-                }
-                else if (flags.HasFlag(ChangeFlags.Name))
-                {
-                    var oldName = (string)obj;
-
-                    var dict = Anchors.Dictionary;
-                    var value = dict[oldName];
-                    dict.Remove(oldName);
-                    dict.Add(value.Name, value);
-                }
-
-                // XXX null-check is temporary
-                Parent?.ApplyChange();
+                _selection = null;
             }
+
+            Parent?.OnChange(change);
         }
 
         private CanvasGeometry _collectPaths(Func<Path, bool> predicate)
@@ -206,83 +284,16 @@ namespace Fonte.Data
             return CanvasGeometry.CreatePath(builder);
         }
 
-        private ObservableDictionary<string, Anchor> _watchAnchors(List<Anchor> items)
+        private Dictionary<string, Anchor> _makeAnchorDict(List<Anchor> anchors)
         {
             var data = new Dictionary<string, Anchor>();
-            if (items != null)
+
+            foreach (Anchor anchor in anchors)
             {
-                foreach (Anchor item in items)
-                {
-                    data.Add(item.Name, item);
-                }
+                data.Add(anchor.Name, anchor);
             }
-            var observable = new ObservableDictionary<string, Anchor>(data, copy: false);
 
-            observable.CollectionChanged += (sender, e) =>
-            {
-                if (e.OldItems != null)
-                    foreach (KeyValuePair<string, Anchor> kv in e.OldItems)
-                    {
-                        var item = kv.Value;
-
-                        item.Selected = false;
-                        item.Parent = null;
-                    }
-
-                if (e.NewItems != null)
-                    foreach (KeyValuePair<string, Anchor> kv in e.NewItems)
-                    {
-                        var item = kv.Value;
-
-                        Debug.Assert(item.Parent == null);
-
-                        item._Name = kv.Key;
-                        item.Selected = false;
-                        item.Parent = this;
-                    }
-
-                ApplyChange(ChangeFlags.None);
-            };
-
-            return observable;
-        }
-
-        private ObservableList<T> _watchItems<T>(List<T> items, ChangeFlags flags = ChangeFlags.Shape)
-            where T: ILayerItem, ISelectable
-        {
-            var observable = items != null ?
-                new ObservableList<T>(items, copy: false) :
-                new ObservableList<T>();
-
-            if (items != null)
-                foreach (T item in items)
-                {
-                    //item.Selected = false;
-                    item.Parent = this;
-                }
-
-            observable.CollectionChanged += (sender, e) =>
-            {
-                if (e.OldItems != null)
-                    foreach (T item in e.OldItems)
-                    {
-                        item.Selected = false;
-                        item.Parent = null;
-                    }
-
-                if (e.NewItems != null)
-                    foreach (T item in e.NewItems)
-                    {
-                        Debug.Assert(item.Parent == null);
-
-                        item.Selected = false;
-                        item.Parent = this;
-                    }
-
-                ApplyChange(flags);
-            };
-
-            return observable;
+            return data;
         }
     }
 }

@@ -5,7 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:local="using:Fonte.App.Controls"
-    xmlns:mux="using:Microsoft.UI.Xaml.Controls"
+    xmlns:muxprimitives="using:Microsoft.UI.Xaml.Controls.Primitives"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -14,7 +14,7 @@
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
 
-    <mux:Scroller x:Name="Root"
+    <muxprimitives:Scroller x:Name="Root"
                   Background="White"
                   HorizontalScrollRailingMode="Disabled"
                   VerticalScrollRailingMode="Disabled"
@@ -34,10 +34,11 @@
                                      IsTabStop="True"
                                      KeyDown="OnKeyDown"
                                      KeyUp="OnKeyUp"
+                                     RightTapped="OnRightTapped"
                                      PointerEntered="OnPointerEntered"
                                      PointerExited="OnPointerExited"
                                      PointerPressed="OnPointerPressed"
                                      PointerMoved="OnPointerMoved"
                                      PointerReleased="OnPointerReleased"/>
-    </mux:Scroller>
+    </muxprimitives:Scroller>
 </UserControl>

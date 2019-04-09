@@ -4,18 +4,19 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
 
     using System.Numerics;
 
-    public partial class Anchor : ILayerItem, ISelectable
+    public partial class Anchor : ISelectable
     {
-        private float _x;
-        private float _y;
-        private string _name;
+        internal float _x;
+        internal float _y;
+        internal string _name;
 
-        private bool _selected;
+        internal bool _selected;
 
         // XXX serialize to writesingle ; check that it's needed
         [JsonProperty("x")]
@@ -26,8 +27,7 @@ namespace Fonte.Data
             {
                 if (value != _x)
                 {
-                    _x = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new AnchorXChange(this, value).Apply();
                 }
             }
         }
@@ -41,8 +41,7 @@ namespace Fonte.Data
             {
                 if (value != _y)
                 {
-                    _y = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new AnchorYChange(this, value).Apply();
                 }
             }
         }
@@ -55,27 +54,14 @@ namespace Fonte.Data
             {
                 if (value != _name)
                 {
-                    var oldName = _name;
-                    _name = value;
-                    Parent?.ApplyChange(ChangeFlags.Name, oldName);
+                    new AnchorNameChange(this, value).Apply();
                 }
             }
         }
 
         [JsonIgnore]
-        internal string _Name
-        {
-            set
-            {
-                _name = value;
-            }
-        }
-
-        [JsonIgnore]
-        public Layer Parent { get; internal set; }
-
-        [JsonIgnore]
-        /* internal */ Layer ILayerItem.Parent { get => Parent; set { Parent = value; } }
+        public Layer Parent
+        { get; internal set; }
 
         [JsonIgnore]
         public bool Selected
@@ -85,8 +71,7 @@ namespace Fonte.Data
             {
                 if (value != _selected)
                 {
-                    _selected = value;
-                    Parent?.ApplyChange(ChangeFlags.Selection, this);
+                    new AnchorSelectedChange(this, value).Apply();
                 }
             }
         }
@@ -101,12 +86,12 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            return $"{nameof(Anchor)}({_name}, {_x}, {_y})";
+            return $"{nameof(Anchor)}({Name}, {X}, {Y})";
         }
 
         public Vector2 ToVector2()
         {
-            return new Vector2(_x, _y);
+            return new Vector2(X, Y);
         }
     }
 }

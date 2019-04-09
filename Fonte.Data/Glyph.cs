@@ -4,23 +4,38 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
 
-    using System;
     using System.Collections.Generic;
 
     public partial class Glyph
     {
+        private UndoStore _undoStore = new UndoStore();
+
+        [JsonProperty("name")]
+        public string Name { get; private set; }
+
+        [JsonProperty("unicodes")]
+        public IReadOnlyList<string> Unicodes { get; private set; }
+
+        /* For kerning groups, make a struct kinda like a rect containing 4 strings? */
+
         [JsonProperty("layers")]
-        public List<Layer> Layers { get; set; }
+        public IReadOnlyList<Layer> Layers { get; }
+
+        /**/
 
         [JsonIgnore]
-        public long? LastModified { get; internal set; }
+        public bool Selected { get; private set; }
 
-        internal void ApplyChange()
+        [JsonIgnore]
+        public IUndoProvider UndoStore => _undoStore;
+
+        internal void OnChange(IChange change)
         {
-            LastModified = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            _undoStore.ProcessChange(change);
         }
     }
 }

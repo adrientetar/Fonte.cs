@@ -4,7 +4,9 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
@@ -12,37 +14,81 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
+    using System.Collections.Specialized;
     using System.Diagnostics;
+    using System.Linq;
     using System.Numerics;
     using System.Reflection;
     using Windows.Foundation;
 
     [JsonConverter(typeof(PathConverter))]
-    public partial class Path : ILayerItem, ISelectable
+    public partial class Path
     {
+        internal List<Point> _points;
+
+        internal Dictionary<string, object> _extraData;
+
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _canvasPath;
-        private ObservableDictionary<string, object> _extraData;
 
-        public IDictionary<string, object> ExtraData
+        public ObserverList<Point> Points
+        {
+            get
+            {
+                var items = new ObserverList<Point>(_points);
+                items.CollectionChanged += (sender, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        if (e.NewItems.Count > 1)
+                        {
+                            new PathPointsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Point>().ToList(), true).Apply();
+                        }
+                        else
+                        {
+                            new PathPointsChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        if (e.OldItems.Count > 1)
+                        {
+                            new PathPointsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Point>().ToList(), false).Apply();
+                        }
+                        else
+                        {
+                            new PathPointsChange(this, e.OldStartingIndex, null).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    {
+                        Debug.Assert(e.NewItems.Count == 1);
+
+                        new PathPointsReplaceChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        new PathPointsResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
+        }
+
+        public IReadOnlyDictionary<string, object> ExtraData
         {
             get
             {
                 if (_extraData == null)
                 {
-                    _extraData = new ObservableDictionary<string, object>();
-                    _watchExtraData();
+                    _extraData = new Dictionary<string, object>();
                 }
                 return _extraData;
             }
         }
 
-        public Layer Parent { get; internal set; }
-
-        /* internal */ Layer ILayerItem.Parent { get => Parent; set { Parent = value; } }
-
-        public ObservableList<Point> Points { get; }
+        public Layer Parent
+        { get; internal set; }
 
         /**/
 
@@ -127,26 +173,21 @@ namespace Fonte.Data
                 }
                 return true;
             }
-            set
-            {
-                foreach (Point point in Points)
-                {
-                    point.Selected = value;
-                }
-            }
         }
 
         public IEnumerable<Segment> Segments
         {
             get
             {
+                var points = Points;
+
                 int start = 0, count = 0;
-                foreach (var point in Points)
+                foreach (var point in points)
                 {
                     ++count;
                     if (point.Type != PointType.None)
                     {
-                        yield return new Segment(Points, start, count);
+                        yield return new Segment(points, start, count);
                         start += count;
                         count = 0;
                     }
@@ -154,36 +195,15 @@ namespace Fonte.Data
             }
         }
 
-        public string UniqueId
+        public Path(List<Point> points = null, Dictionary<string, object> extraData = null)
         {
-            get
-            {
-                if (ExtraData.TryGetValue("id", out object value) && (value as string != null))
-                {
-                    return (string)value;
-                }
-                ExtraData["id"] = Guid.NewGuid().ToString();
-                return (string)ExtraData["id"];
-            }
-        }
-
-        public Path(List<Point> points = null, IDictionary<string, object> extraData = null)
-        {
-            Points = points != null ?
-                new ObservableList<Point>(points, copy: false) :
-                new ObservableList<Point>();
-            _watchPoints();
+            _points = points ?? new List<Point>();
+            _extraData = extraData;
 
             foreach (Point point in Points)
             {
                 //point.Selected = false;
                 point.Parent = this;
-            }
-
-            if (extraData != null)
-            {
-                _extraData = new ObservableDictionary<string, object>(extraData, copy: false);
-                _watchExtraData();
             }
         }
 
@@ -191,11 +211,10 @@ namespace Fonte.Data
         {
             if (Points.Count > 0 && IsOpen)
             {
-                var point = Points[0];
-                Points.RemoveAt(0);
+                var point = Points.PopAt(0);
+                Points.Add(point);
                 point.Smooth = false;
                 point.Type = PointType.Line;
-                Points.Add(point);
             }
         }
 
@@ -207,8 +226,7 @@ namespace Fonte.Data
                 var type = start.Type;
                 if (type != PointType.Move)
                 {
-                    var pivot = Points[Points.Count - 1];
-                    Points.RemoveAt(Points.Count - 1);
+                    var pivot = Points.Pop();
                     Points.Reverse();
                     Points.Add(pivot);
                     type = pivot.Type;
@@ -234,14 +252,14 @@ namespace Fonte.Data
         {
             if (IsOpen)
             {
-                throw new NotImplementedException("Cannot set start point in open path");
+                throw new InvalidOperationException("Cannot set start point in open path");
             }
             if (Points.Count - index + 1 != 0)
             {
                 var end = Points.GetRange(0, index + 1);
                 if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
                 {
-                    throw new IndexOutOfRangeException($"Index {index} breaks a segment");
+                    throw new InvalidOperationException($"Index {index} breaks a segment");
                 }
                 Points.RemoveRange(0, index + 1);
                 Points.AddRange(end);
@@ -258,48 +276,12 @@ namespace Fonte.Data
             throw new NotImplementedException();
         }
 
-        internal void ApplyChange(ChangeFlags flags, Point point = null)
+        internal void OnChange(IChange change)
         {
-            if (flags.HasFlag(ChangeFlags.Shape))
-            {
-                _bounds = Rect.Empty;
-                _canvasPath = null;
-            }
+            _bounds = Rect.Empty;
+            _canvasPath = null;
 
-            Parent.ApplyChange(flags, point);
-        }
-
-        private void _watchExtraData()
-        {
-            _extraData.CollectionChanged += (sender, e) =>
-            {
-                Parent?.ApplyChange(ChangeFlags.None);
-            };
-        }
-
-        private void _watchPoints()
-        {
-            Points.CollectionChanged += (sender, e) =>
-            {
-                if (e.OldItems != null)
-                    foreach (Point point in e.OldItems)
-                    {
-                        point.Selected = false;
-                        point.Parent = null;
-                    }
-
-                if (e.NewItems != null)
-                    foreach (Point point in e.NewItems)
-                    {
-                        Debug.Assert(point.Parent == null);
-
-                        // or add to Layer.selection
-                        point.Selected = false;
-                        point.Parent = this;
-                    }
-
-                ApplyChange(ChangeFlags.ShapeOutline);
-            };
+            Parent?.OnChange(change);
         }
     }
 
@@ -307,15 +289,7 @@ namespace Fonte.Data
     {
         private readonly int _count;
         private readonly int _index;
-        private ObservableList<Point> _points;
-
-        public Rect Bounds
-        {
-            get
-            {
-                throw new NotImplementedException();
-            }
-        }
+        private ObserverList<Point> _points;
 
         public List<Point> OffCurves
         {
@@ -337,6 +311,14 @@ namespace Fonte.Data
         {
             get
             {
+                return _points.GetRange(_index, _count);
+            }
+        }
+
+        public List<Point> PointsInclusive
+        {
+            get
+            {
                 var index = _index - (OnCurve.Type != PointType.Move ? 1 : 0);
                 /* Start point on the other end */
                 if (index < 0)
@@ -349,11 +331,71 @@ namespace Fonte.Data
             }
         }
 
-        public Segment(ObservableList<Point> points, int index, int count)
+        public Segment(ObserverList<Point> points, int index, int count)
         {
             _count = count;
             _index = index;
             _points = points;
+        }
+
+        public void ConvertTo(PointType type)
+        {
+            bool ok = type == OnCurve.Type;
+            if (type == PointType.Curve)
+            {
+                if (OnCurve.Type == PointType.Line)
+                {
+                    var start = PointsInclusive[0];
+                    var index = _index + _count;
+                    _points.Insert(index, new Point(
+                            start.X + .65f * (OnCurve.X - start.X),
+                            start.Y + .65f * (OnCurve.Y - start.Y)
+                        ));
+                    _points.Insert(index, new Point(
+                            start.X + .35f * (OnCurve.X - start.X),
+                            start.Y + .35f * (OnCurve.Y - start.Y)
+                        ));
+                    OnCurve.Type = PointType.Curve;
+
+                    ok = true;
+                }
+            }
+            if (type == PointType.Line)
+            {
+                if (OnCurve.Type == PointType.Curve)
+                {
+                    _points.RemoveRange(_index, _count - 1);
+                    var start = _points.First();
+                    start.Smooth = false;
+                    start.Type = PointType.Line;
+
+                    ok = true;
+                }
+            }
+            else if (type == PointType.Move)
+            {
+                if (OnCurve.Type == PointType.Curve ||
+                    OnCurve.Type == PointType.Line)
+                {
+                    if (_index != 0)
+                    {
+                        throw new InvalidOperationException(
+                            string.Format("Segment for conversion to {0} needs to be at index 0 ({1})", type, _index));
+                    }
+                    _points.RemoveRange(_index, _count - 1);
+                    var start = _points.First();
+                    start.Smooth = false;
+                    start.Type = PointType.Move;
+
+                    ok = true;
+                }
+            }
+
+            if (!ok)
+            {
+                throw new InvalidOperationException(
+                    string.Format("Cannot convert from {0} to {1}", OnCurve.Type, type));
+            }
         }
     }
 
@@ -390,13 +432,13 @@ namespace Fonte.Data
             if (path.ExtraData != null && path.ExtraData.Count > 0)
             {
                 var content = new List<object>(path.Points.Count + 1);
-                content.AddRange(path.Points);
+                content.AddRange(path._points);
                 content.Add(path.ExtraData);
                 data = content;
             }
             else
             {
-                data = path.Points.List;
+                data = path._points;
             }
             serializer.Serialize(writer, data);
         }

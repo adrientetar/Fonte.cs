@@ -8,13 +8,15 @@ namespace Fonte.App.Controls
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Microsoft.Graphics.Canvas.UI.Xaml;
-    using mux = Microsoft.UI.Xaml.Controls;
+    using muxc = Microsoft.UI.Xaml.Controls;
+    using muxp = Microsoft.UI.Xaml.Controls.Primitives;
     using Newtonsoft.Json;
 
     using System;
     using System.Diagnostics;
     using System.Numerics;
     using Windows.Foundation;
+    using Windows.System;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
@@ -35,11 +37,13 @@ namespace Fonte.App.Controls
             get => _tool;
             set
             {
-                _tool = value;
-
-                if (_previousCursor != null)
+                if (value != _tool)
                 {
-                    Window.Current.CoreWindow.PointerCursor = _tool.Cursor;
+                    _tool?.OnDisabled(this);
+                    _tool = value;
+                    _tool.OnActivated(this);
+
+                    InvalidateCursor();
                 }
             }
         }
@@ -50,18 +54,63 @@ namespace Fonte.App.Controls
 
             // later we'll only do this if we're in design mode
             Layer = JsonConvert.DeserializeObject<Data.Layer>(_layerContents);
+            Layer.Parent = new Data.Glyph();
 
             Tool = new BaseTool();
+
+            Window.Current.CoreWindow.KeyDown += (s, e) =>
+            {
+                var undoStore = Layer.Parent.UndoStore;
+                var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
+                var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && (
+                        shift.HasFlag(CoreVirtualKeyStates.Down) &&
+                            e.VirtualKey == VirtualKey.Z ||
+                        e.VirtualKey == VirtualKey.Y))
+                {
+                    if (undoStore.CanRedo)
+                    {
+                        undoStore.Redo();
+                        Invalidate();
+                    }
+                }
+                else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.Z)
+                {
+                    if (undoStore.CanUndo)
+                    {
+                        undoStore.Undo();
+                        Invalidate();
+                    }
+                }
+#if DEBUG
+                else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
+                {
+                    try
+                    {
+                        var path = Layer.Paths.Last();
+
+                        foreach (var point in path.Points)
+                        {
+                            Debug.WriteLine(point);
+                        }
+                        Debug.WriteLine("");
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        return;
+                    }
+                }
+#endif
+
+            };
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            mux.ScrollerChangeOffsetsOptions options = new mux.ScrollerChangeOffsetsOptions(
+            Root.ScrollTo(
                 .5f * (Canvas.ActualWidth - Root.ActualWidth),
-                .5f * (Canvas.ActualHeight - Root.ActualHeight),
-                mux.ScrollerViewKind.Absolute, mux.ScrollerViewChangeKind.DisableAnimation, mux.ScrollerViewChangeSnapPointRespect.IgnoreSnapPoints);
-            Root.ChangeOffsets(options);
+                .5f * (Canvas.ActualHeight - Root.ActualHeight));
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
             _matrix = Matrix3x2.CreateScale(1, -1);
@@ -73,7 +122,7 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnRootViewChanged(mux.Scroller sender, object args)
+        void OnRootViewChanged(muxp.Scroller sender, object args)
         {
             if (sender.ZoomFactor != Canvas.DpiScale)
             {
@@ -113,12 +162,16 @@ namespace Fonte.App.Controls
 
                     var rescale = 1 / sender.DpiScale;
 
-                    Tool.OnDrawBackground(this, ds, rescale);
+                    Tool.OnDraw(this, ds, rescale);
+                    //Drawing.DrawMetrics(Layer, ds, rescale);
+                    Drawing.DrawFill(Layer, ds, rescale);
 
+                    //Drawing.DrawComponents(Layer, ds, rescale);
+                    Drawing.DrawSelection(Layer, ds, rescale);
                     Drawing.DrawPoints(Layer, ds, rescale);
                     Drawing.DrawStroke(Layer, ds, rescale);
-
-                    Tool.OnDraw(this, ds, rescale);
+                    //Drawing.DrawSelectionBounds(Layer, ds, rescale);
+                    Tool.OnDrawCompleted(this, ds, rescale);
                 }
             }
         }
@@ -161,6 +214,11 @@ namespace Fonte.App.Controls
             ((UIElement)sender).ReleasePointerCapture(e.Pointer);
         }
 
+        void OnRightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            Tool.OnRightTapped(this, e);
+        }
+
         Matrix3x2 GetInverseMatrix()
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -185,30 +243,62 @@ namespace Fonte.App.Controls
             return Vector2.Transform(pos.ToVector2(), GetInverseMatrix()).ToPoint();
         }
 
+        public object ItemAt(Point pos, object ignoreItem = null)
+        {
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            var halfSize = 4.0 / Root.ZoomFactor;
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            foreach (var path in Layer.Paths)
+            {
+                foreach (var point in path.Points)
+                {
+                    if (point == ignoreItem)
+                    {
+                        continue;
+                    }
+                    var dx = point.X - pos.X;
+                    var dy = point.Y - pos.Y;
+                    if (-halfSize <= dx && dx <= halfSize &&
+                        -halfSize <= dy && dy <= halfSize)
+                    {
+                        return point;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public void Invalidate()
         {
             Canvas.Invalidate();
         }
 
+        public void InvalidateCursor()
+        {
+            if (_previousCursor != null)
+            {
+                Window.Current.CoreWindow.PointerCursor = _tool.Cursor;
+            }
+        }
+
         public void ScrollTo(double x, double y, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            mux.ScrollerChangeOffsetsOptions options = new mux.ScrollerChangeOffsetsOptions(
-                x, y,
-                offsetsKind: mux.ScrollerViewKind.RelativeToCurrentView,
-                viewChangeKind: animated ? mux.ScrollerViewChangeKind.AllowAnimation : mux.ScrollerViewChangeKind.DisableAnimation,
-                snapPointRespect: mux.ScrollerViewChangeSnapPointRespect.IgnoreSnapPoints);
-            Root.ChangeOffsets(options);
+            var options = new muxc.ScrollOptions(
+                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                muxc.SnapPointsMode.Ignore);
+            Root.ScrollTo(x, y, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
         public void ScrollBy(double dx, double dy, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new mux.ScrollerChangeOffsetsWithAdditionalVelocityOptions(
-                new Vector2((float)dx, (float)dy),
-                new Vector2(0.9f, 0.9f));
-            Root.ChangeOffsetsWithAdditionalVelocity(options);
+            var options = new muxc.ScrollOptions(
+                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                muxc.SnapPointsMode.Ignore);
+            Root.ScrollBy(dx, dy, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
     }

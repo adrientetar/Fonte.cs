@@ -4,17 +4,18 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
 
     using System.Numerics;
 
-    public partial class Component : ILayerItem, ISelectable
+    public partial class Component : ISelectable
     {
-        private string _glyphName;
-        private Matrix3x2 _transformation;
+        internal string _glyphName;
+        internal Matrix3x2 _transformation;
 
-        private bool _selected;
+        internal bool _selected;
 
         [JsonProperty("glyphName")]
         public string GlyphName
@@ -24,8 +25,7 @@ namespace Fonte.Data
             {
                 if (value != _glyphName)
                 {
-                    _glyphName = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new ComponentGlyphNameChange(this, value).Apply();
                 }
             }
         }
@@ -38,22 +38,14 @@ namespace Fonte.Data
             {
                 if (value != _transformation)
                 {
-                    _transformation = value;
-                    Parent?.ApplyChange(ChangeFlags.Shape, this);
+                    new ComponentTransformationChange(this, value).Apply();
                 }
             }
         }
 
-        /**/
-
         [JsonIgnore]
-        public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);
-
-        [JsonIgnore]
-        public Layer Parent { get; internal set; }
-
-        [JsonIgnore]
-        /* internal */ Layer ILayerItem.Parent { get => Parent; set { Parent = value; } }
+        public Layer Parent
+        { get; internal set; }
 
         [JsonIgnore]
         public bool Selected
@@ -63,11 +55,15 @@ namespace Fonte.Data
             {
                 if (value != _selected)
                 {
-                    _selected = value;
-                    Parent?.ApplyChange(ChangeFlags.Selection, this);
+                    new ComponentSelectedChange(this, value).Apply();
                 }
             }
         }
+
+        /**/
+
+        [JsonIgnore]
+        public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);
 
         [JsonConstructor]
         public Component(string glyphName, Matrix3x2? transformation = null)
@@ -78,7 +74,7 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            return $"{nameof(Component)}({_glyphName}, {_transformation})";
+            return $"{nameof(Component)}({GlyphName}, {Transformation})";
         }
     }
 }

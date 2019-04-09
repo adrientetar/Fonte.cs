@@ -4,6 +4,7 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
@@ -11,7 +12,6 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Numerics;
     using System.Reflection;
     using System.Runtime.Serialization;
@@ -31,14 +31,14 @@ namespace Fonte.Data
     [JsonConverter(typeof(PointConverter))]
     public partial class Point : ISelectable
     {
-        private float _x;
-        private float _y;
-        private PointType _type;
-        private bool _smooth;
+        internal float _x;
+        internal float _y;
+        internal PointType _type;
+        internal bool _smooth;
 
-        private ObservableDictionary<string, object> _extraData;
+        internal Dictionary<string, object> _extraData;
 
-        private bool _selected;
+        internal bool _selected;
 
         public float X
         {
@@ -47,8 +47,7 @@ namespace Fonte.Data
             {
                 if (value != _x)
                 {
-                    _x = value;
-                    Parent?.ApplyChange(ChangeFlags.ShapeOutline, this);
+                    new PointXChange(this, value).Apply();
                 }
             }
         }
@@ -60,8 +59,7 @@ namespace Fonte.Data
             {
                 if (value != _y)
                 {
-                    _y = value;
-                    Parent?.ApplyChange(ChangeFlags.ShapeOutline, this);
+                    new PointYChange(this, value).Apply();
                 }
             }
         }
@@ -73,8 +71,7 @@ namespace Fonte.Data
             {
                 if (value != _type)
                 {
-                    _type = value;
-                    Parent?.ApplyChange(ChangeFlags.None);
+                    new PointTypeChange(this, value).Apply();
                 }
             }
         }
@@ -86,25 +83,26 @@ namespace Fonte.Data
             {
                 if (value != _smooth)
                 {
-                    _smooth = value;
-                    Parent?.ApplyChange(ChangeFlags.None);
+                    new PointSmoothChange(this, value).Apply();
                 }
             }
         }
 
-        public IDictionary<string, object> ExtraData {
+        // XXX: add mutation
+        public IReadOnlyDictionary<string, object> ExtraData
+        {
             get
             {
                 if (_extraData == null)
                 {
-                    _extraData = new ObservableDictionary<string, object>();
-                    _watchExtraData();
+                    _extraData = new Dictionary<string, object>();
                 }
                 return _extraData;
             }
         }
 
-        public Path Parent { get; internal set; }
+        public Path Parent
+        { get; internal set; }
 
         public bool Selected
         {
@@ -113,70 +111,46 @@ namespace Fonte.Data
             {
                 if (value != _selected)
                 {
-                    _selected = value;
-                    Parent?.ApplyChange(ChangeFlags.Selection, this);
+                    new PointSelectedChange(this, value).Apply();
                 }
             }
         }
 
-        /**/
-
-        public string UniqueId
-        {
-            get
-            {
-                if (ExtraData.TryGetValue("id", out object value) && (value as string != null))
-                {
-                    return (string)value;
-                }
-                ExtraData["id"] = Guid.NewGuid().ToString();
-                return (string)ExtraData["id"];
-            }
-        }
-
-        public Point(float x, float y, PointType type = PointType.None, bool smooth = false, IDictionary<string, object> extraData = null)
+        public Point(float x, float y, PointType type = PointType.None, bool smooth = false, Dictionary<string, object> extraData = null)
         {
             _x = x;
             _y = y;
             _type = type;
             _smooth = smooth;
+            _extraData = extraData;
+        }
 
-            if (extraData != null)
-            {
-                _extraData = new ObservableDictionary<string, object>(extraData, copy: false);
-                _watchExtraData();
-            }
+        public Point Clone()
+        {
+            return new Point(X, Y, Type, Smooth);
         }
 
         public override string ToString()
         {
             string more;
-            if (_type != PointType.None)
+            if (Type != PointType.None)
             {
-                more = $", {_type}";
-                if (_smooth)
+                more = $", {Type}";
+                if (Smooth)
                 {
-                    more += $", smooth: {_smooth}";
+                    more += $", smooth: {Smooth}";
                 }
             }
             else
             {
                 more = string.Empty;
             }
-            return $"{nameof(Point)}({_x}, {_y}{more})";
+            return $"{nameof(Point)}({X}, {Y}{more})";
         }
 
         public Vector2 ToVector2()
         {
-            return new Vector2(_x, _y);
-        }
-
-        private void _watchExtraData()
-        {
-            _extraData.CollectionChanged += (sender, e) =>
-            {
-                Parent?.ApplyChange(ChangeFlags.None);
-            };
+            return new Vector2(X, Y);
         }
     }
 
@@ -211,6 +185,7 @@ namespace Fonte.Data
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
+            // https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_DefaultValueHandling.htm
             var point = (Point)value;
 
             var formatting = writer.Formatting;

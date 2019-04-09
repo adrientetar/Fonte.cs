@@ -9,7 +9,6 @@ namespace Fonte.App.Controls
 
     using System;
     using System.Collections.ObjectModel;
-    using System.Diagnostics;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
@@ -51,6 +50,10 @@ namespace Fonte.App.Controls
             Items = new ObservableCollection<IToolBarItem>()
             {
                 new SelectionTool(),
+#if DEBUG
+                new DrawingTool(),
+#endif
+                new PenTool(),
                 new ShapesTool(),
             };
         }
