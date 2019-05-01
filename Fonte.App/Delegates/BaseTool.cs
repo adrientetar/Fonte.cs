@@ -18,7 +18,7 @@ namespace Fonte.App.Delegates
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
-    public class BaseTool : ICanvasDelegate, IToolBarItem
+    public class BaseTool : ICanvasDelegate, IToolbarItem
     {
         private Point? _previousPoint;
 
@@ -96,28 +96,62 @@ namespace Fonte.App.Delegates
             }
             else if (e.Key == VirtualKey.Enter)
             {
-                foreach (var path in canvas.Layer.Paths)
+                using (var group = canvas.Layer.CreateUndoGroup())
                 {
-                    var index = -1;
-                    foreach (var point in path.Points)
+                    foreach (var path in canvas.Layer.Paths)
                     {
-                        ++index;
-
-                        if (point.Selected && point.Type != Data.PointType.None)
+                        var index = -1;
+                        foreach (var point in path.Points)
                         {
-                            var before = path.Points[(index - 1) % path.Points.Count];
-                            if (before.Type != Data.PointType.None)
-                            {
-                                var after = path.Points[(index + 1) % path.Points.Count];
-                                if (after.Type != Data.PointType.None)
-                                {
-                                    continue;
-                                }
-                            }
+                            ++index;
 
-                            point.Smooth = !point.Smooth;
+                            if (point.Selected && point.Type != Data.PointType.None)
+                            {
+                                var before = path.Points[(index - 1) % path.Points.Count];
+                                if (before.Type != Data.PointType.None)
+                                {
+                                    var after = path.Points[(index + 1) % path.Points.Count];
+                                    if (after.Type != Data.PointType.None)
+                                    {
+                                        continue;
+                                    }
+                                }
+
+                                point.Smooth = !point.Smooth;
+                            }
                         }
                     }
+                }
+            }
+            else if (e.Key == VirtualKey.Tab)
+            {
+                Data.Point focusPoint = null;
+                foreach (var item in canvas.Layer.Selection)
+                {
+                    if (item is Data.Point point)
+                    {
+                        focusPoint = point;
+                    }
+                }
+
+                if (focusPoint != null)
+                {
+                    var path = focusPoint.Parent;
+                    var index = path.Points.IndexOf(focusPoint);
+
+                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                    Data.Point point;
+                    if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        point = path.Points[(index - 1) % path.Points.Count];
+                    }
+                    else
+                    {
+                        point = path.Points[(index - 1) % path.Points.Count];
+                    }
+
+                    canvas.Layer.ClearSelection();
+                    point.Selected = true;
                 }
             }
             else
@@ -125,7 +159,7 @@ namespace Fonte.App.Delegates
                 return;
             }
             e.Handled = true;
-            canvas.Invalidate();
+            ((App)Application.Current).InvalidateData();
         }
 
         public virtual void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)

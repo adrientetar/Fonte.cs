@@ -1,0 +1,130 @@
+﻿<UserControl
+    x:Class="Fonte.App.Controls.Sidebar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Fonte.App.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="520"
+    d:DesignWidth="220"
+    Loaded="OnControlLoaded"
+    Unloaded="OnControlUnloaded">
+    <UserControl.Resources>
+        <Color x:Key="IconFillColor">#dee3ff</Color>
+        <Color x:Key="IconStrokeColor">#2e2e7b</Color>
+
+        <Style x:Key="IconGridStyle" TargetType="Grid">
+            <Setter Property="Background" Value="#faf9fc"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <!-- TODO use a variable for the border brush, add put colors in their own files -->
+            <Setter Property="BorderBrush" Value="#e9eaeb"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style x:Key="IconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="2,0,2,0"/>
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+        <Style x:Key="TextBoxStyle" TargetType="TextBox">
+            <Setter Property="AcceptsReturn" Value="True"/>
+            <Setter Property="Background" Value="#fff"/>
+            <Setter Property="BorderBrush" Value="#e9eaeb"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="4"/>
+            <Setter Property="Width" Value="60"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Background="#f4f6f7" Width="220">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Style="{StaticResource IconGridStyle}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Click="OnAlignLeftButtonClick" ToolTipService.ToolTip="Align left" Style="{StaticResource IconButtonStyle}" Grid.Column="1">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0.5,0 v16 M3.5,5.5 h10 v5 h-10 Z"/>
+            </Button>
+            <Button Click="OnCenterHorzButtonClick" ToolTipService.ToolTip="Center horizontally" Style="{StaticResource IconButtonStyle}" Grid.Column="2">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M7.5,0 v5.5 M7.5,10.5 v5.5 M1.5,5.5 h12 v5 h-12 Z"/>
+            </Button>
+            <Button Click="OnAlignRightButtonClick" ToolTipService.ToolTip="Align right" Style="{StaticResource IconButtonStyle}" Grid.Column="3">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M13.5,0 v16 M0.5,5.5 h10 v5 h-10 Z"/>
+            </Button>
+            <Button Click="OnAlignTopButtonClick" ToolTipService.ToolTip="Align top" Style="{StaticResource IconButtonStyle}" Grid.Column="4">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,0.5 h16 M5.5,3.5 v10 h5 v-10 Z"/>
+            </Button>
+            <Button Click="OnCenterVertButtonClick" ToolTipService.ToolTip="Center vertically" Style="{StaticResource IconButtonStyle}" Grid.Column="5">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,8.5 h5.5 M10.5,8.5 h5.5 M5.5,2.5 v12 h5 v-12 Z"/>
+            </Button>
+            <Button Click="OnAlignBottomButtonClick" ToolTipService.ToolTip="Align bottom" Style="{StaticResource IconButtonStyle}" Grid.Column="6">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,15.5 h16 M5.5,2.5 v10 h5 v-10 Z"/>
+            </Button>
+        </Grid>
+        <Grid Style="{StaticResource IconGridStyle}" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Click="OnUnionButtonClick" ToolTipService.ToolTip="Union" Style="{StaticResource IconButtonStyle}" Grid.Column="1">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
+            </Button>
+            <Button Click="OnExcludeButtonClick" ToolTipService.ToolTip="Exclude" Style="{StaticResource IconButtonStyle}" Grid.Column="2">
+                <Grid>
+                    <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h-4 v4 h-4 Z"/>
+                    <Path Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M6,6 h8 v8 h-8 Z"/>
+                </Grid>
+            </Button>
+            <Button Click="OnIntersectButtonClick" ToolTipService.ToolTip="Intersect" Style="{StaticResource IconButtonStyle}" Grid.Column="3">
+                <Grid>
+                    <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M6,6 h4 v4 h-4 Z"/>
+                    <Path Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
+                </Grid>
+            </Button>
+            <Button Click="OnXorButtonClick" ToolTipService.ToolTip="Xor" Style="{StaticResource IconButtonStyle}" Grid.Column="4">
+                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v8 h-8 v-8 Z M6,6 h8 v8 h-8 v-8 Z"/>
+            </Button>
+        </Grid>
+        <Grid Padding="4" Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.Resources>
+                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
+            </Grid.Resources>
+            <TextBlock FontSize="12" Foreground="#222" Margin="4" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Position"/>
+            <TextBox x:Name="XPositionTextBox" Style="{StaticResource TextBoxStyle}" Grid.Column="1"/>
+            <TextBox x:Name="YPositionTextBox" Style="{StaticResource TextBoxStyle}" Grid.Column="2"/>
+
+            <TextBlock FontSize="12" Foreground="#222" Margin="4" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Size" Grid.Row="1"/>
+            <TextBox x:Name="XSizeTextBox" Style="{StaticResource TextBoxStyle}" Grid.Row="1" Grid.Column="1"/>
+            <TextBox x:Name="YSizeTextBox" Style="{StaticResource TextBoxStyle}" Grid.Row="1" Grid.Column="2"/>
+        </Grid>
+    </Grid>
+</UserControl>

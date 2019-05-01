@@ -167,11 +167,19 @@ namespace Fonte.Data
         {
             get
             {
-                foreach (Point point in Points)
+                // we're coercing tristate into bool here...
+                foreach (var point in Points)
                 {
                     if (!point.Selected) return false;
                 }
                 return true;
+            }
+            set
+            {
+                foreach (var point in Points)
+                {
+                    point.Selected = value;
+                }
             }
         }
 
@@ -271,9 +279,18 @@ namespace Fonte.Data
             return $"{nameof(Path)}({Points})";
         }
 
-        public void Transform(Matrix3x2 matrix)
+        public void Transform(Matrix3x2 matrix, bool selected = false)
         {
-            throw new NotImplementedException();
+            foreach (var point in Points)
+            {
+                if (!selected || point.Selected)
+                {
+                    var pos = Vector2.Transform(point.ToVector2(), matrix);
+
+                    point.X = pos.X;
+                    point.Y = pos.Y;
+                }
+            }
         }
 
         internal void OnChange(IChange change)
@@ -396,6 +413,11 @@ namespace Fonte.Data
                 throw new InvalidOperationException(
                     string.Format("Cannot convert from {0} to {1}", OnCurve.Type, type));
             }
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(Segment)}({_index}..{_index + _count}, {OnCurve.Type})";
         }
     }
 

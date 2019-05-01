@@ -8,6 +8,7 @@ namespace Fonte.Data
     using Fonte.Data.Interfaces;
     using Newtonsoft.Json;
 
+    using System;
     using System.Numerics;
 
     public partial class Component : ISelectable
@@ -70,6 +71,11 @@ namespace Fonte.Data
         {
             _glyphName = glyphName;
             _transformation = transformation ?? Matrix3x2.Identity;
+        }
+
+        public void Decompose()
+        {
+            throw new NotImplementedException();
         }
 
         public override string ToString()

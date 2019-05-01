@@ -21,6 +21,7 @@ namespace Fonte.App.Controls
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
+    using Windows.UI.Xaml.Media;
 
     public partial class DesignCanvas : UserControl
     {
@@ -29,6 +30,8 @@ namespace Fonte.App.Controls
         private CoreCursor _previousCursor;
         private Matrix3x2 _matrix;
         private ICanvasDelegate _tool;
+
+        public static DependencyProperty LayerProperty = DependencyProperty.Register("Layer", typeof(Data.Layer), typeof(DesignCanvas), null);
 
         public Data.Layer Layer { get; set; }
 
@@ -52,73 +55,25 @@ namespace Fonte.App.Controls
         {
             InitializeComponent();
 
-            // later we'll only do this if we're in design mode
+            // XXX later we'll only do this if we're in design mode
             Layer = JsonConvert.DeserializeObject<Data.Layer>(_layerContents);
             Layer.Parent = new Data.Glyph();
 
             Tool = new BaseTool();
-
-            Window.Current.CoreWindow.KeyDown += (s, e) =>
-            {
-                var undoStore = Layer.Parent.UndoStore;
-                var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-                var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && (
-                        shift.HasFlag(CoreVirtualKeyStates.Down) &&
-                            e.VirtualKey == VirtualKey.Z ||
-                        e.VirtualKey == VirtualKey.Y))
-                {
-                    if (undoStore.CanRedo)
-                    {
-                        undoStore.Redo();
-                        Invalidate();
-                    }
-                }
-                else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.Z)
-                {
-                    if (undoStore.CanUndo)
-                    {
-                        undoStore.Undo();
-                        Invalidate();
-                    }
-                }
-#if DEBUG
-                else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
-                {
-                    try
-                    {
-                        var path = Layer.Paths.Last();
-
-                        foreach (var point in path.Points)
-                        {
-                            Debug.WriteLine(point);
-                        }
-                        Debug.WriteLine("");
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        return;
-                    }
-                }
-#endif
-
-            };
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            Root.ScrollTo(
-                .5f * (Canvas.ActualWidth - Root.ActualWidth),
-                .5f * (Canvas.ActualHeight - Root.ActualHeight));
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-
             _matrix = Matrix3x2.CreateScale(1, -1);
             // should be based on metrics, not bounds
             _matrix.Translation = new Vector2(
                 .5f * ((float)Canvas.ActualWidth - Layer.Width),
                 .5f * (float)(Canvas.ActualHeight + Layer.Bounds.Height)
             );
+
+            FitMetrics();
+
+            ((App)Application.Current).DataRefreshing += OnDataRefreshing;
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -134,8 +89,15 @@ namespace Fonte.App.Controls
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
         {
+            ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+
             Canvas.RemoveFromVisualTree();
             Canvas = null;
+        }
+
+        void OnDataRefreshing()
+        {
+            Invalidate();
         }
 
         void OnPointerEntered(object sender, PointerRoutedEventArgs e)
@@ -160,7 +122,7 @@ namespace Fonte.App.Controls
                 {
                     ds.Transform = _matrix;
 
-                    var rescale = 1 / sender.DpiScale;
+                    var rescale = 1f / sender.DpiScale;
 
                     Tool.OnDraw(this, ds, rescale);
                     //Drawing.DrawMetrics(Layer, ds, rescale);
@@ -234,6 +196,17 @@ namespace Fonte.App.Controls
             }
 
             return m2;
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        }
+
+        public void FitMetrics()
+        {
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            Root.ZoomTo(1.0f, null);
+
+            Root.ScrollTo(
+                .5f * (Canvas.ActualWidth - Root.ActualWidth),
+                .5f * (Canvas.ActualHeight - Root.ActualHeight));
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 

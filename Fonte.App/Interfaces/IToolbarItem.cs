@@ -7,7 +7,7 @@ namespace Fonte.App.Interfaces
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
-    public interface IToolBarItem
+    public interface IToolbarItem
     {
         string Name { get; }
         IconElement Icon { get; }

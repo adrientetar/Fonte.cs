@@ -13,10 +13,17 @@ namespace Fonte.App
 
     sealed partial class App : Application
     {
+        public event Action DataRefreshing;
+
         public App()
         {
             InitializeComponent();
             Suspending += OnSuspending;
+        }
+
+        public void InvalidateData()
+        {
+            DataRefreshing?.Invoke();
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)

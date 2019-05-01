@@ -106,7 +106,7 @@ namespace Fonte.App.Delegates
                 {
                     canvas.Layer.ClearSelection();
                 }
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -137,10 +137,10 @@ namespace Fonte.App.Delegates
                 {
                     _anchor = pos;
 
-                    Debug.Assert(CurrentAction == ActionType.DraggingRect);
+                    //Debug.Assert(CurrentAction == ActionType.DraggingRect);
                 }
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -170,7 +170,7 @@ namespace Fonte.App.Delegates
             }
 
             _mouseItem = null;
-            canvas.Invalidate();
+            ((App)Application.Current).InvalidateData();
 
             Debug.Assert(CurrentAction == ActionType.None);
         }
@@ -225,7 +225,7 @@ namespace Fonte.App.Delegates
                                       otherPoint.Parent,
                                       point.Parent.Points.IndexOf(otherPoint) != 0,
                                       true);
-                    canvas.Invalidate();
+                    ((App)Application.Current).InvalidateData();
                 }
             }
         }

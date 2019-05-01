@@ -12,6 +12,7 @@ namespace Fonte.App.Delegates
     using Windows.System;
     using Windows.UI;
     using Windows.UI.Core;
+    using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
@@ -65,7 +66,7 @@ namespace Fonte.App.Delegates
             }
 
             e.Handled = true;
-            canvas.Invalidate();
+            ((App)Application.Current).InvalidateData();
         }
 
         public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
@@ -80,7 +81,7 @@ namespace Fonte.App.Delegates
             }
 
             e.Handled = true;
-            canvas.Invalidate();
+            ((App)Application.Current).InvalidateData();
         }
 
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
@@ -100,7 +101,7 @@ namespace Fonte.App.Delegates
             if (_origin.HasValue)
             {
                 _anchor = canvas.GetLocalPosition(e);
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -150,8 +151,9 @@ namespace Fonte.App.Delegates
                     );
                 }
                 canvas.Layer.Paths.Add(path);
+                path.Selected = true;
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
             _origin = null;
         }

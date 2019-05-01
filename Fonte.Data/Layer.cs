@@ -16,10 +16,14 @@ namespace Fonte.Data
     using System.Collections.Specialized;
     using System.Diagnostics;
     using System.Linq;
+    using System.Numerics;
     using Windows.Foundation;
 
     public partial class Layer
     {
+        internal Dictionary<string, Anchor> _anchors;
+        internal List<Component> _components;
+        internal List<Guideline> _guidelines;
         internal List<Path> _paths;
 
         private Rect _bounds = Rect.Empty;
@@ -29,21 +33,104 @@ namespace Fonte.Data
         private HashSet<ISelectable> _selection;
         private Rect _selectionBounds = Rect.Empty;
 
-        //[JsonIgnore]
-        //public IReadOnlyDictionary<string, Anchor> Anchors { get; }
+        [JsonIgnore]
+        public IReadOnlyDictionary<string, Anchor> Anchors { get; }
 
         [JsonProperty("anchors")]
-        private IReadOnlyList<Anchor> Anchors { get; }
-        //private List<Anchor> _anchorList
-        //{
-        //    get => new List<Anchor>(Anchors.Values);
-        //}
+        private List<Anchor> _anchorList
+        {
+            get => new List<Anchor>(Anchors.Values);
+        }
 
         [JsonProperty("components")]
-        public IReadOnlyList<Component> Components { get; }
+        public ObserverList<Component> Components
+        {
+            get
+            {
+                var items = new ObserverList<Component>(_components);
+                items.CollectionChanged += (sender, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        if (e.NewItems.Count > 1)
+                        {
+                            new LayerComponentsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Component>().ToList(), true).Apply();
+                        }
+                        else
+                        {
+                            new LayerComponentsChange(this, e.NewStartingIndex, (Component)e.NewItems[0]).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        if (e.OldItems.Count > 1)
+                        {
+                            new LayerComponentsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Component>().ToList(), false).Apply();
+                        }
+                        else
+                        {
+                            new LayerComponentsChange(this, e.OldStartingIndex, null).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    {
+                        Debug.Assert(e.NewItems.Count == 1);
+
+                        new LayerComponentsReplaceChange(this, e.NewStartingIndex, (Component)e.NewItems[0]).Apply();
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        new LayerComponentsResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
+        }
 
         [JsonProperty("guidelines")]
-        public IReadOnlyList<Guideline> Guidelines { get; }
+        public ObserverList<Guideline> Guidelines
+        {
+            get
+            {
+                var items = new ObserverList<Guideline>(_guidelines);
+                items.CollectionChanged += (sender, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        if (e.NewItems.Count > 1)
+                        {
+                            new LayerGuidelinesRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Guideline>().ToList(), true).Apply();
+                        }
+                        else
+                        {
+                            new LayerGuidelinesChange(this, e.NewStartingIndex, (Guideline)e.NewItems[0]).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        if (e.OldItems.Count > 1)
+                        {
+                            new LayerGuidelinesRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Guideline>().ToList(), false).Apply();
+                        }
+                        else
+                        {
+                            new LayerGuidelinesChange(this, e.OldStartingIndex, null).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    {
+                        Debug.Assert(e.NewItems.Count == 1);
+
+                        new LayerGuidelinesReplaceChange(this, e.NewStartingIndex, (Guideline)e.NewItems[0]).Apply();
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        new LayerGuidelinesResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
+        }
 
         // could just store an actual reference to the master,
         // and serialize as masterName
@@ -169,28 +256,28 @@ namespace Fonte.Data
                 {
                     _selection = new HashSet<ISelectable>();
 
-                    foreach (var anchor in Anchors)
+                    foreach (var anchor in _anchors.Values)
                     {
                         if (anchor.Selected)
                         {
                             _selection.Add(anchor);
                         }
                     }
-                    foreach (var component in Components)
+                    foreach (var component in _components)
                     {
                         if (component.Selected)
                         {
                             _selection.Add(component);
                         }
                     }
-                    foreach (var guideline in Guidelines)
+                    foreach (var guideline in _guidelines)
                     {
                         if (guideline.Selected)
                         {
                             _selection.Add(guideline);
                         }
                     }
-                    foreach (var path in Paths)
+                    foreach (var path in _paths)
                     {
                         foreach (var point in path.Points)
                         {
@@ -213,7 +300,13 @@ namespace Fonte.Data
             {
                 if (_selectionBounds.IsEmpty)
                 {
-                    throw new NotImplementedException();
+                    foreach (var item in Selection)
+                    {
+                        if (item is Point point)
+                        {
+                            _selectionBounds.Union(point.ToVector2().ToPoint());
+                        }
+                    }
                 }
                 return _selectionBounds;
             }
@@ -222,14 +315,26 @@ namespace Fonte.Data
         [JsonConstructor]
         public Layer(List<Anchor> anchors = null, List<Component> components = null, List<Guideline> guidelines = null, List<Path> paths = null, string masterName = null, int width = 600)
         {
-            Anchors = anchors ?? new List<Anchor>();//anchors != null ? _makeAnchorDict(anchors) : new Dictionary<string, Anchor>();
-            Components = components ?? new List<Component>();
-            Guidelines = guidelines ?? new List<Guideline>();
+            _anchors = anchors != null ? _makeAnchorDict(anchors) : new Dictionary<string, Anchor>();
+            _components = components ?? new List<Component>();
+            _guidelines = guidelines ?? new List<Guideline>();
             _paths = paths ?? new List<Path>();
 
             MasterName = masterName ?? string.Empty;
             Width = width;
 
+            foreach (var anchor in _anchors.Values)
+            {
+                anchor.Parent = this;
+            }
+            foreach (var component in _components)
+            {
+                component.Parent = this;
+            }
+            foreach (var guideline in _guidelines)
+            {
+                guideline.Parent = this;
+            }
             foreach (var path in _paths)
             {
                 path.Parent = this;
@@ -248,9 +353,26 @@ namespace Fonte.Data
             //}
         }
 
+        public void Clone()
+        {
+            throw new NotImplementedException();
+        }
+
         public IChangeGroup CreateUndoGroup()
         {
             return Parent.UndoStore.CreateUndoGroup();
+        }
+
+        public override string ToString()
+        {
+            var more = "";  // XXX
+            var name = "default";  // XXX
+            return $"{nameof(Layer)}({name}, {_paths.Count} paths{more})";
+        }
+
+        public void Transform(Matrix3x2 matrix, bool selected = false)
+        {
+            throw new NotImplementedException();
         }
 
         internal void OnChange(IChange change)

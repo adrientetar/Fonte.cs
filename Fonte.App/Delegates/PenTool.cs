@@ -44,7 +44,7 @@ namespace Fonte.App.Delegates
                 points.Pop();
                 points.Last().Smooth = false;
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -64,7 +64,7 @@ namespace Fonte.App.Delegates
             }
 
             e.Handled = true;
-            //canvas.Invalidate();
+            //((App)Application.Current).InvalidateData();
         }
 
         public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
@@ -83,7 +83,7 @@ namespace Fonte.App.Delegates
             }
 
             e.Handled = true;
-            //canvas.Invalidate();
+            //((App)Application.Current).InvalidateData();
         }
 
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
@@ -180,7 +180,7 @@ namespace Fonte.App.Delegates
                     _screenOrigin = e.GetCurrentPoint(canvas).Position;
                 }
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -294,7 +294,7 @@ namespace Fonte.App.Delegates
                         }
                     }
                 }
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -410,7 +410,7 @@ namespace Fonte.App.Delegates
                         }
                     }
                     point.Smooth = value;
-                    canvas.Invalidate();
+                    ((App)Application.Current).InvalidateData();
                 }
             }
         }

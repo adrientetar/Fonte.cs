@@ -7,26 +7,36 @@
     xmlns:local="using:Fonte.App"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Loaded="OnPageLoaded"
+    Unloaded="OnPageUnloaded">
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="OnSelectAllInvoked" />
+    </Page.KeyboardAccelerators>
 
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="Auto"/>
-			<RowDefinition/>
-		</Grid.RowDefinitions>
-		<Grid Grid.Row="0" Background="{ThemeResource SystemControlChromeMediumLowAcrylicWindowMediumBrush}">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition/>
-				<ColumnDefinition Width="Auto"/>
-				<ColumnDefinition/>
-			</Grid.ColumnDefinitions>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="Auto"/>
-			</Grid.RowDefinitions>
-			<controls:TitleBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"/>
-			<controls:ToolBar x:Name="ToolBar" Grid.Row="1" Grid.Column="1" CurrentItemChanged="OnToolBarItemChanged"/>
-		</Grid>
-		<controls:DesignCanvas x:Name="Canvas" Grid.Row="1"/>
-	</Grid>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid RequestedTheme="Dark" Background="{ThemeResource SystemControlChromeMediumLowAcrylicWindowMediumBrush}" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <controls:TitleBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"/>
+            <controls:Toolbar x:Name="Toolbar" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1" Grid.Column="1"/>
+        </Grid>
+        <controls:DesignCanvas x:Name="Canvas" Grid.Row="1"/>
+        <controls:Sidebar x:Name="Sidebar" Layer="{x:Bind Path=Canvas.Layer, Mode=OneWay}" Grid.Column="1" Grid.Row="1"/>
+    </Grid>
 </Page>

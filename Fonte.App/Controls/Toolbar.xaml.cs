@@ -13,13 +13,13 @@ namespace Fonte.App.Controls
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Media;
 
-    public partial class ToolBar : UserControl
+    public partial class Toolbar : UserControl
     {
         private int _selectedIndex;
 
         public event EventHandler CurrentItemChanged;
 
-        public ObservableCollection<IToolBarItem> Items
+        public ObservableCollection<IToolbarItem> Items
         { get; }
 
         public int SelectedIndex
@@ -41,13 +41,13 @@ namespace Fonte.App.Controls
             }
         }
 
-        public IToolBarItem SelectedItem => Items[SelectedIndex];
+        public IToolbarItem SelectedItem => Items[SelectedIndex];
 
-        public ToolBar()
+        public Toolbar()
         {
             InitializeComponent();
 
-            Items = new ObservableCollection<IToolBarItem>()
+            Items = new ObservableCollection<IToolbarItem>()
             {
                 new SelectionTool(),
 #if DEBUG

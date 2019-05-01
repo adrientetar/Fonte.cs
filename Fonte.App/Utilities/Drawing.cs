@@ -224,7 +224,55 @@ namespace Fonte.App.Utilities
 
         public static void DrawSelectionBounds(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
-            throw new NotImplementedException();
+            if (layer.Selection.Count > 1)
+            {
+                var rect = layer.SelectionBounds;
+                var strokeStyle = new CanvasStrokeStyle
+                {
+                    CustomDashStyle = new float[] { 1, 4 }
+                };
+                ds.DrawRectangle(rect, Color.FromArgb(128, 34, 34, 34), rescale, strokeStyle);
+
+                var pathBuilder = new CanvasPathBuilder(ds);
+                var radius = 4 * rescale;
+                var margin = 4;
+                var loX = (float)(rect.Left - radius - margin);
+                var loY = (float)(rect.Top - radius - margin);
+                var hiX = (float)(rect.Right + radius + margin);
+                var hiY = (float)(rect.Bottom + radius + margin);
+                if (rect.Width > 0 && rect.Height > 0)
+                {
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, loY), radius));
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, hiY), radius));
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, hiY), radius));
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, loY), radius));
+                }
+                if (rect.Width > 0)
+                {
+                    var midY = .5f * (loY + hiY);
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, midY), radius));
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, midY), radius));
+                }
+                if (rect.Height > 0)
+                {
+                    var midX = .5f * (loX + hiX);
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, loY), radius));
+                    pathBuilder.AddGeometry(
+                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, hiY), radius));
+                }
+                using (var path = CanvasGeometry.CreatePath(pathBuilder))
+                {
+                    ds.FillGeometry(path, Color.FromArgb(120, 255, 255, 255));
+                    ds.DrawGeometry(path, Color.FromArgb(255, 163, 163, 163), rescale);
+                }
+            }
         }
 
         public static void DrawStroke(Data.Layer layer, CanvasDrawingSession ds, float rescale)
