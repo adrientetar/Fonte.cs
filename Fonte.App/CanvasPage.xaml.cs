@@ -19,6 +19,11 @@ namespace Fonte.App
         public CanvasPage()
         {
             InitializeComponent();
+
+#if DEBUG
+            Loaded += OnPageLoaded;
+            Unloaded += OnPageUnloaded;
+#endif
         }
 
         void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -33,38 +38,8 @@ namespace Fonte.App
 
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs e)
         {
-            var undoStore = Canvas.Layer.Parent.UndoStore;
             var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-            if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && (
-                    shift.HasFlag(CoreVirtualKeyStates.Down) &&
-                        e.VirtualKey == VirtualKey.Z ||
-                    e.VirtualKey == VirtualKey.Y))
-            {
-                if (undoStore.CanRedo)
-                {
-                    undoStore.Redo();
-                    Canvas.Invalidate();
-                }
-            }
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.Z)
-            {
-                if (undoStore.CanUndo)
-                {
-                    undoStore.Undo();
-                    Canvas.Invalidate();
-                }
-            }
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.P)
-            {
-                Sidebar.Visibility = Sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-            }
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.Number0)
-            {
-                Canvas.FitMetrics();
-            }
-#if DEBUG
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
+            if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
             {
                 try
                 {
@@ -81,18 +56,80 @@ namespace Fonte.App
                     return;
                 }
             }
-#endif
-        }
-
-        void OnSelectAllInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-        {
-            foreach (var path in Canvas.Layer.Paths)
+            else
             {
-                path.Selected = true;
+                return;
             }
 
+            e.Handled = true;
+        }
+
+        void OnRedoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            var undoStore = Canvas.Layer.Parent.UndoStore;
+            if (undoStore.CanRedo)
+            {
+                undoStore.Redo();
+                ((App)Application.Current).InvalidateData();
+            }
+
+            e.Handled = true;
+        }
+
+        void OnResetZoomInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            Canvas.CenterOnMetrics();
+
+            e.Handled = true;
+        }
+
+        void OnShowSidebarInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            Sidebar.Visibility = Sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+
+            e.Handled = true;
+        }
+
+        void OnSelectAllInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            var pathsSelected = true;
+            foreach (var path in Canvas.Layer.Paths)
+            {
+                if (!path.IsSelected)
+                {
+                    pathsSelected = false;
+                    path.Select();
+                }
+            }
+            if (pathsSelected)
+            {
+                foreach (var anchor in Canvas.Layer.Anchors)
+                {
+                    anchor.Selected = true;
+                }
+                foreach (var component in Canvas.Layer.Components)
+                {
+                    component.Selected = true;
+                }
+            }
+
+            e.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
+
+        void OnUndoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            var undoStore = Canvas.Layer.Parent.UndoStore;
+            if (undoStore.CanUndo)
+            {
+                undoStore.Undo();
+                ((App)Application.Current).InvalidateData();
+            }
+
+            e.Handled = true;
+        }
+
+        /**/
 
         void OnToolbarItemChanged(object sender, EventArgs e)
         {

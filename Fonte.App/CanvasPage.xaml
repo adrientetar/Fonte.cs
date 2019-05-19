@@ -7,14 +7,19 @@
     xmlns:local="using:Fonte.App"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:Windows10version1803="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract, 6)"
     mc:Ignorable="d"
-    Loaded="OnPageLoaded"
-    Unloaded="OnPageUnloaded">
+    Windows10version1803:KeyboardAcceleratorPlacementMode="Hidden"><!-- <= should probably be the case by default -->
     <Page.KeyboardAccelerators>
-        <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="OnSelectAllInvoked" />
+        <KeyboardAccelerator Modifiers="Control" Key="Z" Invoked="OnUndoInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="Y" Invoked="OnRedoInvoked"/>
+        <KeyboardAccelerator Modifiers="Control,Shift" Key="Z" Invoked="OnRedoInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="A" Invoked="OnSelectAllInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="Number0" Invoked="OnResetZoomInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="P" Invoked="OnShowSidebarInvoked"/>
     </Page.KeyboardAccelerators>
 
-    <Grid>
+    <Grid Background="{StaticResource SpacingColor}" ColumnSpacing="1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition Width="Auto"/>

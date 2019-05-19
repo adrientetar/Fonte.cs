@@ -5,8 +5,10 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
 
+    using System;
     using System.Collections.Generic;
     using Windows.Foundation;
     using Windows.System;
@@ -22,8 +24,48 @@ namespace Fonte.App.Delegates
         private Point _anchor;
 
         private bool _drawRectangle;
+        private bool _linkAxes;
+        private bool _originAtCenter;
+        private bool _shouldMoveOrigin;
+
+        private IChangeGroup _undoGroup;
 
         public override CoreCursor Cursor { get; } = new CoreCursor(CoreCursorType.Cross, 0);
+
+        Rect Rectangle
+        {
+            get
+            {
+                var origin = _origin.Value;
+                var x1 = origin.X;
+                var y1 = origin.Y;
+                var x2 = _anchor.X;
+                var y2 = _anchor.Y;
+                if (_linkAxes)
+                {
+                    var dx = x2 - x1;
+                    var dy = y2 - y1;
+                    if (Math.Abs(dx) > Math.Abs(dy))
+                    {
+                        y2 = y1 + Math.Sign(dy) * dx;  //Math.CopySign(x2 - x1, y2 - y1); // .NET Core 3.0
+                    }
+                    else
+                    {
+                        x2 = x1 + Math.Sign(dx) * dy;
+                    }
+                }
+                if (_originAtCenter)
+                {
+                    x1 = 2 * x1 - x2;
+                    y1 = 2 * y1 - y2;
+                }
+                if (x1 > x2)
+                    (x1, x2) = (x2, x1);
+                if (y1 > y2)
+                    (y1, y2) = (y2, y1);
+                return new Rect(new Point(x1, y1), new Point(x2, y2));
+            }
+        }
 
         public ShapesTool()
         {
@@ -35,7 +77,7 @@ namespace Fonte.App.Delegates
             {
                 // XXX: need to fetch the strokeColor here
                 var color = Color.FromArgb(255, 34, 34, 34);
-                var rect = new Rect(_origin.Value, _anchor);
+                var rect = Rectangle;
                 if (_drawRectangle)
                 {
                     ds.DrawRectangle(rect, color, strokeWidth: rescale);
@@ -60,6 +102,22 @@ namespace Fonte.App.Delegates
             {
                 _drawRectangle = true;
             }
+            else if (e.Key == VirtualKey.Shift)
+            {
+                _linkAxes = true;
+            }
+            else if (e.Key == VirtualKey.Control)
+            {
+                _originAtCenter = true;
+            }
+            else if (e.Key == VirtualKey.Space)
+            {
+                _shouldMoveOrigin = true;
+            }
+            else if (e.Key == VirtualKey.Escape)
+            {
+                _origin = null;
+            }
             else
             {
                 return;
@@ -74,6 +132,18 @@ namespace Fonte.App.Delegates
             if (e.Key == VirtualKey.Menu)
             {
                 _drawRectangle = false;
+            }
+            else if (e.Key == VirtualKey.Shift)
+            {
+                _linkAxes = false;
+            }
+            else if (e.Key == VirtualKey.Control)
+            {
+                _originAtCenter = false;
+            }
+            else if (e.Key == VirtualKey.Space)
+            {
+                _shouldMoveOrigin = false;
             }
             else
             {
@@ -90,7 +160,11 @@ namespace Fonte.App.Delegates
 
             if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
             {
+                _undoGroup = canvas.Layer.CreateUndoGroup();
                 _origin = _anchor = canvas.GetLocalPosition(e);
+
+                canvas.Layer.ClearSelection();
+                ((App)Application.Current).InvalidateData();
             }
         }
 
@@ -100,7 +174,16 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue)
             {
-                _anchor = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(e);
+                if (_shouldMoveOrigin)
+                {
+                    var origin = _origin.Value;
+                    origin.X += pos.X - _anchor.X;
+                    origin.Y += pos.Y - _anchor.Y;
+                    _origin = origin;
+                }
+                _anchor = pos;
+
                 ((App)Application.Current).InvalidateData();
             }
         }
@@ -111,7 +194,7 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue && _anchor != _origin.Value)
             {
-                var rect = new Rect(_origin.Value, _anchor);
+                var rect = Rectangle;
                 var x1 = (float)rect.Left;
                 var y1 = (float)rect.Top;
                 var x2 = (float)rect.Right;
@@ -151,8 +234,10 @@ namespace Fonte.App.Delegates
                     );
                 }
                 canvas.Layer.Paths.Add(path);
-                path.Selected = true;
+                path.Select();
 
+                _undoGroup.Dispose();
+                _undoGroup = null;
                 ((App)Application.Current).InvalidateData();
             }
             _origin = null;

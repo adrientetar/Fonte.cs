@@ -5,6 +5,8 @@
 namespace Fonte.Data
 {
     using Fonte.Data.Changes;
+    using Fonte.Data.Collections;
+    using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
     using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
@@ -17,14 +19,15 @@ namespace Fonte.Data
     using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
-    using Windows.Foundation;
 
     public partial class Layer
     {
-        internal Dictionary<string, Anchor> _anchors;
+        internal List<Anchor> _anchors;
         internal List<Component> _components;
         internal List<Guideline> _guidelines;
         internal List<Path> _paths;
+        internal string _masterName;
+        internal int _width;
 
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _closedCanvasPath;
@@ -33,13 +36,49 @@ namespace Fonte.Data
         private HashSet<ISelectable> _selection;
         private Rect _selectionBounds = Rect.Empty;
 
-        [JsonIgnore]
-        public IReadOnlyDictionary<string, Anchor> Anchors { get; }
-
         [JsonProperty("anchors")]
-        private List<Anchor> _anchorList
+        public ObserverList<Anchor> Anchors
         {
-            get => new List<Anchor>(Anchors.Values);
+            get
+            {
+                var items = new ObserverList<Anchor>(_anchors);
+                items.CollectionChanged += (sender, e) =>
+                {
+                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    {
+                        if (e.NewItems.Count > 1)
+                        {
+                            new LayerAnchorsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Anchor>().ToList(), true).Apply();
+                        }
+                        else
+                        {
+                            new LayerAnchorsChange(this, e.NewStartingIndex, (Anchor)e.NewItems[0]).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    {
+                        if (e.OldItems.Count > 1)
+                        {
+                            new LayerAnchorsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Anchor>().ToList(), false).Apply();
+                        }
+                        else
+                        {
+                            new LayerAnchorsChange(this, e.OldStartingIndex, null).Apply();
+                        }
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    {
+                        Debug.Assert(e.NewItems.Count == 1);
+
+                        new LayerAnchorsReplaceChange(this, e.NewStartingIndex, (Anchor)e.NewItems[0]).Apply();
+                    }
+                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    {
+                        new LayerAnchorsResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
         }
 
         [JsonProperty("components")]
@@ -132,14 +171,32 @@ namespace Fonte.Data
             }
         }
 
-        // could just store an actual reference to the master,
-        // and serialize as masterName
-        // -> but then hard to keep up to date as Parent and masters change
         [JsonProperty("masterName")]
-        public string MasterName { get; set; }
+        public string Name
+        {
+            get => _masterName;
+            set
+            {
+                if (value != _masterName)
+                {
+                    new LayerMasterNameChange(this, value).Apply();
+                }
+            }
+        }
 
+        // XXX should this be a float?
         [JsonProperty("width")]
-        public int Width { get; set; }
+        public int Width
+        {
+            get => _width;
+            set
+            {
+                if (value != _width)
+                {
+                    new LayerWidthChange(this, value).Apply();
+                }
+            }
+        }
 
         [JsonProperty("paths")]
         public ObserverList<Path> Paths
@@ -200,7 +257,13 @@ namespace Fonte.Data
                         _bounds.Union(path.Bounds);
                     }
                 }
-                return _bounds;
+                // we can't cache component bounds, we aren't notified when it changes
+                var bounds = _bounds;
+                //foreach (var component in Components)
+                //{
+                //    bounds.Union(component.Bounds);
+                //}
+                return bounds;
             }
         }
 
@@ -214,6 +277,36 @@ namespace Fonte.Data
                     _closedCanvasPath = _collectPaths(path => !path.IsOpen);
                 }
                 return _closedCanvasPath;
+            }
+        }
+
+        [JsonIgnore]
+        public Margins Margins
+        {
+            get
+            {
+                var bounds = Bounds;
+                if (!bounds.IsEmpty)
+                {
+                    var bottom = bounds.Bottom;
+                    var top = bounds.Top;
+                    //if (YOrigin != null)
+                    //{
+                    //    bottom -= YOrigin - Height;
+                    //    top += YOrigin;
+                    //}
+                    //else
+                    //{
+                    //    top += Height;
+                    //}
+                    return new Margins(
+                            bounds.Left,
+                            top,
+                            Width - bounds.Right,
+                            bottom
+                        );
+                }
+                return Margins.Empty;
             }
         }
 
@@ -232,7 +325,7 @@ namespace Fonte.Data
 
         [JsonIgnore]
         public Glyph Parent
-        { get; /*internal*/ set; }  // XXX
+        { get; internal set; }
 
         [JsonIgnore]
         public IReadOnlyList<Path> SelectedPaths
@@ -256,7 +349,7 @@ namespace Fonte.Data
                 {
                     _selection = new HashSet<ISelectable>();
 
-                    foreach (var anchor in _anchors.Values)
+                    foreach (var anchor in _anchors)
                     {
                         if (anchor.Selected)
                         {
@@ -304,7 +397,7 @@ namespace Fonte.Data
                     {
                         if (item is Point point)
                         {
-                            _selectionBounds.Union(point.ToVector2().ToPoint());
+                            _selectionBounds.Union(point.ToVector2());
                         }
                     }
                 }
@@ -315,15 +408,15 @@ namespace Fonte.Data
         [JsonConstructor]
         public Layer(List<Anchor> anchors = null, List<Component> components = null, List<Guideline> guidelines = null, List<Path> paths = null, string masterName = null, int width = 600)
         {
-            _anchors = anchors != null ? _makeAnchorDict(anchors) : new Dictionary<string, Anchor>();
+            _anchors = anchors ?? new List<Anchor>();
             _components = components ?? new List<Component>();
             _guidelines = guidelines ?? new List<Guideline>();
             _paths = paths ?? new List<Path>();
 
-            MasterName = masterName ?? string.Empty;
-            Width = width;
+            _masterName = masterName ?? string.Empty;
+            _width = width;
 
-            foreach (var anchor in _anchors.Values)
+            foreach (var anchor in _anchors)
             {
                 anchor.Parent = this;
             }
@@ -361,6 +454,18 @@ namespace Fonte.Data
         public IChangeGroup CreateUndoGroup()
         {
             return Parent.UndoStore.CreateUndoGroup();
+        }
+
+        public Anchor GetAnchor(string name)
+        {
+            foreach (var anchor in _anchors)
+            {
+                if (anchor.Name == name)
+                {
+                    return anchor;
+                }
+            }
+            return null;  // XXX
         }
 
         public override string ToString()
@@ -404,18 +509,6 @@ namespace Fonte.Data
             }
 
             return CanvasGeometry.CreatePath(builder);
-        }
-
-        private Dictionary<string, Anchor> _makeAnchorDict(List<Anchor> anchors)
-        {
-            var data = new Dictionary<string, Anchor>();
-
-            foreach (Anchor anchor in anchors)
-            {
-                data.Add(anchor.Name, anchor);
-            }
-
-            return data;
         }
     }
 }

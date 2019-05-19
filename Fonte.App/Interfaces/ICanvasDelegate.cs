@@ -14,9 +14,10 @@ namespace Fonte.App.Interfaces
     {
         CoreCursor Cursor { get; }
 
+        object FindResource(DesignCanvas canvas, object resourceKey);
+        bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnActivated(DesignCanvas canvas);
         void OnDisabled(DesignCanvas canvas);
-        bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale);
         void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale);
         void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e);
@@ -24,6 +25,7 @@ namespace Fonte.App.Interfaces
         void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e);
         void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e);
+        void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs e);
         void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs e);
     }
 }

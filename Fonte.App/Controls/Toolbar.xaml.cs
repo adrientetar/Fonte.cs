@@ -50,11 +50,11 @@ namespace Fonte.App.Controls
             Items = new ObservableCollection<IToolbarItem>()
             {
                 new SelectionTool(),
+                new PenTool(),
+                new ShapesTool(),
 #if DEBUG
                 new DrawingTool(),
 #endif
-                new PenTool(),
-                new ShapesTool(),
             };
         }
 

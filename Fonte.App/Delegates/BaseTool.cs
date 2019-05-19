@@ -28,6 +28,11 @@ namespace Fonte.App.Delegates
         {
         }
 
+        public virtual object FindResource(DesignCanvas canvas, object resourceKey)
+        {
+            return canvas.Resources[resourceKey];
+        }
+
         public virtual bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs e)
         {
             return e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
@@ -158,6 +163,7 @@ namespace Fonte.App.Delegates
             {
                 return;
             }
+
             e.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
@@ -200,6 +206,10 @@ namespace Fonte.App.Delegates
             e.Handled = true;
         }
 
+        public virtual void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs e)
+        {
+        }
+
         public virtual void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs e)
         {
         }
@@ -237,7 +247,7 @@ namespace Fonte.App.Delegates
             {
                 behavior = SpecialBehavior.InterpolateSegment;
             }
-            if (alt.HasFlag(CoreVirtualKeyStates.Down))
+            else if (alt.HasFlag(CoreVirtualKeyStates.Down))
             {
                 behavior = SpecialBehavior.LockHandles;
             }
@@ -246,6 +256,17 @@ namespace Fonte.App.Delegates
                 behavior = SpecialBehavior.None;
             }
             Outline.MoveSelection(canvas.Layer, dx, dy, behavior);
+        }
+
+        protected static XamlUICommand MakeUICommand(string label, KeyboardAccelerator accelerator)
+        {
+            var command = new XamlUICommand()
+            {
+                Label = label,
+            };
+            command.KeyboardAccelerators.Add(accelerator);
+
+            return command;
         }
 
         #region IToolBarEntry implementation

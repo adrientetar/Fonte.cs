@@ -4,7 +4,7 @@
 
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Utilities;
+    using Fonte.Data.Collections;
     using PointType = Data.PointType;
 
     using System.Collections.Generic;

@@ -12,6 +12,7 @@ namespace Fonte.App.Delegates
 
     using System;
     using System.Diagnostics;
+    using System.Linq;
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
@@ -123,7 +124,7 @@ namespace Fonte.App.Delegates
                     var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                     if (shift.HasFlag(CoreVirtualKeyStates.Down))
                     {
-                        pos = _clampToNodeOrOrigin(canvas, point, pos);
+                        pos = ClampToNodeOrOrigin(canvas, point, pos);
                     }
 
                     MoveSelection(
@@ -150,7 +151,7 @@ namespace Fonte.App.Delegates
 
             if (CurrentAction == ActionType.DraggingPoint)
             {
-                _tryJoinPath(canvas, canvas.GetLocalPosition(e));
+                TryJoinPath(canvas, canvas.GetLocalPosition(e));
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
@@ -192,7 +193,9 @@ namespace Fonte.App.Delegates
 #endif
         }
 
-        private Point _clampToNodeOrOrigin(DesignCanvas canvas, Data.Point point, Point pos)
+        /**/
+
+        Point ClampToNodeOrOrigin(DesignCanvas canvas, Data.Point point, Point pos)
         {
             // We clamp to the mousedown pos, unless we have a single offcurve
             // in which case we clamp it against its parent.
@@ -213,7 +216,7 @@ namespace Fonte.App.Delegates
             return ClampToOrigin(_origin, pos);
         }
 
-        private void _tryJoinPath(DesignCanvas canvas, Point pos)
+        void TryJoinPath(DesignCanvas canvas, Point pos)
         {
             if (_mouseItem is Data.Point point && Is.AtOpenBoundary(point))
             {

@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Fonte.Data.Utilities
+namespace Fonte.Data.Collections
 {
     using System;
     using System.Collections;
@@ -10,13 +10,8 @@ namespace Fonte.Data.Utilities
     using System.Collections.Specialized;
     using System.ComponentModel;
 
-    // could drop INotifyPropertyChanged ?
-    public class ObserverList<T> : IList<T>, INotifyCollectionChanged, INotifyPropertyChanged
+    public class ObserverList<T> : IList<T>, INotifyCollectionChanged
     {
-        private const string CountString = "Count";
-        private const string IndexerName = "Item[]";
-
-        // could make this an attr?
         List<T> List { get; }
 
         public ObserverList(List<T> items)
@@ -112,12 +107,6 @@ namespace Fonte.Data.Utilities
 
         #endregion
 
-        #region INotifyPropertyChanged Members
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        #endregion
-
         public void AddRange(List<T> list)
         {
             if (list == null) throw new ArgumentNullException("collection");
@@ -185,56 +174,37 @@ namespace Fonte.Data.Utilities
             return r;
         }
 
-        private void OnPropertyChanged()
-        {
-            PropertyChanged?.Invoke(this, EventArgsCache.CountPropertyChanged);
-            PropertyChanged?.Invoke(this, EventArgsCache.IndexerPropertyChanged);
-        }
-
         private void OnCollectionChanged()
         {
-            OnPropertyChanged();
             CollectionChanged?.Invoke(this, EventArgsCache.ResetCollectionChanged);
         }
 
         private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)
         {
-            OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, item, index));
         }
 
         private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)
         {
-            PropertyChanged?.Invoke(this, EventArgsCache.IndexerPropertyChanged);
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
-        }
-
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, IList changedItems)
-        {
-            OnPropertyChanged();
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems));
         }
 
         private void OnCollectionChanged(NotifyCollectionChangedAction action, IList changedItems, int index)
         {
-            OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems, index));
         }
 
         private void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems)
         {
-            PropertyChanged?.Invoke(this, EventArgsCache.IndexerPropertyChanged);
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems));
         }
     }
 
     /// <remarks>
-    /// To be kept outside <see cref="ObservableList{T}"/>, since otherwise, a new instance will be created for each generic type used.
+    /// To be kept outside <see cref="ObserverList{T}"/>, since otherwise, a new instance will be created for each generic type used.
     /// </remarks>
     internal static class EventArgsCache
     {
-        internal static readonly PropertyChangedEventArgs CountPropertyChanged = new PropertyChangedEventArgs("Count");
-        internal static readonly PropertyChangedEventArgs IndexerPropertyChanged = new PropertyChangedEventArgs("Item[]");
         internal static readonly NotifyCollectionChangedEventArgs ResetCollectionChanged = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
     }
 }

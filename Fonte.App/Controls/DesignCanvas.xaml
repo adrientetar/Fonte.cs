@@ -13,6 +13,12 @@
     d:DesignWidth="400"
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
+    <UserControl.Resources>
+        <x:Boolean x:Key="DrawPoints">true</x:Boolean>
+        <x:Boolean x:Key="DrawStroke">true</x:Boolean>
+
+        <Color x:Key="FillColor">#4DF4F4F4</Color>
+    </UserControl.Resources>
 
     <muxprimitives:Scroller x:Name="Root"
                   Background="White"
@@ -34,6 +40,7 @@
                                      IsTabStop="True"
                                      KeyDown="OnKeyDown"
                                      KeyUp="OnKeyUp"
+                                     DoubleTapped="OnDoubleTapped"
                                      RightTapped="OnRightTapped"
                                      PointerEntered="OnPointerEntered"
                                      PointerExited="OnPointerExited"

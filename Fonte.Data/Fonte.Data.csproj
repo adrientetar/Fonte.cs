@@ -107,8 +107,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Anchor.cs" />
+    <Compile Include="Changes\LayerMasterNameChange.cs" />
+    <Compile Include="Changes\LayerWidthChange.cs" />
     <Compile Include="Changes\ChangeGroup.cs" />
+    <Compile Include="Changes\LayerAnchorsChange.cs" />
     <Compile Include="Changes\LayerComponentsChange.cs" />
+    <Compile Include="Changes\LayerAnchorsRangeChange.cs" />
+    <Compile Include="Changes\LayerAnchorsReplaceChange.cs" />
+    <Compile Include="Changes\LayerAnchorsResetChange.cs" />
     <Compile Include="Changes\LayerGuidelinesChange.cs" />
     <Compile Include="Changes\LayerComponentsRangeChange.cs" />
     <Compile Include="Changes\LayerComponentsReplaceChange.cs" />
@@ -142,6 +148,9 @@
     <Compile Include="Changes\PointYChange.cs" />
     <Compile Include="Changes\PointXChange.cs" />
     <Compile Include="Component.cs" />
+    <Compile Include="Geometry\Margins.cs" />
+    <Compile Include="Geometry\Rect.cs" />
+    <Compile Include="Font.cs" />
     <Compile Include="Guideline.cs" />
     <Compile Include="Interfaces\IUndoProvider.cs" />
     <Compile Include="Interfaces\IChange.cs" />
@@ -151,11 +160,12 @@
     <Compile Include="Point.cs" />
     <Compile Include="Glyph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\Conversion.cs" />
     <Compile Include="Utilities\UndoStore.cs" />
     <Compile Include="Utilities\Iterable.cs" />
     <Compile Include="Utilities\Selection.cs" />
-    <Compile Include="Utilities\ObservableDictionary.cs" />
-    <Compile Include="Utilities\ObserverList.cs" />
+    <Compile Include="Collections\ObservableDictionary.cs" />
+    <Compile Include="Collections\ObserverList.cs" />
     <EmbeddedResource Include="Properties\Fonte.Data.rd.xml" />
   </ItemGroup>
   <ItemGroup>

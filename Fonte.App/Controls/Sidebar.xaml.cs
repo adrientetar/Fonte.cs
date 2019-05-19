@@ -2,20 +2,27 @@
 namespace Fonte.App.Controls
 {
     using Fonte.App.Utilities;
+    using Fonte.Data.Geometry;
+
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
-    using Windows.Foundation;
+    using Windows.ApplicationModel;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
 
     // TODO add a ViewModel
     public partial class Sidebar : UserControl
     {
-        public static DependencyProperty LayerProperty = DependencyProperty.Register("Layer", typeof(Data.Layer), typeof(Sidebar), null);
+        public static DependencyProperty LayerProperty = DependencyProperty.Register(
+            "Layer", typeof(Data.Layer), typeof(Sidebar), null);
 
-        public Data.Layer Layer { get; set; }
+        public Data.Layer Layer
+        {
+            get => (Data.Layer)GetValue(LayerProperty);
+            set { SetValue(LayerProperty, value); }
+        }
 
         public Sidebar()
         {
@@ -24,14 +31,21 @@ namespace Fonte.App.Controls
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
+            if (DesignMode.DesignMode2Enabled)
+                return;
+
             ((App)Application.Current).DataRefreshing += OnDataRefreshing;
         }
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
         {
+            if (DesignMode.DesignMode2Enabled)
+                return;
+
             ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
         }
 
+        // Rewrite this to be based on properties
         void OnDataRefreshing()
         {
             XPositionTextBox.Text = YPositionTextBox.Text = XSizeTextBox.Text = YSizeTextBox.Text = string.Empty;
@@ -39,7 +53,7 @@ namespace Fonte.App.Controls
             if (Layer != null && !Layer.SelectionBounds.IsEmpty)
             {
                 XPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Left).ToString();
-                YPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Top).ToString();
+                YPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Bottom).ToString();
 
                 XSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Width).ToString();
                 YSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Height).ToString();
@@ -51,7 +65,7 @@ namespace Fonte.App.Controls
         void OnAlignLeftButtonClick(object sender, RoutedEventArgs e)
         {
             _alignSelectedPaths((path, refBounds) => new Vector2(
-                    path.Bounds.Left > refBounds.Left ? (float)(refBounds.Left - path.Bounds.Left) : 0,
+                    path.Bounds.Left > refBounds.Left ? refBounds.Left - path.Bounds.Left : 0,
                     0
                 ));
         }
@@ -71,7 +85,7 @@ namespace Fonte.App.Controls
         void OnAlignRightButtonClick(object sender, RoutedEventArgs e)
         {
             _alignSelectedPaths((path, refBounds) => new Vector2(
-                    path.Bounds.Right < refBounds.Right ? (float)(refBounds.Right - path.Bounds.Right) : 0,
+                    path.Bounds.Right < refBounds.Right ? refBounds.Right - path.Bounds.Right : 0,
                     0
                 ));
         }
@@ -80,15 +94,15 @@ namespace Fonte.App.Controls
         {
             _alignSelectedPaths((path, refBounds) => new Vector2(
                     0,
-                    path.Bounds.Bottom < refBounds.Bottom ? (float)(refBounds.Bottom - path.Bounds.Bottom) : 0
+                    path.Bounds.Top < refBounds.Top ? refBounds.Top - path.Bounds.Top : 0
                 ));
         }
 
         void OnCenterVertButtonClick(object sender, RoutedEventArgs e)
         {
             _alignSelectedPaths((path, refBounds) => {
-                    var refYMid = refBounds.Top + Math.Round(.5 * refBounds.Height);
-                    var yMid = path.Bounds.Top + Math.Round(.5 * path.Bounds.Height);
+                    var refYMid = refBounds.Bottom + Math.Round(.5 * refBounds.Height);
+                    var yMid = path.Bounds.Bottom + Math.Round(.5 * path.Bounds.Height);
                     return new Vector2(
                         0,
                         (float)(refYMid - yMid)
@@ -100,7 +114,7 @@ namespace Fonte.App.Controls
         {
             _alignSelectedPaths((path, refBounds) => new Vector2(
                     0,
-                    path.Bounds.Top > refBounds.Top ? (float)(refBounds.Top - path.Bounds.Top) : 0
+                    path.Bounds.Bottom > refBounds.Bottom ? refBounds.Bottom - path.Bounds.Bottom : 0
                 ));
         }
 

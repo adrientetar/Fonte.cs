@@ -6,7 +6,7 @@ namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
     using Fonte.App.Utilities;
-    using Fonte.Data.Utilities;
+    using Fonte.Data.Collections;
 
     using System;
     using System.Linq;
@@ -52,7 +52,7 @@ namespace Fonte.App.Delegates
         {
             if (e.Key == VirtualKey.Menu)
             {
-                _updateOnCurveSmoothness(canvas, false);
+                UpdateOnCurveSmoothness(canvas, false);
             }
             else if (e.Key == VirtualKey.Space && _path != null)
             {
@@ -71,7 +71,7 @@ namespace Fonte.App.Delegates
         {
             if (e.Key == VirtualKey.Menu)
             {
-                _updateOnCurveSmoothness(canvas, true);
+                UpdateOnCurveSmoothness(canvas, true);
             }
             else if (e.Key == VirtualKey.Space && _path != null)
             {
@@ -94,7 +94,7 @@ namespace Fonte.App.Delegates
             {
                 var pos = canvas.GetLocalPosition(e);
                 var mouseItem = canvas.ItemAt(pos);
-                var selPoint = _getSelectedPoint(canvas);
+                var selPoint = GetSelectedPoint(canvas);
 
                 _undoGroup = canvas.Layer.CreateUndoGroup();
                 if (mouseItem is Data.Point mousePoint)
@@ -191,7 +191,7 @@ namespace Fonte.App.Delegates
             if (_path != null && e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
             {
                 var pos = canvas.GetLocalPosition(e);
-                var selPoint = _getMovingPoint();
+                var selPoint = GetMovingPoint();
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
                     if (!CanStartDragging(_screenOrigin.Value, e.GetCurrentPoint(canvas).Position))
@@ -204,7 +204,7 @@ namespace Fonte.App.Delegates
 
                     if (selPoint.Type == Data.PointType.Line && makeOnSmooth)
                     {
-                        _coerceSegmentToCurve(_path, selPoint, pos);
+                        CoerceSegmentToCurve(_path, selPoint, pos);
                     }
                     else if (selPoint.Smooth && _path.IsOpen)
                     {
@@ -286,7 +286,7 @@ namespace Fonte.App.Delegates
                         {
                             if (onCurve.Type == Data.PointType.Line)
                             {
-                                _coerceSegmentToCurve(_path, onCurve, pos);
+                                CoerceSegmentToCurve(_path, onCurve, pos);
                             }
                             var otherSidePoint = _path.Points[_path.Points.Count - 3];
                             otherSidePoint.X = 2 * onCurve.X - (float)pos.X;
@@ -316,7 +316,7 @@ namespace Fonte.App.Delegates
             }
         }
 
-        private void _coerceSegmentToCurve(Data.Path path, Data.Point onCurve, Point pos)
+        private void CoerceSegmentToCurve(Data.Path path, Data.Point onCurve, Point pos)
         {
             var index = _path.Points.IndexOf(onCurve);
             var prevOn = _path.Points[index - 1];
@@ -366,7 +366,7 @@ namespace Fonte.App.Delegates
             onCurve.Smooth = smooth;
         }
 
-        private Data.Point _getMovingPoint()
+        private Data.Point GetMovingPoint()
         {
             var point = _path.Points[_path.Points.Count - 1];
             if (!_path.IsOpen && point.Type == Data.PointType.Curve)
@@ -380,7 +380,7 @@ namespace Fonte.App.Delegates
             return point;
         }
 
-        private Data.Point _getSelectedPoint(DesignCanvas canvas)
+        private Data.Point GetSelectedPoint(DesignCanvas canvas)
         {
             var selection = canvas.Layer.Selection;
             if (selection.Count == 1)
@@ -394,7 +394,7 @@ namespace Fonte.App.Delegates
             return null;
         }
 
-        private void _updateOnCurveSmoothness(DesignCanvas canvas, bool value)
+        private void UpdateOnCurveSmoothness(DesignCanvas canvas, bool value)
         {
             if (_path != null && _path.Points.Count >= 2)
             {

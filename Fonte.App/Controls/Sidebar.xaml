@@ -5,44 +5,73 @@
     xmlns:local="using:Fonte.App.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sidebarparts="using:Fonte.App.Controls.SidebarParts"
     mc:Ignorable="d"
     d:DesignHeight="520"
     d:DesignWidth="220"
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>
-        <Color x:Key="IconFillColor">#dee3ff</Color>
-        <Color x:Key="IconStrokeColor">#2e2e7b</Color>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
 
-        <Style x:Key="IconGridStyle" TargetType="Grid">
-            <Setter Property="Background" Value="#faf9fc"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="VerticalAlignment" Value="Top"/>
-            <!-- TODO use a variable for the border brush, add put colors in their own files -->
-            <Setter Property="BorderBrush" Value="#e9eaeb"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-        </Style>
-        <Style x:Key="IconButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="2,0,2,0"/>
-            <Setter Property="Padding" Value="4"/>
-        </Style>
-        <Style x:Key="TextBoxStyle" TargetType="TextBox">
-            <Setter Property="AcceptsReturn" Value="True"/>
-            <Setter Property="Background" Value="#fff"/>
-            <Setter Property="BorderBrush" Value="#e9eaeb"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius" Value="2"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="4"/>
-            <Setter Property="Width" Value="60"/>
-        </Style>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="Transparent"/>
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="White"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource BorderColor}"/>
+
+            <Style TargetType="sidebarparts:ButtonPair">
+                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                <Setter Property="CornerRadius" Value="2"/>
+                <Setter Property="Height" Value="26"/>
+                <Setter Property="Width" Value="60"/>
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Foreground" Value="#222"/>
+                <Setter Property="Margin" Value="4"/>
+                <!-- shouldn't have to do this... -->
+                <Setter Property="Padding" Value="0,2,0,0"/>
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="AcceptsReturn" Value="True"/>
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="CornerRadius" Value="2"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="MinHeight" Value="26"/>
+                <Setter Property="MinWidth" Value="60"/>
+                <Setter Property="Width" Value="60"/>
+                <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
+            </Style>
+
+            <Style x:Key="IconButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="Margin" Value="2,0,2,0"/>
+                <Setter Property="Padding" Value="4"/>
+            </Style>
+            <Style x:Key="IconGridStyle" TargetType="Grid">
+                <Setter Property="Background" Value="{StaticResource AltBackgroundColor}"/>
+                <Setter Property="Height" Value="37"/>
+                <Setter Property="VerticalAlignment" Value="Top"/>
+                <Setter Property="BorderBrush" Value="{StaticResource SpacingColor}"/>
+                <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Background="#f4f6f7" Width="220">
+    <Grid Background="{StaticResource BackgroundColor}" Width="220">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -58,23 +87,32 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Button Click="OnAlignLeftButtonClick" ToolTipService.ToolTip="Align left" Style="{StaticResource IconButtonStyle}" Grid.Column="1">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0.5,0 v16 M3.5,5.5 h10 v5 h-10 Z"/>
+            <Grid.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+                <Style TargetType="Path">
+                    <Setter Property="Fill" Value="{StaticResource IconFillColor}"/>
+                    <Setter Property="Stroke" Value="{StaticResource IconStrokeColor}"/>
+                    <Setter Property="Height" Value="16"/>
+                    <Setter Property="Width" Value="16"/>
+                </Style>
+            </Grid.Resources>
+            <Button Click="OnAlignLeftButtonClick" ToolTipService.ToolTip="Align left" Grid.Column="1">
+                <Path Data="M0.5,0 v16 M3.5,5.5 h10 v5 h-10 Z"/>
             </Button>
-            <Button Click="OnCenterHorzButtonClick" ToolTipService.ToolTip="Center horizontally" Style="{StaticResource IconButtonStyle}" Grid.Column="2">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M7.5,0 v5.5 M7.5,10.5 v5.5 M1.5,5.5 h12 v5 h-12 Z"/>
+            <Button Click="OnCenterHorzButtonClick" ToolTipService.ToolTip="Center horizontally" Grid.Column="2">
+                <Path Data="M7.5,0 v5.5 M7.5,10.5 v5.5 M1.5,5.5 h12 v5 h-12 Z"/>
             </Button>
-            <Button Click="OnAlignRightButtonClick" ToolTipService.ToolTip="Align right" Style="{StaticResource IconButtonStyle}" Grid.Column="3">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M13.5,0 v16 M0.5,5.5 h10 v5 h-10 Z"/>
+            <Button Click="OnAlignRightButtonClick" ToolTipService.ToolTip="Align right" Grid.Column="3">
+                <Path Data="M13.5,0 v16 M0.5,5.5 h10 v5 h-10 Z"/>
             </Button>
-            <Button Click="OnAlignTopButtonClick" ToolTipService.ToolTip="Align top" Style="{StaticResource IconButtonStyle}" Grid.Column="4">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,0.5 h16 M5.5,3.5 v10 h5 v-10 Z"/>
+            <Button Click="OnAlignTopButtonClick" ToolTipService.ToolTip="Align top" Grid.Column="4">
+                <Path Data="M0,0.5 h16 M5.5,3.5 v10 h5 v-10 Z"/>
             </Button>
-            <Button Click="OnCenterVertButtonClick" ToolTipService.ToolTip="Center vertically" Style="{StaticResource IconButtonStyle}" Grid.Column="5">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,8.5 h5.5 M10.5,8.5 h5.5 M5.5,2.5 v12 h5 v-12 Z"/>
+            <Button Click="OnCenterVertButtonClick" ToolTipService.ToolTip="Center vertically" Grid.Column="5">
+                <Path Data="M0,8.5 h5.5 M10.5,8.5 h5.5 M5.5,2.5 v12 h5 v-12 Z"/>
             </Button>
-            <Button Click="OnAlignBottomButtonClick" ToolTipService.ToolTip="Align bottom" Style="{StaticResource IconButtonStyle}" Grid.Column="6">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M0,15.5 h16 M5.5,2.5 v10 h5 v-10 Z"/>
+            <Button Click="OnAlignBottomButtonClick" ToolTipService.ToolTip="Align bottom" Grid.Column="6">
+                <Path Data="M0,15.5 h16 M5.5,2.5 v10 h5 v-10 Z"/>
             </Button>
         </Grid>
         <Grid Style="{StaticResource IconGridStyle}" Grid.Row="1">
@@ -86,23 +124,32 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Button Click="OnUnionButtonClick" ToolTipService.ToolTip="Union" Style="{StaticResource IconButtonStyle}" Grid.Column="1">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
+            <Grid.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+                <Style TargetType="Path">
+                    <Setter Property="Fill" Value="{StaticResource IconFillColor}"/>
+                    <Setter Property="Stroke" Value="{StaticResource IconStrokeColor}"/>
+                    <Setter Property="Height" Value="16"/>
+                    <Setter Property="Width" Value="16"/>
+                </Style>
+            </Grid.Resources>
+            <Button Click="OnUnionButtonClick" ToolTipService.ToolTip="Union" Grid.Column="1">
+                <Path Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
             </Button>
-            <Button Click="OnExcludeButtonClick" ToolTipService.ToolTip="Exclude" Style="{StaticResource IconButtonStyle}" Grid.Column="2">
+            <Button Click="OnExcludeButtonClick" ToolTipService.ToolTip="Exclude" Grid.Column="2">
                 <Grid>
-                    <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h-4 v4 h-4 Z"/>
-                    <Path Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M6,6 h8 v8 h-8 Z"/>
+                    <Path Data="M2,2 h8 v4 h-4 v4 h-4 Z"/>
+                    <Path Fill="Transparent" Data="M6,6 h8 v8 h-8 Z"/>
                 </Grid>
             </Button>
-            <Button Click="OnIntersectButtonClick" ToolTipService.ToolTip="Intersect" Style="{StaticResource IconButtonStyle}" Grid.Column="3">
+            <Button Click="OnIntersectButtonClick" ToolTipService.ToolTip="Intersect" Grid.Column="3">
                 <Grid>
-                    <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M6,6 h4 v4 h-4 Z"/>
-                    <Path Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
+                    <Path Data="M6,6 h4 v4 h-4 Z"/>
+                    <Path Fill="Transparent" Data="M2,2 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
                 </Grid>
             </Button>
-            <Button Click="OnXorButtonClick" ToolTipService.ToolTip="Xor" Style="{StaticResource IconButtonStyle}" Grid.Column="4">
-                <Path Fill="{StaticResource IconFillColor}" Stroke="{StaticResource IconStrokeColor}" Height="16" Width="16" Data="M2,2 h8 v8 h-8 v-8 Z M6,6 h8 v8 h-8 v-8 Z"/>
+            <Button Click="OnXorButtonClick" ToolTipService.ToolTip="Xor" Grid.Column="4">
+                <Path Data="M2,2 h8 v8 h-8 v-8 Z M6,6 h8 v8 h-8 v-8 Z"/>
             </Button>
         </Grid>
         <Grid Padding="4" Grid.Row="2">
@@ -115,16 +162,63 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
-            <Grid.Resources>
-                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
-            </Grid.Resources>
-            <TextBlock FontSize="12" Foreground="#222" Margin="4" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Position"/>
-            <TextBox x:Name="XPositionTextBox" Style="{StaticResource TextBoxStyle}" Grid.Column="1"/>
-            <TextBox x:Name="YPositionTextBox" Style="{StaticResource TextBoxStyle}" Grid.Column="2"/>
+            <TextBlock Text="Position"/>
+            <TextBox x:Name="XPositionTextBox" Grid.Column="1"/>
+            <TextBox x:Name="YPositionTextBox" Grid.Column="2"/>
 
-            <TextBlock FontSize="12" Foreground="#222" Margin="4" HorizontalAlignment="Left" VerticalAlignment="Center" Text="Size" Grid.Row="1"/>
-            <TextBox x:Name="XSizeTextBox" Style="{StaticResource TextBoxStyle}" Grid.Row="1" Grid.Column="1"/>
-            <TextBox x:Name="YSizeTextBox" Style="{StaticResource TextBoxStyle}" Grid.Row="1" Grid.Column="2"/>
+            <TextBlock Text="Size" Grid.Row="1"/>
+            <TextBox x:Name="XSizeTextBox" Grid.Row="1" Grid.Column="1"/>
+            <TextBox x:Name="YSizeTextBox" Grid.Row="1" Grid.Column="2"/>
+        </Grid>
+        <Grid Padding="4" Background="{StaticResource AltBackgroundColor}" BorderBrush="{StaticResource SpacingColor}" BorderThickness="0,1,0,1" Grid.Row="4">
+            <TextBlock Margin="4,1,4,1" Padding="0" Text="Transform"/>
+        </Grid>
+        <Grid Padding="4" Grid.Row="5">
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Scale"/>
+            <TextBox x:Name="XScaleTextBox" Grid.Column="1"/>
+            <sidebarparts:ButtonPair Grid.Column="2">
+                <sidebarparts:ButtonPair.LeftContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                </sidebarparts:ButtonPair.LeftContent>
+                <sidebarparts:ButtonPair.RightContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                </sidebarparts:ButtonPair.RightContent>
+            </sidebarparts:ButtonPair>
+
+            <TextBox x:Name="YScaleTextBox" Grid.Row="1" Grid.Column="1"/>
+
+            <TextBlock Text="Rotation" Grid.Row="2"/>
+            <TextBox x:Name="RotationTextBox" Grid.Row="2" Grid.Column="1"/>
+            <sidebarparts:ButtonPair Grid.Row="2" Grid.Column="2">
+                <sidebarparts:ButtonPair.LeftContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                </sidebarparts:ButtonPair.LeftContent>
+                <sidebarparts:ButtonPair.RightContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                </sidebarparts:ButtonPair.RightContent>
+            </sidebarparts:ButtonPair>
+
+            <TextBlock Text="Skew" Grid.Row="3"/>
+            <TextBox x:Name="SkewTextBox" Grid.Row="3" Grid.Column="1"/>
+            <sidebarparts:ButtonPair Grid.Row="3" Grid.Column="2">
+                <sidebarparts:ButtonPair.LeftContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                </sidebarparts:ButtonPair.LeftContent>
+                <sidebarparts:ButtonPair.RightContent>
+                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                </sidebarparts:ButtonPair.RightContent>
+            </sidebarparts:ButtonPair>
         </Grid>
     </Grid>
 </UserControl>

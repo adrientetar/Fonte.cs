@@ -40,10 +40,10 @@ namespace Fonte.App.Utilities
             {
                 using (var result = geom1.CombineWith(geom2, Matrix3x2.Identity, operation, float.Epsilon))
                 {
-                    var pen = new CanvasPathPen();
-                    result.SendPathTo(pen);
+                    var recv = new GeometrySink();
+                    result.SendPathTo(recv);
 
-                    return pen.Paths;
+                    return recv.Paths;
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace Fonte.App.Utilities
 
     // TODO prune duplicate point(s?)
     // TODO make smooth points
-    class CanvasPathPen : ICanvasPathReceiver
+    class GeometrySink : ICanvasPathReceiver
     {
         public List<Data.Path> Paths { get; } = new List<Data.Path>();
 

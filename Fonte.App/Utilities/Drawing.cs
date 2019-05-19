@@ -40,10 +40,10 @@ namespace Fonte.App.Utilities
             throw new NotImplementedException();
         }
 
-        public static void DrawFill(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        public static void DrawFill(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
         {
-            ds.FillGeometry(layer.ClosedCanvasPath, Color.FromArgb(77, 244, 244, 244));
-            ds.FillGeometry(layer.OpenCanvasPath, Color.FromArgb(77, 244, 244, 244));
+            ds.FillGeometry(layer.ClosedCanvasPath, color);
+            ds.FillGeometry(layer.OpenCanvasPath, color);
         }
 
         public static void DrawMetrics(Data.Layer layer, CanvasDrawingSession ds, float rescale)
@@ -231,15 +231,15 @@ namespace Fonte.App.Utilities
                 {
                     CustomDashStyle = new float[] { 1, 4 }
                 };
-                ds.DrawRectangle(rect, Color.FromArgb(128, 34, 34, 34), rescale, strokeStyle);
+                ds.DrawRectangle(rect.ToFoundationRect(), Color.FromArgb(128, 34, 34, 34), rescale, strokeStyle);
 
                 var pathBuilder = new CanvasPathBuilder(ds);
                 var radius = 4 * rescale;
                 var margin = 4;
-                var loX = (float)(rect.Left - radius - margin);
-                var loY = (float)(rect.Top - radius - margin);
-                var hiX = (float)(rect.Right + radius + margin);
-                var hiY = (float)(rect.Bottom + radius + margin);
+                var loX = rect.Left - radius - margin;
+                var loY = rect.Bottom - radius - margin;
+                var hiX = rect.Right + radius + margin;
+                var hiY = rect.Top + radius + margin;
                 if (rect.Width > 0 && rect.Height > 0)
                 {
                     pathBuilder.AddGeometry(

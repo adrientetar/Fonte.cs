@@ -5,8 +5,9 @@
 namespace Fonte.Data
 {
     using Fonte.Data.Changes;
+    using Fonte.Data.Collections;
+    using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
-    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
@@ -19,7 +20,6 @@ namespace Fonte.Data
     using System.Linq;
     using System.Numerics;
     using System.Reflection;
-    using Windows.Foundation;
 
     [JsonConverter(typeof(PathConverter))]
     public partial class Path
@@ -98,7 +98,7 @@ namespace Fonte.Data
             {
                 if (_bounds.IsEmpty)
                 {
-                    _bounds = CanvasPath.ComputeBounds();
+                    _bounds = Conversion.FromFoundationRect(CanvasPath.ComputeBounds());
                 }
                 return _bounds;
             }
@@ -163,23 +163,15 @@ namespace Fonte.Data
             }
         }
 
-        public bool Selected
+        public bool IsSelected
         {
             get
             {
-                // we're coercing tristate into bool here...
                 foreach (var point in Points)
                 {
                     if (!point.Selected) return false;
                 }
                 return true;
-            }
-            set
-            {
-                foreach (var point in Points)
-                {
-                    point.Selected = value;
-                }
             }
         }
 
@@ -256,6 +248,14 @@ namespace Fonte.Data
             }
         }
 
+        public void Select(bool value = true)
+        {
+            foreach (var point in Points)
+            {
+                point.Selected = value;
+            }
+        }
+
         public void StartAt(int index)
         {
             if (IsOpen)
@@ -306,7 +306,7 @@ namespace Fonte.Data
     {
         private readonly int _count;
         private readonly int _index;
-        private ObserverList<Point> _points;
+        private readonly ObserverList<Point> _points;
 
         public List<Point> OffCurves
         {
@@ -413,6 +413,21 @@ namespace Fonte.Data
                 throw new InvalidOperationException(
                     string.Format("Cannot convert from {0} to {1}", OnCurve.Type, type));
             }
+        }
+
+        public List<Vector2> IntersectLine(Vector2 p1, Vector2 p2)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Vector2? ProjectPoint(Vector2 p)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SplitAt(float t)
+        {
+            throw new NotImplementedException();
         }
 
         public override string ToString()

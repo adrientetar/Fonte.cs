@@ -141,7 +141,10 @@ namespace Fonte.Data.Utilities
                 ++_undoCounter;
                 _redoCounter = 0;
                 _redoStack.Clear();
-                _undoStack.Add(_undoGroup);
+                if (_undoGroup.Count > 0)
+                {
+                    _undoStack.Add(_undoGroup);
+                }
                 _undoGroup = null;
             }
         }
