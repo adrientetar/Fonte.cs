@@ -10,6 +10,8 @@ namespace Fonte.Data
 
     public partial class Font
     {
+        [JsonProperty("glyphs")]
+        public List<Glyph> Glyphs { get; }
 
         [JsonProperty("copyright")]
         public string Copyright { get; set; }
@@ -22,9 +24,6 @@ namespace Fonte.Data
 
         [JsonProperty("familyName")]
         public string FamilyName { get; set; }
-
-        [JsonProperty("glyphs")]
-        public List<Glyph> Glyphs { get; }
 
         [JsonProperty("manufacturer")]
         public string Manufacturer { get; set; }
@@ -40,6 +39,30 @@ namespace Fonte.Data
 
         [JsonProperty("versionMinor")]
         public int VersionMinor { get; set; }
+
+        [JsonConstructor]
+        public Font(List<Glyph> glyphs = null, string copyright = null, string designer = null, string designerURL = null,
+                    string familyName = null, string manufacturer = null, string manufacturerURL = null, int unitsPerEm = 1000,
+                    int versionMajor = 1, int versionMinor = 0)
+        {
+            Glyphs = glyphs ?? new List<Glyph>();
+
+            Copyright = copyright ?? string.Empty;
+            Designer = designer ?? string.Empty;
+            DesignerURL = designerURL ?? string.Empty;
+            FamilyName = familyName ?? string.Empty;
+            Manufacturer = manufacturer ?? string.Empty;
+            ManufacturerURL = manufacturerURL ?? string.Empty;
+
+            UnitsPerEm = unitsPerEm;
+            VersionMajor = versionMajor;
+            VersionMinor = versionMinor;
+
+            foreach (var glyph in Glyphs)
+            {
+                glyph.Parent = this;
+            }
+        }
 
         public override string ToString()
         {

@@ -36,6 +36,8 @@ namespace Fonte.App.Controls
         private bool _inPreview;
 
         internal static readonly string DrawPointsKey = "DrawPoints";
+        internal static readonly string DrawSelectionKey = "DrawSelection";
+        internal static readonly string DrawSelectionBoundsKey = "DrawSelectionBounds";
         internal static readonly string DrawStrokeKey = "DrawStroke";
         internal static readonly string FillColorKey = "FillColor";
 
@@ -131,9 +133,12 @@ namespace Fonte.App.Controls
 
         void OnPointerExited(object sender, PointerRoutedEventArgs e)
         {
-            Window.Current.CoreWindow.PointerCursor = _previousCursor;
+            if (_previousCursor != null)
+            {
+                Window.Current.CoreWindow.PointerCursor = _previousCursor;
 
-            _previousCursor = null;
+                _previousCursor = null;
+            }
         }
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
@@ -151,10 +156,10 @@ namespace Fonte.App.Controls
                     Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
 
                     //Drawing.DrawComponents(Layer, ds, rescale);
-                    Drawing.DrawSelection(Layer, ds, rescale);
+                    if ((bool)Tool.FindResource(this, DrawSelectionKey)) Drawing.DrawSelection(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
-                    Drawing.DrawSelectionBounds(Layer, ds, rescale);
+                    if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
                     Tool.OnDrawCompleted(this, ds, rescale);
                 }
             }
@@ -164,7 +169,7 @@ namespace Fonte.App.Controls
         {
             Tool.OnKeyDown(this, e);
 
-            if (!e.Handled && e.Key == VirtualKey.Space)
+            if (!e.Handled && e.Key == VirtualKey.Space && !e.KeyStatus.WasKeyDown)
             {
                 _inPreview = true;
 

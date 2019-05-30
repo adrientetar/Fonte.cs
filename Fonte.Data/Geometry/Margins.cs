@@ -71,7 +71,7 @@ namespace Fonte.Data.Geometry
             _bottom = bottom;
         }
 
-        private static Margins CreateEmptyMargins()
+        static Margins CreateEmptyMargins()
         {
             Margins margins = new Margins
             {

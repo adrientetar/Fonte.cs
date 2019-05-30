@@ -1,0 +1,39 @@
+﻿<UserControl
+    x:Class="Fonte.App.Controls.SidebarParts.OriginControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:Fonte.App.Converters"
+    xmlns:local="using:Fonte.App.Controls.SidebarParts"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Width="30"
+    Height="30">
+    <UserControl.Resources>
+        <converters:IndexToActiveConverter x:Key="IndexToActiveConverterKey"/>
+    </UserControl.Resources>
+
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+            <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Stroke="{StaticResource SpacingColor}" Width="21" Height="21"/>
+
+        <local:OriginButton Tag="0" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=0, Mode=OneWay}" Click="OnButtonClicked"/>
+        <local:OriginButton Tag="1" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=1, Mode=OneWay}" Click="OnButtonClicked" Grid.Column="1"/>
+        <local:OriginButton Tag="2" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=2, Mode=OneWay}" Click="OnButtonClicked" Grid.Column="2"/>
+        <local:OriginButton Tag="3" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=3, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="1"/>
+        <local:OriginButton Tag="4" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=4, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="1" Grid.Column="1"/>
+        <local:OriginButton Tag="5" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=5, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="1" Grid.Column="2"/>
+        <local:OriginButton Tag="6" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=6, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="2"/>
+        <local:OriginButton Tag="7" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=7, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="2" Grid.Column="1"/>
+        <local:OriginButton Tag="8" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=8, Mode=OneWay}" Click="OnButtonClicked" Grid.Row="2" Grid.Column="2"/>
+    </Grid>
+</UserControl>

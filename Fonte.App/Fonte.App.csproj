@@ -11,7 +11,7 @@
     <AssemblyName>Fonte.App</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.17763.0</TargetPlatformVersion>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.18362.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -104,6 +104,12 @@
     <Compile Include="Controls\Sidebar.xaml.cs">
       <DependentUpon>Sidebar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SidebarParts\OriginButton.xaml.cs">
+      <DependentUpon>OriginButton.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\SidebarParts\OriginControl.xaml.cs">
+      <DependentUpon>OriginControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\SidebarParts\ButtonPair.xaml.cs">
       <DependentUpon>ButtonPair.xaml</DependentUpon>
     </Compile>
@@ -113,6 +119,7 @@
     <Compile Include="Controls\Toolbar.xaml.cs">
       <DependentUpon>Toolbar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
     <Compile Include="Delegates\PenTool.cs" />
     <Compile Include="Delegates\SelectionTool.cs" />
@@ -160,6 +167,14 @@
     <Page Include="Controls\Sidebar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\SidebarParts\OriginButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\SidebarParts\OriginControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\SidebarParts\ButtonPair.xaml">
       <SubType>Designer</SubType>

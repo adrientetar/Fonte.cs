@@ -36,7 +36,7 @@ namespace Fonte.App.Controls
                         "Invalid index {0} given items count {1}", value, Items.Count));
                 }
                 _selectedIndex = value;
-                _checkActiveButton();
+                CheckActiveButton();
                 CurrentItemChanged?.Invoke(this, new EventArgs());
             }
         }
@@ -69,7 +69,9 @@ namespace Fonte.App.Controls
             SelectedIndex = ItemsControl.IndexFromContainer(parent);
         }
 
-        private void _checkActiveButton()
+        /**/
+
+        void CheckActiveButton()
         {
             for (int index = 0; index < Items.Count; ++index)
             {

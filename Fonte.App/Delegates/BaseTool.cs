@@ -7,9 +7,11 @@ namespace Fonte.App.Delegates
     using Fonte.App.Controls;
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
 
     using System;
+    using System.Collections;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
@@ -91,7 +93,7 @@ namespace Fonte.App.Delegates
                     }
                 }
 
-                MoveSelection(canvas, dx, dy);
+                Outline.MoveSelection(canvas.Layer, dx, dy, GetMoveMode());
             }
             else if (e.Key == VirtualKey.Back ||
                      e.Key == VirtualKey.Delete)
@@ -112,10 +114,10 @@ namespace Fonte.App.Delegates
 
                             if (point.Selected && point.Type != Data.PointType.None)
                             {
-                                var before = path.Points[(index - 1) % path.Points.Count];
+                                var before = path.Points[Sequence.PreviousIndex(path.Points, index)];
                                 if (before.Type != Data.PointType.None)
                                 {
-                                    var after = path.Points[(index + 1) % path.Points.Count];
+                                    var after = path.Points[Sequence.NextIndex(path.Points, index)];
                                     if (after.Type != Data.PointType.None)
                                     {
                                         continue;
@@ -145,18 +147,18 @@ namespace Fonte.App.Delegates
                     var index = path.Points.IndexOf(focusPoint);
 
                     var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    Data.Point point;
+                    int ix;
                     if (shift.HasFlag(CoreVirtualKeyStates.Down))
                     {
-                        point = path.Points[(index - 1) % path.Points.Count];
+                        ix = Sequence.PreviousIndex(path.Points, index);
                     }
                     else
                     {
-                        point = path.Points[(index - 1) % path.Points.Count];
+                        ix = Sequence.NextIndex(path.Points, index);
                     }
 
                     canvas.Layer.ClearSelection();
-                    point.Selected = true;
+                    path.Points[ix].Selected = true;
                 }
             }
             else
@@ -236,26 +238,26 @@ namespace Fonte.App.Delegates
             return new Point(pos.X, origin.Y);
         }
 
-        public void MoveSelection(DesignCanvas canvas, float dx, float dy)
+        public MoveMode GetMoveMode()
         {
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftMenu);
             var windows = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows);
 
-            SpecialBehavior behavior;
+            MoveMode mode;
             if (windows.HasFlag(CoreVirtualKeyStates.Down) &&
                 alt.HasFlag(CoreVirtualKeyStates.Down))
             {
-                behavior = SpecialBehavior.InterpolateSegment;
+                mode = MoveMode.InterpolateCurve;
             }
             else if (alt.HasFlag(CoreVirtualKeyStates.Down))
             {
-                behavior = SpecialBehavior.LockHandles;
+                mode = MoveMode.StaticHandles;
             }
             else
             {
-                behavior = SpecialBehavior.None;
+                mode = MoveMode.Normal;
             }
-            Outline.MoveSelection(canvas.Layer, dx, dy, behavior);
+            return mode;
         }
 
         protected static XamlUICommand MakeUICommand(string label, KeyboardAccelerator accelerator)

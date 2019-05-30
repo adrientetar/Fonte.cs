@@ -4,20 +4,21 @@
 
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Collections;
+    using Fonte.Data.Utilities;
     using PointType = Data.PointType;
 
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
 
-    public enum SpecialBehavior
+    public enum MoveMode
     {
-        None = 0,
-        // Keep off curves relative position on segment constant
-        InterpolateSegment,
-        // Move on curve along handles path
-        LockHandles
+        Normal = 0,
+        // Maintain control points % position
+        InterpolateCurve,
+        // Don't move control points across handles
+        StaticHandles
     };
 
     class Outline
@@ -51,17 +52,20 @@ namespace Fonte.App.Utilities
         // XXX: impl more
         public static void DeleteSelection(Data.Layer layer, bool breakPaths = false)
         {
-            List<Data.Path> paths;
-            if (breakPaths)
+            using (var group = layer.CreateUndoGroup())
             {
-                paths = DeleteSelection(layer.Paths);
+                List<Data.Path> paths;
+                if (breakPaths)
+                {
+                    paths = DeleteSelection(layer.Paths);
+                }
+                else
+                {
+                    paths = MergeSelection(layer.Paths);
+                }
+                layer.Paths.Clear();
+                layer.Paths.AddRange(paths);
             }
-            else
-            {
-                paths = MergeSelection(layer.Paths);
-            }
-            layer.Paths.Clear();
-            layer.Paths.AddRange(paths);
         }
 
         public static void JoinPaths(Data.Path path, bool atStart, Data.Path otherPath, bool atOtherStart,
@@ -115,52 +119,78 @@ namespace Fonte.App.Utilities
             }
         }
 
-        public static void MoveSelection(Data.Path path, float dx, float dy, SpecialBehavior behavior = SpecialBehavior.None)
+        public static void MoveSelection(Data.Layer layer, float dx, float dy, MoveMode mode = MoveMode.Normal)
+        {
+            // XXX: for multi-level undo, add a PhantomChangeGroup
+            //var group = layer.CreateUndoGroup();
+            foreach (var anchor in layer.Anchors)
+            {
+                if (anchor.Selected)
+                {
+                    anchor.X = RoundToGrid(anchor.X + dx);
+                    anchor.Y = RoundToGrid(anchor.Y + dy);
+                }
+            }
+            foreach (var component in layer.Components)
+            {
+                if (component.Selected)
+                {
+                    var t = component.Transformation;
+                    t.M31 = RoundToGrid(t.M31 + dx);
+                    t.M32 = RoundToGrid(t.M32 + dy);
+                    component.Transformation = t;
+                }
+            }
+            // XXX: add master guidelines
+            foreach (var guideline in layer.Guidelines)
+            {
+                if (guideline.Selected)
+                {
+                    guideline.X = RoundToGrid(guideline.X + dx);
+                    guideline.Y = RoundToGrid(guideline.Y + dy);
+                }
+            }
+            foreach (var path in layer.Paths)
+            {
+                MoveSelection(path, dx, dy, mode);
+            }
+            //group.Dispose();
+        }
+
+        public static void MoveSelection(Data.Path path, float dx, float dy, MoveMode mode = MoveMode.Normal)
         {
             if (path.Points.Count < 2)
             {
                 var lonePoint = path.Points.First();
                 if (lonePoint.Selected)
                 {
-                    lonePoint.X += dx;
-                    lonePoint.Y += dy;
+                    lonePoint.X = RoundToGrid(lonePoint.X + dx);
+                    lonePoint.Y = RoundToGrid(lonePoint.Y + dy);
                 }
                 return;
             }
             // First pass: move
-            Data.Point prevOn = null;
             var prev = path.Points[path.Points.Count - 2];
             var point = path.Points.Last();
             foreach (var next in path.Points)
             {
                 if (point.Selected)
                 {
-                    point.X += dx;
-                    point.Y += dy;
-                }
-                if (behavior != SpecialBehavior.LockHandles)
-                {
-                    if (point.Type != PointType.None)
+                    point.X = RoundToGrid(point.X + dx);
+                    point.Y = RoundToGrid(point.Y + dy);
+
+                    if (point.Type != PointType.None && mode != MoveMode.StaticHandles)
                     {
-                        if (point.Selected)
+                        if (!prev.Selected && prev.Type == PointType.None && point.Type != PointType.Move)
                         {
-                            if (prev.Type == PointType.None && !prev.Selected && point.Type != PointType.Move)
-                            {
-                                prev.X += dx;
-                                prev.Y += dy;
-                            }
-                            if (next.Type == PointType.None && !next.Selected)
-                            {
-                                next.X += dx;
-                                next.Y += dy;
-                            }
+                            prev.X = RoundToGrid(prev.X + dx);
+                            prev.Y = RoundToGrid(prev.Y + dy);
                         }
-                        prevOn = point;
-                    }
-                    if (behavior == SpecialBehavior.InterpolateSegment && next.Type == PointType.Curve)
-                    {
-                        // XXX: next hasn't moved yet
-                        MoveSegmentInterpolate(prevOn, prev, point, next, dx, dy);
+                        if (!next.Selected && next.Type == PointType.None)
+                        {
+                            next.X = RoundToGrid(next.X + dx);
+                            next.Y = RoundToGrid(next.Y + dy);
+                        }
                     }
                 }
                 prev = point;
@@ -172,105 +202,45 @@ namespace Fonte.App.Utilities
             }
 
             // Second pass: project
+            Data.Point prevOn = null;
             foreach (var next in path.Points)
             {
                 var atNode = point.Type != PointType.None &&
                              prev.Type == PointType.None || next.Type == PointType.None;
-                // Slide points
-                if (atNode && behavior == SpecialBehavior.LockHandles)
+
+                if (mode == MoveMode.InterpolateCurve)
                 {
-                    // TODO: make this a function instead of cloning local vars?
-                    var (p1, p2, p3) = (prev, point, next);
-                    if (p2.Selected && p2.Type != PointType.Move)
+                    if (next.Type == PointType.Curve)
                     {
-                        if (p1.Selected || p3.Selected)
-                        {
-                            if (p1.Selected)
-                            {
-                                (p1, p3) = (p3, p1);
-                            }
-                            if (!p1.Selected && p3.Type == PointType.None)
-                            {
-                                VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
-                            }
-                        }
-                        else
-                        {
-                            if (p2.Smooth)
-                            {
-                                VectorProjection(p2, p1.ToVector2(), p3.ToVector2());
-                            }
-                        }
-                    }
-                    else if (p1.Selected != p3.Selected)
-                    {
-                        if (p1.Selected)
-                        {
-                            (p1, p3) = (p3, p1);
-                        }
-                        if (p3.Type == PointType.None)
-                        {
-                            if (p2.Smooth && p2.Type != PointType.Move)
-                            {
-                                VectorProjection(p3, p1.ToVector2(), p2.ToVector2());
-                            }
-                            else
-                            {
-                                var rvec = new Vector2(p3.X - dx, p3.Y - dy);
-                                VectorProjection(p3, p2.ToVector2(), rvec);
-                            }
-                        }
+                        InterpolateCurve(prevOn, prev, point, next, dx, dy);
                     }
                 }
-                // Rotation/projection across smooth onCurve
+                else if (mode == MoveMode.StaticHandles)
+                {
+                    if (atNode)
+                    {
+                        ConstrainStaticHandles(prev, point, next, dx, dy);
+                    }
+                }
+
                 if (atNode && point.Smooth && point.Type != PointType.Move)
                 {
-                    // TODO: make this a function?
-                    var (p1, p2, p3) = (prev, point, next);
-                    if (p2.Selected)
-                    {
-                        if (p1.Type == PointType.None)
-                        {
-                            (p1, p3) = (p3, p1);
-                        }
-                        if (p1.Type != PointType.None)
-                        {
-                            VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
-                        }
-                    }
-                    else if (p1.Selected != p3.Selected)
-                    {
-                        if (p1.Selected)
-                        {
-                            (p1, p3) = (p3, p1);
-                        }
-                        if (p1.Type != PointType.None)
-                        {
-                            VectorProjection(p3, p1.ToVector2(), p2.ToVector2());
-                        }
-                        else if (behavior != SpecialBehavior.LockHandles)
-                        {
-                            VectorRotation(p1, p3.ToVector2(), p2.ToVector2());
-                        }
-                    }
+                    ConstrainSmoothPoint(prev, point, next, mode != MoveMode.StaticHandles);
                 }
                 // --
+                if (point.Type != PointType.None)
+                {
+                    prevOn = point;
+                }
                 prev = point;
                 point = next;
             }
         }
 
-        // TODO: take Vector2 for delta?
-        // XXX: impl more
-        public static void MoveSelection(Data.Layer layer, float dx, float dy, SpecialBehavior behavior = SpecialBehavior.None)
+        public static float RoundToGrid(float value)
         {
-            // XXX: for multi-level undo, add a PhantomChangeGroup
-            //var group = layer.CreateUndoGroup();
-            foreach (var path in layer.Paths)
-            {
-                MoveSelection(path, dx, dy, behavior);
-            }
-            //group.Dispose();
+            // TODO: get rounding info from the app, cache as static value
+            return (float)Math.Round(value);
         }
 
         /**/
@@ -283,7 +253,7 @@ namespace Fonte.App.Utilities
         static List<Data.Path> DeleteSelection(IEnumerable<Data.Path> paths)
         {
             var outPaths = new List<Data.Path>();
-            foreach (var path in Selection.FilterSelection(paths))
+            foreach (var path in Selection.FilterSelection(paths, invert: true))
             {
                 var segmentsList = new List<Data.Segment>(path.Segments);
                 IEnumerable<Data.Segment> iter;
@@ -291,17 +261,15 @@ namespace Fonte.App.Utilities
                       AnyOffCurveSelected(segmentsList.First())
                       ))
                 {
-                    var firstIndex = segmentsList.Count;
-
-                    for (int ix = segmentsList.Count - 1; ix >= 0; --ix)
+                    int index;
+                    for (index = segmentsList.Count - 1; index >= 0; --index)
                     {
-                        firstIndex -= 1;
-                        if (AnyOffCurveSelected(segmentsList[ix]))
+                        if (AnyOffCurveSelected(segmentsList[index]))
                         {
                             break;
                         }
                     }
-                    if (firstIndex == 0)
+                    if (index <= 0)
                     {
                         // None selected, bring on the original path
                         outPaths.Add(path);
@@ -309,8 +277,7 @@ namespace Fonte.App.Utilities
                     }
                     else
                     {
-                        firstIndex += segmentsList.Count;
-                        iter = Iterable.IterAt(segmentsList, firstIndex);
+                        iter = Sequence.IterAt(segmentsList, index);
                     }
                 }
                 else
@@ -328,6 +295,8 @@ namespace Fonte.App.Utilities
                             outPaths.Add(outPath);
                         }
                         outPath = new Data.Path();
+                        outPath.Parent = path.Parent;  // XXX
+
                         var point = segment.OnCurve;
                         point.Smooth = false;
                         point.Type = PointType.Move;
@@ -338,6 +307,7 @@ namespace Fonte.App.Utilities
                         outPath.Points.AddRange(segment.Points);
                     }
                 }
+                outPaths.Add(outPath);
             }
 
             return outPaths;
@@ -355,11 +325,9 @@ namespace Fonte.App.Utilities
                     var segment = segments[ix];
                     if (segment.OnCurve.Selected)
                     {
-                        if (ix == 0 && segment.OnCurve.Type == PointType.Move)
-                        {
-                            forwardMove = true;
-                        }
-                        segments.RemoveAt(ix);
+                        forwardMove = ix == 0 && segment.OnCurve.Type == PointType.Move;
+
+                        segment.Remove();
                     }
                     else if (AnyOffCurveSelected(segment))
                     {
@@ -367,7 +335,7 @@ namespace Fonte.App.Utilities
                     }
                 }
 
-                if (segments.Count > 0)
+                if (path.Points.Count > 0)
                 {
                     if (forwardMove)
                     {
@@ -380,7 +348,81 @@ namespace Fonte.App.Utilities
             return outPaths;
         }
 
-        static void MoveSegmentInterpolate(Data.Point on1, Data.Point off1, Data.Point off2, Data.Point on2, float dx, float dy)
+        static void ConstrainSmoothPoint(Data.Point p1, Data.Point p2, Data.Point p3, bool handleMovement)
+        {
+            if (p2.Selected)
+            {
+                if (p1.Type == PointType.None)
+                {
+                    (p1, p3) = (p3, p1);
+                }
+                if (p1.Type != PointType.None)
+                {
+                    VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
+                }
+            }
+            else if (p1.Selected != p3.Selected)
+            {
+                if (p1.Selected)
+                {
+                    (p1, p3) = (p3, p1);
+                }
+                if (p1.Type != PointType.None)
+                {
+                    VectorProjection(p3, p1.ToVector2(), p2.ToVector2());
+                }
+                else if (handleMovement)
+                {
+                    VectorRotation(p1, p3.ToVector2(), p2.ToVector2());
+                }
+            }
+        }
+
+        static void ConstrainStaticHandles(Data.Point p1, Data.Point p2, Data.Point p3, float dx, float dy)
+        {
+            if (p2.Selected && p2.Type != PointType.Move)
+            {
+                if (p1.Selected || p3.Selected)
+                {
+                    if (p1.Selected)
+                    {
+                        (p1, p3) = (p3, p1);
+                    }
+                    if (!p1.Selected && p3.Type == PointType.None)
+                    {
+                        VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
+                    }
+                }
+                else
+                {
+                    if (p2.Smooth)
+                    {
+                        VectorProjection(p2, p1.ToVector2(), p3.ToVector2());
+                    }
+                }
+            }
+            else if (p1.Selected != p3.Selected)
+            {
+                if (p1.Selected)
+                {
+                    (p1, p3) = (p3, p1);
+                }
+                if (p3.Type == PointType.None)
+                {
+                    if (p2.Smooth && p2.Type != PointType.Move)
+                    {
+                        VectorProjection(p3, p1.ToVector2(), p2.ToVector2());
+                    }
+                    else
+                    {
+                        var rvec = new Vector2(p3.X - dx, p3.Y - dy);
+                        VectorProjection(p3, p2.ToVector2(), rvec);
+                    }
+                }
+            }
+        }
+
+        static void InterpolateCurve(Data.Point on1, Data.Point off1, Data.Point off2, Data.Point on2, float dx, float dy)
         {
             if (on2.Selected != on1.Selected)
             {
@@ -396,13 +438,13 @@ namespace Fonte.App.Utilities
 
                 if (!off1.Selected)
                 {
-                    off1.X = on1.X + factor.X * (off1.X - on1.X);
-                    off1.Y = on1.Y + factor.Y * (off1.Y - on1.Y);
+                    off1.X = RoundToGrid(on1.X + factor.X * (off1.X - on1.X));
+                    off1.Y = RoundToGrid(on1.Y + factor.Y * (off1.Y - on1.Y));
                 }
                 if (!off2.Selected)
                 {
-                    off2.X = on1.X + factor.X * (off2.X - on1.X - sdelta.X);
-                    off2.Y = on1.Y + factor.Y * (off2.Y - on1.Y - sdelta.Y);
+                    off2.X = RoundToGrid(on1.X + factor.X * (off2.X - on1.X - sdelta.X));
+                    off2.Y = RoundToGrid(on1.Y + factor.Y * (off2.Y - on1.Y - sdelta.Y));
                 }
             }
         }
@@ -416,13 +458,13 @@ namespace Fonte.App.Utilities
                 var ap = point.ToVector2() - a;
                 var t = Vector2.Dot(ap, ab) / l2;
 
-                point.X = a.X + t * ab.X;
-                point.Y = a.Y + t * ab.Y;
+                point.X = RoundToGrid(a.X + t * ab.X);
+                point.Y = RoundToGrid(a.Y + t * ab.Y);
             }
             else
             {
-                point.X = a.X;
-                point.Y = a.Y;
+                point.X = RoundToGrid(a.X);
+                point.Y = RoundToGrid(a.Y);
             }
         }
 
@@ -436,8 +478,8 @@ namespace Fonte.App.Utilities
                 var pb_len = (b - p).Length();
                 var t = (ab_len + pb_len) / ab_len;
 
-                point.X = a.X + t * ab.X;
-                point.Y = a.Y + t * ab.Y;
+                point.X = RoundToGrid(a.X + t * ab.X);
+                point.Y = RoundToGrid(a.Y + t * ab.Y);
             }
         }
     }

@@ -215,7 +215,7 @@ namespace Fonte.Data.Geometry
                    (rect.Y + rect.Height >= Y);
         }
 
-        private static Rect CreateEmptyRect()
+        static Rect CreateEmptyRect()
         {
             Rect rect = new Rect
             {

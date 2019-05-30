@@ -15,6 +15,8 @@
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>
         <x:Boolean x:Key="DrawPoints">true</x:Boolean>
+        <x:Boolean x:Key="DrawSelection">true</x:Boolean>
+        <x:Boolean x:Key="DrawSelectionBounds">true</x:Boolean>
         <x:Boolean x:Key="DrawStroke">true</x:Boolean>
 
         <Color x:Key="FillColor">#4DF4F4F4</Color>

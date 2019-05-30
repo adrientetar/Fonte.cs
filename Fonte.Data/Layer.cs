@@ -274,7 +274,7 @@ namespace Fonte.Data
             {
                 if (_closedCanvasPath == null)
                 {
-                    _closedCanvasPath = _collectPaths(path => !path.IsOpen);
+                    _closedCanvasPath = CollectPaths(path => !path.IsOpen);
                 }
                 return _closedCanvasPath;
             }
@@ -317,7 +317,7 @@ namespace Fonte.Data
             {
                 if (_openCanvasPath == null)
                 {
-                    _openCanvasPath = _collectPaths(path => path.IsOpen);
+                    _openCanvasPath = CollectPaths(path => path.IsOpen);
                 }
                 return _openCanvasPath;
             }
@@ -475,9 +475,16 @@ namespace Fonte.Data
             return $"{nameof(Layer)}({name}, {_paths.Count} paths{more})";
         }
 
+        // XXX: impl more
         public void Transform(Matrix3x2 matrix, bool selected = false)
         {
-            throw new NotImplementedException();
+            using (var group = CreateUndoGroup())
+            {
+                foreach (var path in Paths)
+                {
+                    path.Transform(matrix, selected);
+                }
+            }
         }
 
         internal void OnChange(IChange change)
@@ -495,7 +502,7 @@ namespace Fonte.Data
             Parent?.OnChange(change);
         }
 
-        private CanvasGeometry _collectPaths(Func<Path, bool> predicate)
+        CanvasGeometry CollectPaths(Func<Path, bool> predicate)
         {
             var device = CanvasDevice.GetSharedDevice();
             var builder = new CanvasPathBuilder(device);

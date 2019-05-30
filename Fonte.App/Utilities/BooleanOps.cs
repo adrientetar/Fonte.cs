@@ -7,6 +7,7 @@ namespace Fonte.App.Utilities
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
@@ -65,8 +66,6 @@ namespace Fonte.App.Utilities
         }
     }
 
-    // TODO prune duplicate point(s?)
-    // TODO make smooth points
     class GeometrySink : ICanvasPathReceiver
     {
         public List<Data.Path> Paths { get; } = new List<Data.Path>();
@@ -76,29 +75,49 @@ namespace Fonte.App.Utilities
         public void BeginFigure(Vector2 start, CanvasFigureFill figureFill)
         {
             Paths.Add(new Data.Path());
-            Path.Points.Add(new Data.Point(start.X, start.Y, Data.PointType.Move));
+            Path.Points.Add(new Data.Point(
+                Outline.RoundToGrid(start.X),
+                Outline.RoundToGrid(start.Y),
+                Data.PointType.Move));
         }
 
         public void AddArc(Vector2 endPoint, float radiusX, float radiusY, float rotationAngle, CanvasSweepDirection sweepDirection, CanvasArcSize arcSize)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void AddCubicBezier(Vector2 off1, Vector2 off2, Vector2 to)
         {
-            Path.Points.Add(new Data.Point(off1.X, off1.Y));
-            Path.Points.Add(new Data.Point(off2.X, off2.Y));
-            Path.Points.Add(new Data.Point(to.X, to.Y, Data.PointType.Curve));
+            Path.Points.Add(new Data.Point(
+                Outline.RoundToGrid(off1.X),
+                Outline.RoundToGrid(off1.Y)
+                ));
+            Path.Points.Add(new Data.Point(
+                Outline.RoundToGrid(off2.X),
+                Outline.RoundToGrid(off2.Y)
+                ));
+            Path.Points.Add(new Data.Point(
+                Outline.RoundToGrid(to.X),
+                Outline.RoundToGrid(to.Y),
+                Data.PointType.Curve));
         }
 
         public void AddLine(Vector2 to)
         {
-            Path.Points.Add(new Data.Point(to.X, to.Y, Data.PointType.Line));
+            var point = new Data.Point(
+                Outline.RoundToGrid(to.X),
+                Outline.RoundToGrid(to.Y),
+                Data.PointType.Line);
+            var last = Path.Points.Last();
+            if (!(point.X == last.X && point.Y == last.Y))
+            {
+                Path.Points.Add(point);
+            }
         }
 
         public void AddQuadraticBezier(Vector2 controlPoint, Vector2 endPoint)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         public void SetFilledRegionDetermination(CanvasFilledRegionDetermination filledRegionDetermination)
@@ -121,12 +140,39 @@ namespace Fonte.App.Utilities
                     if (first.X == last.X && first.Y == last.Y)
                     {
                         Path.Points.RemoveAt(0);
-                        return;
                     }
                 }
+                if (Path.IsOpen)
+                {
+                    Path.Close();
+                }
 
-                Path.Close();
+                if (Path.Points.Count > 2)
+                {
+                    var prev = Path.Points[Path.Points.Count - 2];
+                    var point = Path.Points[Path.Points.Count - 1];
+                    foreach (var next in Path.Points)
+                    {
+                        if (point.Type != Data.PointType.None &&
+                            (prev.Type == Data.PointType.None || next.Type == Data.PointType.None) &&
+                            IsFlatAngle(prev, point, next))
+                        {
+                            point.Smooth = true;
+                        }
+
+                        prev = point;
+                        point = next;
+                    }
+                }
             }
+        }
+
+        static bool IsFlatAngle(Data.Point p0, Data.Point p1, Data.Point p2, float tol = 0.05f)
+        {
+            var p01 = p1.ToVector2() - p0.ToVector2();
+            var p12 = p2.ToVector2() - p1.ToVector2();
+
+            return Math.Abs(Math.Atan2(p01.Y, p01.X) - Math.Atan2(p12.Y, p12.X)) <= tol;
         }
     }
 }

@@ -176,7 +176,7 @@ namespace System.Collections.ObjectModel
             }
         }
 
-        private void Insert(TKey key, TValue value, bool add)
+        void Insert(TKey key, TValue value, bool add)
         {
             if (key == null) throw new ArgumentNullException("key");
 
@@ -197,7 +197,7 @@ namespace System.Collections.ObjectModel
             }
         }
 
-        private void OnPropertyChanged()
+        void OnPropertyChanged()
         {
             OnPropertyChanged(CountString);
             OnPropertyChanged(IndexerName);
@@ -210,25 +210,25 @@ namespace System.Collections.ObjectModel
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private void OnCollectionChanged()
+        void OnCollectionChanged()
         {
             OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> changedItem)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> changedItem)
         {
             OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItem));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> newItem, KeyValuePair<TKey, TValue> oldItem)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> newItem, KeyValuePair<TKey, TValue> oldItem)
         {
             OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItem, oldItem));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, IList newItems)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, IList newItems)
         {
             OnPropertyChanged();
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems));

@@ -7,6 +7,7 @@ namespace Fonte.App.Delegates
     using Fonte.App.Controls;
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
@@ -127,10 +128,11 @@ namespace Fonte.App.Delegates
                         pos = ClampToNodeOrOrigin(canvas, point, pos);
                     }
 
-                    MoveSelection(
-                        canvas,
+                    Outline.MoveSelection(
+                        canvas.Layer,
                         (float)(pos.X - _origin.X),
-                        (float)(pos.Y - _origin.Y)
+                        (float)(pos.Y - _origin.Y),
+                        GetMoveMode()
                     );
                     _origin = _anchor = pos;
                 }
@@ -203,10 +205,10 @@ namespace Fonte.App.Delegates
             {
                 var path = point.Parent;
                 var index = path.Points.IndexOf(point);
-                var otherPoint = path.Points[(index - 1) % path.Points.Count];
+                var otherPoint = path.Points[Sequence.PreviousIndex(path.Points, index)];
                 if (otherPoint.Type == Data.PointType.None)
                 {
-                    otherPoint = path.Points[(index + 1) % path.Points.Count];
+                    otherPoint = path.Points[Sequence.NextIndex(path.Points, index)];
                 }
                 if (otherPoint.Type != Data.PointType.None)
                 {

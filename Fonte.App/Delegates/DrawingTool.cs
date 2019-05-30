@@ -80,6 +80,10 @@ namespace Fonte.App.Delegates
             {
                 _drawLine = true;
             }
+            else if (e.Key == VirtualKey.Escape && _path != null)
+            {
+                _path = null;
+            }
             else
             {
                 return;

@@ -73,7 +73,7 @@ namespace Fonte.App.Delegates
             {
                 UpdateOnCurveSmoothness(canvas, true);
             }
-            else if (e.Key == VirtualKey.Space && _path != null)
+            else if (e.Key == VirtualKey.Space)
             {
                 _shouldMoveOnCurve = false;
             }
@@ -172,7 +172,9 @@ namespace Fonte.App.Delegates
                     }
                     // In any case, unselect all points (*click*) and enable new point
                     canvas.Layer.ClearSelection();
-                    var point = new Data.Point((float)pos.X, (float)pos.Y, type)
+                    var x = Outline.RoundToGrid((float)pos.X);
+                    var y = Outline.RoundToGrid((float)pos.Y);
+                    var point = new Data.Point(x, y, type)
                     {
                         Selected = true
                     };
@@ -213,14 +215,16 @@ namespace Fonte.App.Delegates
                         if (_path.Points.Count > 1)
                         {
                             var onCurveBefore = _path.Points[_path.Points.Count - 2];
-                            onCurveBefore.X = 2 * selPoint.X - (float)pos.X;
-                            onCurveBefore.Y = 2 * selPoint.Y - (float)pos.Y;
+                            onCurveBefore.X = Outline.RoundToGrid(2 * selPoint.X - (float)pos.X);
+                            onCurveBefore.Y = Outline.RoundToGrid(2 * selPoint.Y - (float)pos.Y);
                         }
                     }
 
                     if (_path.IsOpen)
                     {
-                        var point = new Data.Point((float)pos.X, (float)pos.Y)
+                        var x = Outline.RoundToGrid((float)pos.X);
+                        var y = Outline.RoundToGrid((float)pos.Y);
+                        var point = new Data.Point(x, y)
                         {
                             Selected = true
                         };
@@ -260,28 +264,31 @@ namespace Fonte.App.Delegates
                     {
                         var dx = (float)(pos.X - selPoint.X);
                         var dy = (float)(pos.Y - selPoint.Y);
-                        onCurve.X += dx;
-                        onCurve.Y += dy;
-                        if (_path.Points.Count >= 3)
+                        onCurve.X = Outline.RoundToGrid(onCurve.X + dx);
+                        onCurve.Y = Outline.RoundToGrid(onCurve.Y + dy);
+                        if (onCurveIndex - 1 >= 0)
                         {
                             var prev = _path.Points[onCurveIndex - 1];
                             if (prev.Type == Data.PointType.None)
                             {
-                                prev.X += dx;
-                                prev.Y += dy;
+                                prev.X = Outline.RoundToGrid(prev.X + dx);
+                                prev.Y = Outline.RoundToGrid(prev.Y + dy);
                             }
                         }
-                        var next = _path.Points[onCurveIndex + 1];
-                        if (next.Type == Data.PointType.None)
+                        if (onCurveIndex + 1 < _path.Points.Count)
                         {
-                            next.X += dx;
-                            next.Y += dy;
+                            var next = _path.Points[onCurveIndex + 1];
+                            if (next.Type == Data.PointType.None)
+                            {
+                                next.X = Outline.RoundToGrid(next.X + dx);
+                                next.Y = Outline.RoundToGrid(next.Y + dy);
+                            }
                         }
                     }
                     else
                     {
-                        selPoint.X = (float)pos.X;
-                        selPoint.Y = (float)pos.Y;
+                        selPoint.X = Outline.RoundToGrid((float)pos.X);
+                        selPoint.Y = Outline.RoundToGrid((float)pos.Y);
                         if (_path.IsOpen && _path.Points.Count >= 3 && onCurve.Smooth)
                         {
                             if (onCurve.Type == Data.PointType.Line)
@@ -289,8 +296,8 @@ namespace Fonte.App.Delegates
                                 CoerceSegmentToCurve(_path, onCurve, pos);
                             }
                             var otherSidePoint = _path.Points[_path.Points.Count - 3];
-                            otherSidePoint.X = 2 * onCurve.X - (float)pos.X;
-                            otherSidePoint.Y = 2 * onCurve.Y - (float)pos.Y;
+                            otherSidePoint.X = Outline.RoundToGrid(2 * onCurve.X - (float)pos.X);
+                            otherSidePoint.Y = Outline.RoundToGrid(2 * onCurve.Y - (float)pos.Y);
                         }
                     }
                 }
@@ -316,7 +323,9 @@ namespace Fonte.App.Delegates
             }
         }
 
-        private void CoerceSegmentToCurve(Data.Path path, Data.Point onCurve, Point pos)
+        /**/
+
+        void CoerceSegmentToCurve(Data.Path path, Data.Point onCurve, Point pos)
         {
             var index = _path.Points.IndexOf(onCurve);
             var prevOn = _path.Points[index - 1];
@@ -327,19 +336,17 @@ namespace Fonte.App.Delegates
             if (_path.IsOpen)
             {
                 // Inverse point
-                newPoint = new Data.Point(
-                        2 * onCurve.X - (float)pos.X,
-                        2 * onCurve.Y - (float)pos.Y
-                    );
+                var x = Outline.RoundToGrid(2 * onCurve.X - (float)pos.X);
+                var y = Outline.RoundToGrid(2 * onCurve.Y - (float)pos.Y);
+                newPoint = new Data.Point(x, y);
                 smooth = true;
             }
             else
             {
                 // Closed path, we put the point under the mouse
-                newPoint = new Data.Point(
-                        (float)pos.X,
-                        (float)pos.Y
-                    );
+                var x = Outline.RoundToGrid((float)pos.X);
+                var y = Outline.RoundToGrid((float)pos.Y);
+                newPoint = new Data.Point(x, y);
                 smooth = false;
             }
             _path.Points.Insert(index, newPoint);
@@ -354,11 +361,13 @@ namespace Fonte.App.Delegates
             }
             else
             {
-                var ierpPoint = new Data.Point(
-                        prevOn.X + (float)Math.Round(.35 * (onCurve.X - prevOn.X)),
-                        prevOn.Y + (float)Math.Round(.35 * (onCurve.Y - prevOn.Y))
+                var x = Outline.RoundToGrid(
+                    prevOn.X + (float)Math.Round(.35 * (onCurve.X - prevOn.X))
                     );
-                _path.Points.Insert(index, ierpPoint);
+                var y = Outline.RoundToGrid(
+                    prevOn.Y + (float)Math.Round(.35 * (onCurve.Y - prevOn.Y))
+                    );
+                _path.Points.Insert(index, new Data.Point(x, y));
             }
 
             // Now flag onCurve as curve segment
@@ -366,7 +375,7 @@ namespace Fonte.App.Delegates
             onCurve.Smooth = smooth;
         }
 
-        private Data.Point GetMovingPoint()
+        Data.Point GetMovingPoint()
         {
             var point = _path.Points[_path.Points.Count - 1];
             if (!_path.IsOpen && point.Type == Data.PointType.Curve)
@@ -380,7 +389,7 @@ namespace Fonte.App.Delegates
             return point;
         }
 
-        private Data.Point GetSelectedPoint(DesignCanvas canvas)
+        Data.Point GetSelectedPoint(DesignCanvas canvas)
         {
             var selection = canvas.Layer.Selection;
             if (selection.Count == 1)
@@ -394,7 +403,7 @@ namespace Fonte.App.Delegates
             return null;
         }
 
-        private void UpdateOnCurveSmoothness(DesignCanvas canvas, bool value)
+        void UpdateOnCurveSmoothness(DesignCanvas canvas, bool value)
         {
             if (_path != null && _path.Points.Count >= 2)
             {

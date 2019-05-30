@@ -52,11 +52,11 @@ namespace Fonte.App.Controls
 
             if (Layer != null && !Layer.SelectionBounds.IsEmpty)
             {
-                XPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Left).ToString();
-                YPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Bottom).ToString();
+                XPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Left, 2).ToString();
+                YPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Bottom, 2).ToString();
 
-                XSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Width).ToString();
-                YSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Height).ToString();
+                XSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Width, 2).ToString();
+                YSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Height, 2).ToString();
             }
         }
 
@@ -64,7 +64,7 @@ namespace Fonte.App.Controls
 
         void OnAlignLeftButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => new Vector2(
+            AlignSelectedPaths((path, refBounds) => new Vector2(
                     path.Bounds.Left > refBounds.Left ? refBounds.Left - path.Bounds.Left : 0,
                     0
                 ));
@@ -72,7 +72,7 @@ namespace Fonte.App.Controls
 
         void OnCenterHorzButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => {
+            AlignSelectedPaths((path, refBounds) => {
                     var refXMid = refBounds.Left + Math.Round(.5 * refBounds.Width);
                     var xMid = path.Bounds.Left + Math.Round(.5 * path.Bounds.Width);
                     return new Vector2(
@@ -84,7 +84,7 @@ namespace Fonte.App.Controls
 
         void OnAlignRightButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => new Vector2(
+            AlignSelectedPaths((path, refBounds) => new Vector2(
                     path.Bounds.Right < refBounds.Right ? refBounds.Right - path.Bounds.Right : 0,
                     0
                 ));
@@ -92,7 +92,7 @@ namespace Fonte.App.Controls
 
         void OnAlignTopButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => new Vector2(
+            AlignSelectedPaths((path, refBounds) => new Vector2(
                     0,
                     path.Bounds.Top < refBounds.Top ? refBounds.Top - path.Bounds.Top : 0
                 ));
@@ -100,7 +100,7 @@ namespace Fonte.App.Controls
 
         void OnCenterVertButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => {
+            AlignSelectedPaths((path, refBounds) => {
                     var refYMid = refBounds.Bottom + Math.Round(.5 * refBounds.Height);
                     var yMid = path.Bounds.Bottom + Math.Round(.5 * path.Bounds.Height);
                     return new Vector2(
@@ -112,7 +112,7 @@ namespace Fonte.App.Controls
 
         void OnAlignBottomButtonClick(object sender, RoutedEventArgs e)
         {
-            _alignSelectedPaths((path, refBounds) => new Vector2(
+            AlignSelectedPaths((path, refBounds) => new Vector2(
                     0,
                     path.Bounds.Bottom > refBounds.Bottom ? refBounds.Bottom - path.Bounds.Bottom : 0
                 ));
@@ -120,12 +120,12 @@ namespace Fonte.App.Controls
 
         void OnExcludeButtonClick(object sender, RoutedEventArgs e)
         {
-            _binaryBooleanOp((a, b) => BooleanOps.Exclude(a, b));
+            BinaryBooleanOp((a, b) => BooleanOps.Exclude(a, b));
         }
 
         void OnIntersectButtonClick(object sender, RoutedEventArgs e)
         {
-            _binaryBooleanOp((a, b) => BooleanOps.Intersect(a, b));
+            BinaryBooleanOp((a, b) => BooleanOps.Intersect(a, b));
         }
 
         // TODO skip the no-intersections (same geometry after filtering) case
@@ -157,23 +157,46 @@ namespace Fonte.App.Controls
                 }
 
                 var resultPaths = BooleanOps.Union(usePaths);
-                using (var group = Layer.CreateUndoGroup())
+                if (resultPaths.Count != usePaths.Count)
                 {
-                    Layer.Paths.Clear();
-                    Layer.Paths.AddRange(resultPaths);
-                    Layer.Paths.AddRange(retainPaths);
+                    using (var group = Layer.CreateUndoGroup())
+                    {
+                        Layer.Paths.Clear();
+                        Layer.Paths.AddRange(resultPaths);
+                        Layer.Paths.AddRange(retainPaths);
 
-                    ((App)Application.Current).InvalidateData();
+                        ((App)Application.Current).InvalidateData();
+                    }
                 }
             }
         }
 
         void OnXorButtonClick(object sender, RoutedEventArgs e)
         {
-            _binaryBooleanOp((a, b) => BooleanOps.Xor(a, b));
+            BinaryBooleanOp((a, b) => BooleanOps.Xor(a, b));
         }
 
-        private void _alignSelectedPaths(Func<Data.Path, Rect, Vector2> transformFunc)
+        void OnHorzMirrorButtonClick(object sender, RoutedEventArgs e)
+        {
+            var origin = Origin.GetOrigin(Layer);
+            var matrix = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(2 * origin.X, 0);
+            Layer.Transform(matrix, true);
+
+            ((App)Application.Current).InvalidateData();
+        }
+
+        void OnVertMirrorButtonClick(object sender, RoutedEventArgs e)
+        {
+            var origin = Origin.GetOrigin(Layer);
+            var matrix = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, 2 * origin.Y);
+            Layer.Transform(matrix, true);
+
+            ((App)Application.Current).InvalidateData();
+        }
+
+        /**/
+
+        void AlignSelectedPaths(Func<Data.Path, Rect, Vector2> transformFunc)
         {
             var selectedBounds = new Rect();
             var selectedPaths = new List<Data.Path>();
@@ -202,7 +225,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        private void _binaryBooleanOp(Func<IEnumerable<Data.Path>, IEnumerable<Data.Path>, List<Data.Path>> booleanFunc)
+        void BinaryBooleanOp(Func<IEnumerable<Data.Path>, IEnumerable<Data.Path>, List<Data.Path>> booleanFunc)
         {
             if (Layer != null && Layer.Paths.Count >= 2)
             {
@@ -229,6 +252,7 @@ namespace Fonte.App.Controls
                     }
                     //}
                 }
+                // TODO: consider dropping this behavior, more confusing than useful
                 if (refPath == null)
                 {
                     refPath = usePaths.Last();
@@ -236,13 +260,16 @@ namespace Fonte.App.Controls
                 }
 
                 var resultPaths = booleanFunc(usePaths, new List<Data.Path>() { refPath });
-                using (var group = Layer.CreateUndoGroup())
+                if (resultPaths.Count != usePaths.Count + 1)
                 {
-                    Layer.Paths.Clear();
-                    Layer.Paths.AddRange(resultPaths);
-                    Layer.Paths.AddRange(retainPaths);
+                    using (var group = Layer.CreateUndoGroup())
+                    {
+                        Layer.Paths.Clear();
+                        Layer.Paths.AddRange(resultPaths);
+                        Layer.Paths.AddRange(retainPaths);
 
-                    ((App)Application.Current).InvalidateData();
+                        ((App)Application.Current).InvalidateData();
+                    }
                 }
             }
         }

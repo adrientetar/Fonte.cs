@@ -26,17 +26,16 @@ namespace Fonte.Data.Utilities
                 if (!path.IsOpen && firstSegment.OnCurve.Selected == selValue)
                 {
                     var segmentsList = new List<Segment>(segments);
-                    var firstIndex = 0;
 
-                    for (int ix = segmentsList.Count - 1; ix >= 0; --ix)
+                    int index;
+                    for (index = segmentsList.Count - 1; index >= 0; --index)
                     {
-                        if (segmentsList[ix].OnCurve.Selected != selValue)
+                        if (segmentsList[index].OnCurve.Selected != selValue)
                         {
                             break;
                         }
-                        firstIndex -= 1;
                     }
-                    if (firstIndex == -segmentsList.Count)
+                    if (index <= 0)
                     {
                         // All selected, bring on the original path
                         outPaths.Add(path);
@@ -44,8 +43,7 @@ namespace Fonte.Data.Utilities
                     }
                     else
                     {
-                        firstIndex += segmentsList.Count;
-                        iter = Iterable.IterAt(segmentsList, firstIndex);
+                        iter = Sequence.IterAt(segmentsList, index);
                     }
                 }
                 else
@@ -63,6 +61,11 @@ namespace Fonte.Data.Utilities
                     {
                         if (prevSelected)
                         {
+                            if (invert)
+                            {
+                                // XXX: bad
+                                segment.Points.ForEach(point => point.Parent = outPath);
+                            }
                             outPath._points.AddRange(segment.Points);
                         }
                         else
@@ -71,8 +74,13 @@ namespace Fonte.Data.Utilities
                             outPath = new Path();
                             if (invert)
                             {
-                                outPath.Parent = path.Parent;
                                 point = segment.OnCurve;
+                                // XXX: bad. we're making assumptions about caller.
+                                // here we are reparenting because we know original paths will be trashed
+                                // (Outline.DeleteSelection) where !invert does a no copy work.
+                                // I don't like this, and the delete apis returning a list of paths tbh....
+                                outPath.Parent = path.Parent;
+                                point.Parent = outPath;
                             }
                             else
                             {

@@ -9,6 +9,9 @@ namespace Fonte.App.Controls.SidebarParts
 
     public partial class ButtonPair : UserControl
     {
+        public event RoutedEventHandler LeftClick;
+        public event RoutedEventHandler RightClick;
+
         public static DependencyProperty LeftContentProperty = DependencyProperty.Register(
             "LeftContent", typeof(object), typeof(ButtonPair), null);
 
@@ -27,6 +30,24 @@ namespace Fonte.App.Controls.SidebarParts
             set { SetValue(RightContentProperty, value); }
         }
 
+        public static DependencyProperty LeftToolTipProperty = DependencyProperty.Register(
+            "LeftToolTip", typeof(string), typeof(ButtonPair), null);
+
+        public string LeftToolTip
+        {
+            get => (string)GetValue(LeftToolTipProperty);
+            set { SetValue(LeftToolTipProperty, value); }
+        }
+
+        public static DependencyProperty RightToolTipProperty = DependencyProperty.Register(
+            "RightToolTip", typeof(string), typeof(ButtonPair), null);
+
+        public string RightToolTip
+        {
+            get => (string)GetValue(RightToolTipProperty);
+            set { SetValue(RightToolTipProperty, value); }
+        }
+
         public CornerRadius LeftCornerRadius => new CornerRadius(CornerRadius.TopLeft, 0, 0, CornerRadius.BottomLeft);
 
         public CornerRadius RightCornerRadius => new CornerRadius(0, CornerRadius.TopRight, CornerRadius.BottomRight, 0);
@@ -34,6 +55,16 @@ namespace Fonte.App.Controls.SidebarParts
         public ButtonPair()
         {
             InitializeComponent();
+        }
+
+        void OnLeftButtonClick(object sender, RoutedEventArgs e)
+        {
+            LeftClick.Invoke(sender, e);
+        }
+
+        void OnRightButtonClick(object sender, RoutedEventArgs e)
+        {
+            RightClick.Invoke(sender, e);
         }
     }
 }

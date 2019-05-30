@@ -18,22 +18,22 @@ namespace Fonte.App.Utilities
             if (points.Count < 2)
                 throw new ArgumentException("At least two intermediate points are required");
 
-            var ts = _centripetalParams(points, p0, p3);
-            var (p1, p2) = _findBezierControlPoints(points, p0, p3, ts);
+            var ts = CentripetalParams(points, p0, p3);
+            var (p1, p2) = FindBezierControlPoints(points, p0, p3, ts);
 
-            var splPoints = _bezierInterp(p0, p1, p2, p3, ts);
-            var (sqX, sqY, sqI) = _maxSqDist(points, splPoints);
+            var splPoints = BezierInterp(p0, p1, p2, p3, ts);
+            var (sqX, sqY, sqI) = MaxSqDist(points, splPoints);
 
             var sqDist = Math.Max(sqX, sqY);
 
             var maxIterations = 20;
             while (sqDist > maxSqDist && maxIterations > 0)
             {
-                ts = _reparametrize(points, p0, p1, p2, p3, ts);
-                var (p1n, p2n) = _findBezierControlPoints(points, p0, p3, ts);
+                ts = Reparametrize(points, p0, p1, p2, p3, ts);
+                var (p1n, p2n) = FindBezierControlPoints(points, p0, p3, ts);
 
-                splPoints = _bezierInterp(p0, p1n, p2n, p3, ts);
-                (sqX, sqY, sqI) = _maxSqDist(points, splPoints);
+                splPoints = BezierInterp(p0, p1n, p2n, p3, ts);
+                (sqX, sqY, sqI) = MaxSqDist(points, splPoints);
 
                 var sqDistn = Math.Max(sqX, sqY);
                 if (sqDistn >= sqDist) break;
@@ -46,7 +46,9 @@ namespace Fonte.App.Utilities
             return (p1, p2);
         }
 
-        private static List<Point> _bezierInterp(Point p0, Point p1, Point p2, Point p3, List<double> ts)
+        /**/
+
+        static List<Point> BezierInterp(Point p0, Point p1, Point p2, Point p3, List<double> ts)
         {
             var pts = new List<Point>(ts.Count);
 
@@ -71,7 +73,7 @@ namespace Fonte.App.Utilities
             return pts;
         }
 
-        private static List<double> _centripetalParams(List<Point> points, Point p0, Point p3)
+        static List<double> CentripetalParams(List<Point> points, Point p0, Point p3)
         {
             var result = new List<double>();
             var sum = 0d;
@@ -95,7 +97,7 @@ namespace Fonte.App.Utilities
             return result.Select(v => v / sum).ToList();
         }
 
-        private static Point _bezierAt(Point p0, Point p1, Point p2, Point p3, double t)
+        static Point BezierAt(Point p0, Point p1, Point p2, Point p3, double t)
         {
             var b0 = Math.Pow(1 - t, 3);
             var b1 = 3 * t * Math.Pow(1 - t, 2);
@@ -108,7 +110,7 @@ namespace Fonte.App.Utilities
             );
         }
 
-        private static Point _bezierPrimeAt(Point p0, Point p1, Point p2, Point p3, double t)
+        static Point BezierPrimeAt(Point p0, Point p1, Point p2, Point p3, double t)
         {
             var b0 = 3 * Math.Pow(1 - t, 2);
             var b1 = 6 * t * (1 - t);
@@ -120,7 +122,7 @@ namespace Fonte.App.Utilities
             );
         }
 
-        private static Point _bezierPrimePrimeAt(Point p0, Point p1, Point p2, Point p3, double t)
+        static Point BezierPrimePrimeAt(Point p0, Point p1, Point p2, Point p3, double t)
         {
             var b0 = 6 * (1 - t);
             var b1 = 6 * t;
@@ -131,7 +133,7 @@ namespace Fonte.App.Utilities
             );
         }
 
-        private static ValueTuple<Point, Point> _findBezierControlPoints(List<Point> points, Point p0, Point p3, List<double> ts)
+        static ValueTuple<Point, Point> FindBezierControlPoints(List<Point> points, Point p0, Point p3, List<double> ts)
         {
             Point p1, p2;
 
@@ -177,7 +179,7 @@ namespace Fonte.App.Utilities
             return (p1, p2);
         }
 
-        private static ValueTuple<double, double, int> _maxSqDist(List<Point> pts1, List<Point> pts2)
+        static ValueTuple<double, double, int> MaxSqDist(List<Point> pts1, List<Point> pts2)
         {
             if (pts1.Count != pts2.Count)
                 throw new ArgumentException("Points must be of equal dimension");
@@ -200,7 +202,7 @@ namespace Fonte.App.Utilities
             return (sqMaxx, sqMaxy, ix);
         }
 
-        private static List<double> _reparametrize(List<Point> points, Point p0, Point p1, Point p2, Point p3, List<double> ts)
+        static List<double> Reparametrize(List<Point> points, Point p0, Point p1, Point p2, Point p3, List<double> ts)
         {
             var result = new List<double>();
 
@@ -209,9 +211,9 @@ namespace Fonte.App.Utilities
                 var t = ts[i];
                 var point = points[i];
 
-                var p = _bezierAt(p0, p1, p2, p3, t);
-                var pp = _bezierPrimeAt(p0, p1, p2, p3, t);
-                var ppp = _bezierPrimePrimeAt(p0, p1, p2, p3, t);
+                var p = BezierAt(p0, p1, p2, p3, t);
+                var pp = BezierPrimeAt(p0, p1, p2, p3, t);
+                var ppp = BezierPrimePrimeAt(p0, p1, p2, p3, t);
 
                 var num = (p.X - point.X) * pp.X + (p.Y - point.Y) * pp.Y;
                 var den = Math.Pow(pp.X, 2) + (p.X - point.X) * ppp.X +

@@ -28,6 +28,10 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
+        public Font Parent
+        { get; internal set; }
+
+        [JsonIgnore]
         public bool Selected { get; set; }
 
         [JsonIgnore]

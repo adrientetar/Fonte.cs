@@ -8,6 +8,7 @@ namespace Fonte.Data
     using Fonte.Data.Collections;
     using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
@@ -88,7 +89,7 @@ namespace Fonte.Data
         }
 
         public Layer Parent
-        { get; internal set; }
+        { get; /*internal*/ set; }
 
         /**/
 
@@ -382,7 +383,7 @@ namespace Fonte.Data
                 if (OnCurve.Type == PointType.Curve)
                 {
                     _points.RemoveRange(_index, _count - 1);
-                    var start = _points.First();
+                    var start = _points[_index];
                     start.Smooth = false;
                     start.Type = PointType.Line;
 
@@ -400,7 +401,7 @@ namespace Fonte.Data
                             string.Format("Segment for conversion to {0} needs to be at index 0 ({1})", type, _index));
                     }
                     _points.RemoveRange(_index, _count - 1);
-                    var start = _points.First();
+                    var start = _points[_index];
                     start.Smooth = false;
                     start.Type = PointType.Move;
 
@@ -413,6 +414,11 @@ namespace Fonte.Data
                 throw new InvalidOperationException(
                     string.Format("Cannot convert from {0} to {1}", OnCurve.Type, type));
             }
+        }
+
+        public void Remove()
+        {
+            _points.RemoveRange(_index, _count);
         }
 
         public List<Vector2> IntersectLine(Vector2 p1, Vector2 p2)

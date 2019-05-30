@@ -10,7 +10,7 @@ namespace Fonte.Data.Collections
     using System.Collections.Specialized;
     using System.ComponentModel;
 
-    public class ObserverList<T> : IList<T>, INotifyCollectionChanged
+    public class ObserverList<T> : IList<T>, ICollection, INotifyCollectionChanged
     {
         List<T> List { get; }
 
@@ -101,6 +101,19 @@ namespace Fonte.Data.Collections
 
         #endregion
 
+        #region ICollection Members
+
+        public bool IsSynchronized => false;
+
+        public object SyncRoot => null;
+
+        public void CopyTo(Array array, int index)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
         #region INotifyCollectionChanged Members
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
@@ -174,27 +187,27 @@ namespace Fonte.Data.Collections
             return r;
         }
 
-        private void OnCollectionChanged()
+        void OnCollectionChanged()
         {
             CollectionChanged?.Invoke(this, EventArgsCache.ResetCollectionChanged);
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)
         {
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, item, index));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)
         {
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, IList changedItems, int index)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, IList changedItems, int index)
         {
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems, index));
         }
 
-        private void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems)
         {
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems));
         }

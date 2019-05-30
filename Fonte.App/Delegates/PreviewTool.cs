@@ -14,6 +14,8 @@ namespace Fonte.App.Delegates
         {
             var key = (string)resourceKey;
             if (key == DesignCanvas.DrawPointsKey ||
+                key == DesignCanvas.DrawSelectionKey ||
+                key == DesignCanvas.DrawSelectionBoundsKey ||
                 key == DesignCanvas.DrawStrokeKey)
             {
                 return false;

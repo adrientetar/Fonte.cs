@@ -30,13 +30,21 @@
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Button Content="{x:Bind LeftContent, Mode=OneWay}"
+        <Button Background="{x:Bind Background, Mode=OneWay}"
+                BorderBrush="{x:Bind BorderBrush, Mode=OneWay}"
+                Content="{x:Bind LeftContent, Mode=OneWay}"
                 CornerRadius="{x:Bind LeftCornerRadius, Mode=OneWay}"
-                Template="{StaticResource SimpleButtonTemplate}"/>
-        <Button BorderThickness="0,1,1,1"
+                Template="{StaticResource SimpleButtonTemplate}"
+                ToolTipService.ToolTip="{x:Bind LeftToolTip}"
+                Click="OnLeftButtonClick"/>
+        <Button Background="{x:Bind Background, Mode=OneWay}"
+                BorderBrush="{x:Bind BorderBrush, Mode=OneWay}"
+                BorderThickness="0,1,1,1"
                 Content="{x:Bind RightContent, Mode=OneWay}"
                 CornerRadius="{x:Bind RightCornerRadius, Mode=OneWay}"
                 Template="{StaticResource SimpleButtonTemplate}"
+                ToolTipService.ToolTip="{x:Bind RightToolTip}"
+                Click="OnRightButtonClick"
                 Grid.Column="1"/>
     </Grid>
 </UserControl>

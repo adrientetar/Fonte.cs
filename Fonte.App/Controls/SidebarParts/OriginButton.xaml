@@ -1,0 +1,27 @@
+﻿<Button
+    x:Class="Fonte.App.Controls.SidebarParts.OriginButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Fonte.App.Controls.SidebarParts"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="10"
+    d:DesignWidth="10">
+    <Button.Resources>
+        <ControlTemplate x:Key="ButtonTemplate">
+            <Grid>
+                <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Fill="Transparent"/>
+                <Rectangle x:Name="Root" Width="6" Height="6" RadiusX="1" RadiusY="1" Fill="{TemplateBinding Background}"/>
+            </Grid>
+        </ControlTemplate>
+
+        <Style TargetType="local:OriginButton">
+            <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
+            <Setter Property="ActiveBackground" Value="#0078d7"/>
+            <Setter Property="DefaultBackground" Value="#d8dce3"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="VerticalAlignment" Value="Stretch"/>
+        </Style>
+    </Button.Resources>
+</Button>

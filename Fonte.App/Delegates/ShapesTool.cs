@@ -5,6 +5,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
 
@@ -63,7 +64,13 @@ namespace Fonte.App.Delegates
                     (x1, x2) = (x2, x1);
                 if (y1 > y2)
                     (y1, y2) = (y2, y1);
-                return new Rect(new Point(x1, y1), new Point(x2, y2));
+                return new Rect(new Point(
+                        Outline.RoundToGrid((float)x1),
+                        Outline.RoundToGrid((float)y1)
+                    ), new Point(
+                        Outline.RoundToGrid((float)x2),
+                        Outline.RoundToGrid((float)y2)
+                    ));
             }
         }
 
@@ -110,7 +117,7 @@ namespace Fonte.App.Delegates
             {
                 _originAtCenter = true;
             }
-            else if (e.Key == VirtualKey.Space)
+            else if (e.Key == VirtualKey.Space && _origin.HasValue)
             {
                 _shouldMoveOrigin = true;
             }
@@ -216,20 +223,28 @@ namespace Fonte.App.Delegates
                 {
                     var dx = x2 - x1;
                     var dy = y2 - y1;
+
+                    var dot225dx = Outline.RoundToGrid(.225f * dx);
+                    var dot5dx = Outline.RoundToGrid(.5f * dx);
+                    var dot775dx = Outline.RoundToGrid(.775f * dx);
+                    var dot225dy = Outline.RoundToGrid(.225f * dy);
+                    var dot5dy = Outline.RoundToGrid(.5f * dy);
+                    var dot775dy = Outline.RoundToGrid(.775f * dy);
+
                     path = new Data.Path(
                         new List<Data.Point>() {
-                            new Data.Point(x1 + .225f * dx, y2),
-                            new Data.Point(x1, y1 + .775f * dy),
-                            new Data.Point(x1, y1 + .5f * dy, Data.PointType.Curve, smooth: true),
-                            new Data.Point(x1, y1 + .225f * dy),
-                            new Data.Point(x1 + .225f * dx, y1),
-                            new Data.Point(x1 + .5f * dx, y1, Data.PointType.Curve, smooth: true),
-                            new Data.Point(x1 + .775f * dx, y1),
-                            new Data.Point(x2, y1 + .225f * dy),
-                            new Data.Point(x2, y1 + .5f * dy, Data.PointType.Curve, smooth: true),
-                            new Data.Point(x2, y1 + .775f * dy),
-                            new Data.Point(x1 + .775f * dx, y2),
-                            new Data.Point(x1 + .5f * dx, y2, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1 + dot225dx, y2),
+                            new Data.Point(x1, y1 + dot775dy),
+                            new Data.Point(x1, y1 + dot5dy, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1, y1 + dot225dy),
+                            new Data.Point(x1 + dot225dx, y1),
+                            new Data.Point(x1 + dot5dx, y1, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1 + dot775dx, y1),
+                            new Data.Point(x2, y1 + dot225dy),
+                            new Data.Point(x2, y1 + dot5dy, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x2, y1 + dot775dy),
+                            new Data.Point(x1 + dot775dx, y2),
+                            new Data.Point(x1 + dot5dx, y2, Data.PointType.Curve, smooth: true),
                         }
                     );
                 }
