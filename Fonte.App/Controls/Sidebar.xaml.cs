@@ -11,6 +11,7 @@ namespace Fonte.App.Controls
     using Windows.ApplicationModel;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
+    using Windows.UI.Xaml.Input;
 
     // TODO add a ViewModel
     public partial class Sidebar : UserControl
@@ -24,6 +25,42 @@ namespace Fonte.App.Controls
             set { SetValue(LayerProperty, value); }
         }
 
+        public static DependencyProperty XPositionProperty = DependencyProperty.Register(
+            "XPosition", typeof(string), typeof(Sidebar), null);
+
+        public string XPosition
+        {
+            get => (string)GetValue(XPositionProperty);
+            set { SetValue(XPositionProperty, value); }
+        }
+
+        public static DependencyProperty YPositionProperty = DependencyProperty.Register(
+            "YPosition", typeof(string), typeof(Sidebar), null);
+
+        public string YPosition
+        {
+            get => (string)GetValue(YPositionProperty);
+            set { SetValue(YPositionProperty, value); }
+        }
+
+        public static DependencyProperty XSizeProperty = DependencyProperty.Register(
+            "XSize", typeof(string), typeof(Sidebar), null);
+
+        public string XSize
+        {
+            get => (string)GetValue(XSizeProperty);
+            set { SetValue(XSizeProperty, value); }
+        }
+
+        public static DependencyProperty YSizeProperty = DependencyProperty.Register(
+            "YSize", typeof(string), typeof(Sidebar), null);
+
+        public string YSize
+        {
+            get => (string)GetValue(YSizeProperty);
+            set { SetValue(YSizeProperty, value); }
+        }
+
         public Sidebar()
         {
             InitializeComponent();
@@ -35,6 +72,8 @@ namespace Fonte.App.Controls
                 return;
 
             ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+
+            Origin.SelectedIndexChanged += OnDataRefreshing;
         }
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
@@ -42,21 +81,25 @@ namespace Fonte.App.Controls
             if (DesignMode.DesignMode2Enabled)
                 return;
 
+            Origin.SelectedIndexChanged -= OnDataRefreshing;
+
             ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
         }
 
-        // Rewrite this to be based on properties
         void OnDataRefreshing()
         {
-            XPositionTextBox.Text = YPositionTextBox.Text = XSizeTextBox.Text = YSizeTextBox.Text = string.Empty;
-
             if (Layer != null && !Layer.SelectionBounds.IsEmpty)
             {
-                XPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Left, 2).ToString();
-                YPositionTextBox.Text = Math.Round(Layer.SelectionBounds.Bottom, 2).ToString();
+                var origin = Origin.GetOrigin(Layer);
+                XPosition = Math.Round(origin.X, 2).ToString();
+                YPosition = Math.Round(origin.Y, 2).ToString();
 
-                XSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Width, 2).ToString();
-                YSizeTextBox.Text = Math.Round(Layer.SelectionBounds.Height, 2).ToString();
+                XSize = Math.Round(Layer.SelectionBounds.Width, 2).ToString();
+                YSize = Math.Round(Layer.SelectionBounds.Height, 2).ToString();
+            }
+            else
+            {
+                XPosition = YPosition = XSize = YSize = string.Empty;
             }
         }
 
@@ -192,6 +235,70 @@ namespace Fonte.App.Controls
             Layer.Transform(matrix, true);
 
             ((App)Application.Current).InvalidateData();
+        }
+
+        void OnXPositionChanged(object sender, LosingFocusEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            if (float.TryParse(textBox.Text, out float result))
+            {
+                var dx = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).X;
+                Layer.Transform(Matrix3x2.CreateTranslation(dx, 0), selected: true);
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else
+            {
+                OnDataRefreshing();
+            }
+        }
+
+        void OnYPositionChanged(object sender, LosingFocusEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            if (float.TryParse(textBox.Text, out float result))
+            {
+                var dy = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).Y;
+                Layer.Transform(Matrix3x2.CreateTranslation(0, dy), selected: true);
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else
+            {
+                OnDataRefreshing();
+            }
+        }
+
+        void OnXSizeChanged(object sender, LosingFocusEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            if (Layer.SelectionBounds.Width > 0 && float.TryParse(textBox.Text, out float result))
+            {
+                var wr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Width;
+                Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)), selected: true);
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else
+            {
+                OnDataRefreshing();
+            }
+        }
+
+        void OnYSizeChanged(object sender, LosingFocusEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            if (Layer.SelectionBounds.Height > 0 && float.TryParse(textBox.Text, out float result))
+            {
+                var hr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Height;
+                Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)), selected: true);
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else
+            {
+                OnDataRefreshing();
+            }
         }
 
         /**/

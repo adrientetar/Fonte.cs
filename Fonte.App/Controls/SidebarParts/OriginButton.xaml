@@ -9,17 +9,19 @@
     d:DesignHeight="10"
     d:DesignWidth="10">
     <Button.Resources>
-        <ControlTemplate x:Key="ButtonTemplate">
+        <ControlTemplate x:Key="ButtonTemplate" TargetType="local:OriginButton">
             <Grid>
                 <Rectangle HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Fill="Transparent"/>
-                <Rectangle x:Name="Root" Width="6" Height="6" RadiusX="1" RadiusY="1" Fill="{TemplateBinding Background}"/>
+                <Rectangle x:Name="Root" Width="6" Height="6" RadiusX="1" RadiusY="1"
+                   Fill="{x:Bind Fill, Mode=OneWay}" Stroke="{x:Bind Stroke, Mode=OneWay}"/>
             </Grid>
         </ControlTemplate>
 
         <Style TargetType="local:OriginButton">
             <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
-            <Setter Property="ActiveBackground" Value="#0078d7"/>
-            <Setter Property="DefaultBackground" Value="#d8dce3"/>
+            <Setter Property="Accent" Value="#0078d7"/>
+            <Setter Property="Foreground" Value="#d8dce3"/>
+            <Setter Property="Background" Value="#f4f6f7"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
         </Style>

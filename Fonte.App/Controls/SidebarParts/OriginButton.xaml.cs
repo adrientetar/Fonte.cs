@@ -10,8 +10,17 @@ namespace Fonte.App.Controls.SidebarParts
 
     public partial class OriginButton : Button
     {
+        public static DependencyProperty AccentProperty = DependencyProperty.Register(
+            "Accent", typeof(Brush), typeof(OriginButton), new PropertyMetadata(null, OnUIChanged));
+
+        public Brush Accent
+        {
+            get => (Brush)GetValue(AccentProperty);
+            set { SetValue(AccentProperty, value); }
+        }
+
         public static DependencyProperty IsActiveProperty = DependencyProperty.Register(
-            "IsActive", typeof(bool), typeof(OriginButton), new PropertyMetadata(false, OnActiveChanged));
+            "IsActive", typeof(bool), typeof(OriginButton), new PropertyMetadata(false, OnUIChanged));
 
         public bool IsActive
         {
@@ -19,22 +28,22 @@ namespace Fonte.App.Controls.SidebarParts
             set { SetValue(IsActiveProperty, value); }
         }
 
-        public static DependencyProperty ActiveBackgroundProperty = DependencyProperty.Register(
-            "ActiveBackground", typeof(Brush), typeof(OriginButton), new PropertyMetadata(null, OnActiveChanged));
+        public static DependencyProperty FillProperty = DependencyProperty.Register(
+            "Fill", typeof(Brush), typeof(OriginButton), null);
 
-        public Brush ActiveBackground
+        public Brush Fill
         {
-            get => (Brush)GetValue(ActiveBackgroundProperty);
-            set { SetValue(ActiveBackgroundProperty, value); }
+            get => (Brush)GetValue(FillProperty);
+            set { SetValue(FillProperty, value); }
         }
 
-        public static DependencyProperty DefaultBackgroundProperty = DependencyProperty.Register(
-            "DefaultBackground", typeof(Brush), typeof(OriginButton), new PropertyMetadata(null, OnActiveChanged));
+        public static DependencyProperty StrokeProperty = DependencyProperty.Register(
+            "Stroke", typeof(Brush), typeof(OriginButton), null);
 
-        public Brush DefaultBackground
+        public Brush Stroke
         {
-            get => (Brush)GetValue(DefaultBackgroundProperty);
-            set { SetValue(DefaultBackgroundProperty, value); }
+            get => (Brush)GetValue(StrokeProperty);
+            set { SetValue(StrokeProperty, value); }
         }
 
         public OriginButton()
@@ -42,19 +51,20 @@ namespace Fonte.App.Controls.SidebarParts
             InitializeComponent();
         }
 
-        void OnActiveChanged()
+        void OnUIChanged()
         {
-            Background = IsActive ? ActiveBackground : DefaultBackground;
+            Fill = IsActive ? Accent : Background;
+            Stroke = IsActive ? Accent : Foreground;
         }
 
-        static void OnActiveChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnUIChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            ((OriginButton)sender).OnActiveChanged();
+            ((OriginButton)sender).OnUIChanged();
         }
 
         protected override void OnApplyTemplate()
         {
-            OnActiveChanged();
+            OnUIChanged();
         }
     }
 }
