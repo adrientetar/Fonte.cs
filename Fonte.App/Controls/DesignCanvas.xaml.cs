@@ -260,13 +260,12 @@ namespace Fonte.App.Controls
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
-        public Point GetLocalPosition(PointerRoutedEventArgs e)
+        public Point GetLocalPosition(Point pos)
         {
-            var pos = e.GetCurrentPoint(this).Position;
             return Vector2.Transform(pos.ToVector2(), GetInverseMatrix()).ToPoint();
         }
 
-        public object ItemAt(Point pos, object ignoreItem = null)
+        public object FindItemAt(Point pos, object ignoreItem = null)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var halfSize = 4.0 / Root.ZoomFactor;

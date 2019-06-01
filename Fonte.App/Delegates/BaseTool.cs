@@ -11,6 +11,8 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
 
     using System;
+    using System.Diagnostics;
+    using System.Linq;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
@@ -109,10 +111,10 @@ namespace Fonte.App.Delegates
 
                             if (point.Selected && point.Type != Data.PointType.None)
                             {
-                                var before = path.Points[Sequence.PreviousIndex(path.Points, index)];
+                                var before = Sequence.PreviousItem(path.Points, index);
                                 if (before.Type != Data.PointType.None)
                                 {
-                                    var after = path.Points[Sequence.NextIndex(path.Points, index)];
+                                    var after = Sequence.NextItem(path.Points, index);
                                     if (after.Type != Data.PointType.None)
                                     {
                                         continue;
@@ -142,18 +144,12 @@ namespace Fonte.App.Delegates
                     var index = path.Points.IndexOf(focusPoint);
 
                     var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    int ix;
-                    if (shift.HasFlag(CoreVirtualKeyStates.Down))
-                    {
-                        ix = Sequence.PreviousIndex(path.Points, index);
-                    }
-                    else
-                    {
-                        ix = Sequence.NextIndex(path.Points, index);
-                    }
+                    var point = shift.HasFlag(CoreVirtualKeyStates.Down) ?
+                                Sequence.PreviousItem(path.Points, index) :
+                                Sequence.NextItem(path.Points, index);
 
                     canvas.Layer.ClearSelection();
-                    path.Points[ix].Selected = true;
+                    point.Selected = true;
                 }
             }
             else
@@ -181,7 +177,7 @@ namespace Fonte.App.Delegates
         }
 
         public virtual void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e)
-        {            
+        {
             if (_previousPoint.HasValue)
             {
                 var point = e.GetCurrentPoint(canvas).Position;
@@ -207,13 +203,95 @@ namespace Fonte.App.Delegates
         {
         }
 
+        // TODO: might want to do a model where we return the flyout so subclasses can take base class flyout and change things
         public virtual void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs e)
         {
+            var flyout = new MenuFlyout()
+            {
+                AreOpenCloseAnimationsEnabled = false
+            };
+
+            var pos = e.GetPosition(canvas);
+            var focusItem = canvas.FindItemAt(canvas.GetLocalPosition(pos));
+
+            if (focusItem is Data.Point point)
+            {
+                flyout.Items.Add(new MenuFlyoutItem()
+                {
+                    Command = SetStartPointCommand,
+                    CommandParameter = point
+                });
+                flyout.Items.Add(new MenuFlyoutItem()
+                {
+                    Command = ReversePathCommand,
+                    CommandParameter = point.Parent
+                });
+            }
+            else if (focusItem is Data.Component component)
+            {
+                flyout.Items.Add(new MenuFlyoutItem()
+                {
+                    Command = DecomposeComponentCommand,
+                    CommandParameter = component
+                });
+            }
+            flyout.Items.Add(new MenuFlyoutItem()
+            {
+                Command = ReverseAllPathsCommand,
+                CommandParameter = canvas.Layer
+            });
+
+            flyout.ShowAt(canvas, pos);
+            e.Handled = true;
         }
+
+        /**/
+
+        static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand(
+            "Decompose",
+            (s, e) => {
+                var component = (Data.Component)e.Parameter;
+
+                component.Decompose();
+                ((App)Application.Current).InvalidateData();
+            });
+
+        static XamlUICommand ReverseAllPathsCommand { get; } = MakeUICommand(
+            "Reverse All Paths",
+            (s, e) => {
+                var layer = (Data.Layer)e.Parameter;
+
+                foreach (var path in layer.Paths)
+                {
+                    path.Reverse();
+                }
+                ((App)Application.Current).InvalidateData();
+            });
+
+        static XamlUICommand ReversePathCommand { get; } = MakeUICommand(
+            "Reverse Path",
+            (s, e) => {
+                var path = (Data.Path)e.Parameter;
+
+                path.Reverse();
+                ((App)Application.Current).InvalidateData();
+            });
+
+        static XamlUICommand SetStartPointCommand { get; } = MakeUICommand(
+            "Set As Start Point",
+            (s, e) => {
+                var point = (Data.Point)e.Parameter;
+                var path = point.Parent;
+
+                path.StartAt(path.Points.IndexOf(point));
+                ((App)Application.Current).InvalidateData();
+            });
+
+        /**/
 
         // origin and pos should be in screen coordinates
         // XXX: should we convert internally? tools need to maintain screen pos only for this check ;(
-        public bool CanStartDragging(Point origin, Point pos)
+        protected bool CanStartDragging(Point origin, Point pos)
         {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;
@@ -221,7 +299,7 @@ namespace Fonte.App.Delegates
             return Math.Abs(dx) >= 8 || Math.Abs(dy) >= 9;
         }
 
-        public Point ClampToOrigin(Point origin, Point pos)
+        protected Point ClampToOrigin(Point origin, Point pos)
         {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;
@@ -233,7 +311,7 @@ namespace Fonte.App.Delegates
             return new Point(pos.X, origin.Y);
         }
 
-        public MoveMode GetMoveMode()
+        protected MoveMode GetMoveMode()
         {
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftMenu);
             var windows = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows);
@@ -255,13 +333,17 @@ namespace Fonte.App.Delegates
             return mode;
         }
 
-        protected static XamlUICommand MakeUICommand(string label, KeyboardAccelerator accelerator)
+        protected static XamlUICommand MakeUICommand(string label, TypedEventHandler<XamlUICommand, ExecuteRequestedEventArgs> handler, KeyboardAccelerator accelerator = null)
         {
             var command = new XamlUICommand()
             {
                 Label = label,
             };
-            command.KeyboardAccelerators.Add(accelerator);
+            command.ExecuteRequested += handler;
+            if (accelerator != null)
+            {
+                command.KeyboardAccelerators.Add(accelerator);
+            }
 
             return command;
         }

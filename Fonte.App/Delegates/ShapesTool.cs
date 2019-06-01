@@ -161,10 +161,11 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerPressed(canvas, e);
 
-            if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (ptPoint.Properties.IsLeftButtonPressed)
             {
                 _undoGroup = canvas.Layer.CreateUndoGroup();
-                _origin = _anchor = canvas.GetLocalPosition(e);
+                _origin = _anchor = canvas.GetLocalPosition(ptPoint.Position);
 
                 canvas.Layer.ClearSelection();
                 ((App)Application.Current).InvalidateData();
@@ -177,7 +178,7 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue)
             {
-                var pos = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(e.GetCurrentPoint(canvas).Position);
                 if (_shouldMoveOrigin)
                 {
                     var origin = _origin.Value;
@@ -245,7 +246,7 @@ namespace Fonte.App.Delegates
                     );
                 }
                 canvas.Layer.Paths.Add(path);
-                path.Select();
+                path.IsSelected = true;
 
                 _undoGroup.Dispose();
                 _undoGroup = null;

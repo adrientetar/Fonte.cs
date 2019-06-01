@@ -22,7 +22,7 @@ namespace Fonte.Data.Utilities
             }
         }
 
-        public static int NextIndex(ICollection list, int index)
+        public static T NextItem<T>(IList<T> list, int index)
         {
             Debug.Assert(list.Count > 0);
 
@@ -32,10 +32,10 @@ namespace Fonte.Data.Utilities
                 value -= list.Count;
             }
 
-            return value;
+            return list[value];
         }
 
-        public static int PreviousIndex(ICollection list, int index)
+        public static T PreviousItem<T>(IList<T> list, int index)
         {
             Debug.Assert(list.Count > 0);
 
@@ -45,7 +45,7 @@ namespace Fonte.Data.Utilities
                 value += list.Count;
             }
 
-            return value;
+            return list[value];
         }
     }
 }

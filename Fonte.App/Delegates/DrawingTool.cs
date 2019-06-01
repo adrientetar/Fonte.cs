@@ -27,8 +27,9 @@ namespace Fonte.App.Delegates
 
         public override void OnDisabled(DesignCanvas canvas)
         {
-            _path = null;
+            base.OnDisabled(canvas);
 
+            _path = null;
             if (_points != null)
             {
                 _points.Clear();
@@ -107,9 +108,10 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerPressed(canvas, e);
 
-            if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(ptPoint.Position);
 
                 if (_path != null)
                 {
@@ -155,9 +157,10 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerMoved(canvas, e);
 
-            if (_path != null && !e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (_path != null && !ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(ptPoint.Position);
 
                 if (_points.Count >= 2)
                 {

@@ -98,7 +98,7 @@ namespace Fonte.App
                 if (!path.IsSelected)
                 {
                     pathsSelected = false;
-                    path.Select();
+                    path.IsSelected = true;
                 }
             }
             if (pathsSelected)

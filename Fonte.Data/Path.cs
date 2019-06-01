@@ -174,6 +174,13 @@ namespace Fonte.Data
                 }
                 return true;
             }
+            set
+            {
+                foreach (var point in Points)
+                {
+                    point.Selected = value;
+                }
+            }
         }
 
         public IEnumerable<Segment> Segments
@@ -212,10 +219,13 @@ namespace Fonte.Data
         {
             if (Points.Count > 0 && IsOpen)
             {
-                var point = Points.PopAt(0);
-                Points.Add(point);
-                point.Smooth = false;
-                point.Type = PointType.Line;
+                using (var group = Parent?.CreateUndoGroup())
+                {
+                    var point = Points.PopAt(0);
+                    Points.Add(point);
+                    point.Smooth = false;
+                    point.Type = PointType.Line;
+                }
             }
         }
 
@@ -223,37 +233,32 @@ namespace Fonte.Data
         {
             if (Points.Count > 0)
             {
-                var start = Points[0];
-                var type = start.Type;
-                if (type != PointType.Move)
+                using (var group = Parent?.CreateUndoGroup())
                 {
-                    var pivot = Points.Pop();
-                    Points.Reverse();
-                    Points.Add(pivot);
-                    type = pivot.Type;
-                }
-                else
-                {
-                    Points.Reverse();
-                }
-
-                foreach (var point in Points)
-                {
-                    if (point.Type != PointType.None)
+                    var start = Points[0];
+                    var type = start.Type;
+                    if (type != PointType.Move)
                     {
-                        var pType = point.Type;
-                        point.Type = type;
-                        type = pType;
+                        var pivot = Points.Pop();
+                        Points.Reverse();
+                        Points.Add(pivot);
+                        type = pivot.Type;
+                    }
+                    else
+                    {
+                        Points.Reverse();
+                    }
+
+                    foreach (var point in Points)
+                    {
+                        if (point.Type != PointType.None)
+                        {
+                            var pType = point.Type;
+                            point.Type = type;
+                            type = pType;
+                        }
                     }
                 }
-            }
-        }
-
-        public void Select(bool value = true)
-        {
-            foreach (var point in Points)
-            {
-                point.Selected = value;
             }
         }
 
@@ -265,13 +270,16 @@ namespace Fonte.Data
             }
             if (Points.Count - index + 1 != 0)
             {
-                var end = Points.GetRange(0, index + 1);
-                if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
+                using (var group = Parent?.CreateUndoGroup())
                 {
-                    throw new InvalidOperationException($"Index {index} breaks a segment");
+                    var end = Points.GetRange(0, index + 1);
+                    if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
+                    {
+                        throw new InvalidOperationException($"Index {index} breaks a segment");
+                    }
+                    Points.RemoveRange(0, index + 1);
+                    Points.AddRange(end);
                 }
-                Points.RemoveRange(0, index + 1);
-                Points.AddRange(end);
             }
         }
 

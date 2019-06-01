@@ -221,8 +221,7 @@ namespace Fonte.App.Controls
 
         void OnHorzMirrorButtonClick(object sender, RoutedEventArgs e)
         {
-            var origin = Origin.GetOrigin(Layer);
-            var matrix = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(2 * origin.X, 0);
+            var matrix = Matrix3x2.CreateScale(-1, 1, Origin.GetOrigin(Layer));
             Layer.Transform(matrix, Layer.Selection.Count > 0);
 
             ((App)Application.Current).InvalidateData();
@@ -230,8 +229,7 @@ namespace Fonte.App.Controls
 
         void OnVertMirrorButtonClick(object sender, RoutedEventArgs e)
         {
-            var origin = Origin.GetOrigin(Layer);
-            var matrix = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, 2 * origin.Y);
+            var matrix = Matrix3x2.CreateScale(1, -1, Origin.GetOrigin(Layer));
             Layer.Transform(matrix, Layer.Selection.Count > 0);
 
             ((App)Application.Current).InvalidateData();
@@ -307,15 +305,17 @@ namespace Fonte.App.Controls
         {
             var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
             var result = float.Parse(RotationTextBox.Text);
-            var rad = result * (float)Math.PI / 180 * sign;
-
-            Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
-                            selected: Layer.Selection.Count > 0);
-
-            ((App)Application.Current).InvalidateData();
-
-            // TODO: else restore oldValue
+            // TODO: if incorrect restore oldValue
             // -- actually the value should be validated/restored on textbox input, not here
+
+            if (result != 0f)
+            {
+                var rad = result * (float)Math.PI / 180 * sign;
+                Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
+                                selected: Layer.Selection.Count > 0);
+
+                ((App)Application.Current).InvalidateData();
+            }
         }
 
         void OnScaleButtonClick(object sender, RoutedEventArgs e)
@@ -326,22 +326,28 @@ namespace Fonte.App.Controls
                          1f / (1 - sign * .01f * float.Parse(YScaleTextBox.Text)) :
                          xScale;
 
-            Layer.Transform(Matrix3x2.CreateScale(xScale, yScale, Origin.GetOrigin(Layer)),
-                            selected: Layer.Selection.Count > 0);
+            if (xScale != 1f || yScale != 1f)
+            {
+                Layer.Transform(Matrix3x2.CreateScale(xScale, yScale, Origin.GetOrigin(Layer)),
+                                selected: Layer.Selection.Count > 0);
 
-            ((App)Application.Current).InvalidateData();
+                ((App)Application.Current).InvalidateData();
+            }
         }
 
         void OnSkewButtonClick(object sender, RoutedEventArgs e)
         {
             var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
-
             var result = float.Parse(SkewTextBox.Text);
-            var rad = result * (float)Math.PI / 180 * sign;
-            Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
-                            selected: Layer.Selection.Count > 0);
 
-            ((App)Application.Current).InvalidateData();
+            if (result != 0)
+            {
+                var rad = result * (float)Math.PI / 180 * sign;
+                Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
+                                selected: Layer.Selection.Count > 0);
+
+                ((App)Application.Current).InvalidateData();
+            }
         }
 
         /**/

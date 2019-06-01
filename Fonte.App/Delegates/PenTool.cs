@@ -29,6 +29,8 @@ namespace Fonte.App.Delegates
 
         public override void OnDisabled(DesignCanvas canvas)
         {
+            base.OnDisabled(canvas);
+
             ObserverList<Data.Point> points;
             try
             {
@@ -90,10 +92,11 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerPressed(canvas, e);
 
-            if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(e);
-                var mouseItem = canvas.ItemAt(pos);
+                var pos = canvas.GetLocalPosition(ptPoint.Position);
+                var mouseItem = canvas.FindItemAt(pos);
                 var selPoint = GetSelectedPoint(canvas);
 
                 _undoGroup = canvas.Layer.CreateUndoGroup();
@@ -119,7 +122,7 @@ namespace Fonte.App.Delegates
                             Outline.JoinPaths(selPath, selPoints[0] == selPoint,
                                               mousePath, mousePath.Points[0] == mousePoint);
                             _path = selPath;
-                            _screenOrigin = e.GetCurrentPoint(canvas).Position;
+                            _screenOrigin = ptPoint.Position;
                         }
 
                     }
@@ -179,7 +182,7 @@ namespace Fonte.App.Delegates
                         Selected = true
                     };
                     points.Add(point);
-                    _screenOrigin = e.GetCurrentPoint(canvas).Position;
+                    _screenOrigin = ptPoint.Position;
                 }
 
                 ((App)Application.Current).InvalidateData();
@@ -190,13 +193,14 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerMoved(canvas, e);
 
-            if (_path != null && e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (_path != null && ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint();
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
-                    if (!CanStartDragging(_screenOrigin.Value, e.GetCurrentPoint(canvas).Position))
+                    if (!CanStartDragging(_screenOrigin.Value, ptPoint.Position))
                     {
                         return;
                     }

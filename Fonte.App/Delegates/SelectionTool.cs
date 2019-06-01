@@ -11,9 +11,7 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
-    using System;
     using System.Diagnostics;
-    using System.Linq;
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
@@ -25,11 +23,13 @@ namespace Fonte.App.Delegates
 
     public class SelectionTool : BaseTool
     {
+        private Point _origin = EmptyPoint;
         private Point _anchor;
         private object _mouseItem;
-        private ValueTuple<CanvasGeometry, CanvasGeometry> _oldPaths;
-        private Point _origin;
+        private (CanvasGeometry, CanvasGeometry) _oldPaths;
         private IChangeGroup _undoGroup;
+
+        static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
 
         enum ActionType
         {
@@ -46,7 +46,7 @@ namespace Fonte.App.Delegates
                 {
                     return ActionType.DraggingPoint;
                 }
-                else if (_anchor != _origin)
+                else if (_origin != EmptyPoint)
                 {
                     return ActionType.DraggingRect;
                 }
@@ -59,6 +59,7 @@ namespace Fonte.App.Delegates
             if (CurrentAction == ActionType.DraggingPoint)
             {
                 // to parametrize this, could do a GetResource(key) that uses App.Resources[key]
+                // or just use FindResource, given that DesignCanvas takes on App's MergedDictionaries
                 var color = Color.FromArgb(255, 210, 210, 210);
                 ds.DrawGeometry(_oldPaths.Item1, color, strokeWidth: rescale);
                 ds.DrawGeometry(_oldPaths.Item2, color, strokeWidth: rescale);
@@ -73,10 +74,11 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerPressed(canvas, e);
 
-            if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                _origin = _anchor = canvas.GetLocalPosition(e);
-                _mouseItem = canvas.ItemAt(_origin);
+                _origin = _anchor = canvas.GetLocalPosition(ptPoint.Position);
+                _mouseItem = canvas.FindItemAt(_origin);
 
                 if (_mouseItem is Data.Point point)
                 {
@@ -104,6 +106,8 @@ namespace Fonte.App.Delegates
                 else
                 {
                     canvas.Layer.ClearSelection();
+
+                    Debug.Assert(CurrentAction == ActionType.DraggingRect);
                 }
                 ((App)Application.Current).InvalidateData();
             }
@@ -113,9 +117,13 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerMoved(canvas, e);
 
-            if (e.GetCurrentPoint(canvas).Properties.IsLeftButtonPressed)
+            if (CurrentAction == ActionType.None)
+                return;
+
+            var ptPoint = e.GetCurrentPoint(canvas);
+            if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(e);
+                var pos = canvas.GetLocalPosition(ptPoint.Position);
 
                 if (_mouseItem is Data.Point point)
                 {
@@ -150,7 +158,7 @@ namespace Fonte.App.Delegates
 
             if (CurrentAction == ActionType.DraggingPoint)
             {
-                TryJoinPath(canvas, canvas.GetLocalPosition(e));
+                TryJoinPath(canvas, canvas.GetLocalPosition(e.GetCurrentPoint(canvas).Position));
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
@@ -165,31 +173,17 @@ namespace Fonte.App.Delegates
                         point.Selected = rect.Contains(point.ToVector2().ToPoint());
                     }
                 }
-
-                _anchor = _origin;
+            }
+            else
+            {
+                return;
             }
 
             _mouseItem = null;
+            _origin = EmptyPoint;
             ((App)Application.Current).InvalidateData();
 
             Debug.Assert(CurrentAction == ActionType.None);
-        }
-
-        public override void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs e)
-        {
-#if DEBUG
-            var flyout = new MenuFlyout();
-
-            flyout.Items.Add(new MenuFlyoutItem
-            {
-                Text = "Hello World!",
-                Icon = new FontIcon() { Glyph = "\ue76e" }
-            });
-
-            flyout.ShowAt(canvas, e.GetPosition(canvas));
-
-            e.Handled = true;
-#endif
         }
 
         /**/
@@ -202,10 +196,10 @@ namespace Fonte.App.Delegates
             {
                 var path = point.Parent;
                 var index = path.Points.IndexOf(point);
-                var otherPoint = path.Points[Sequence.PreviousIndex(path.Points, index)];
+                var otherPoint = Sequence.PreviousItem(path.Points, index);
                 if (otherPoint.Type == Data.PointType.None)
                 {
-                    otherPoint = path.Points[Sequence.NextIndex(path.Points, index)];
+                    otherPoint = Sequence.NextItem(path.Points, index);
                 }
                 if (otherPoint.Type != Data.PointType.None)
                 {
@@ -219,7 +213,7 @@ namespace Fonte.App.Delegates
         {
             if (_mouseItem is Data.Point point && Is.AtOpenBoundary(point))
             {
-                var otherItem = canvas.ItemAt(pos, ignoreItem: point);
+                var otherItem = canvas.FindItemAt(pos, ignoreItem: point);
                 if (otherItem is Data.Point otherPoint && Is.AtOpenBoundary(otherPoint))
                 {
                     Outline.JoinPaths(point.Parent,

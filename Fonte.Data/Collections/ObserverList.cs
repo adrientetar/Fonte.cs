@@ -10,7 +10,7 @@ namespace Fonte.Data.Collections
     using System.Collections.Specialized;
     using System.ComponentModel;
 
-    public class ObserverList<T> : IList<T>, ICollection, INotifyCollectionChanged
+    public class ObserverList<T> : IList<T>, INotifyCollectionChanged
     {
         List<T> List { get; }
 
@@ -98,19 +98,6 @@ namespace Fonte.Data.Collections
         public int Count => List.Count;
 
         public bool IsReadOnly => ((IList)List).IsReadOnly;
-
-        #endregion
-
-        #region ICollection Members
-
-        public bool IsSynchronized => false;
-
-        public object SyncRoot => null;
-
-        public void CopyTo(Array array, int index)
-        {
-            throw new NotImplementedException();
-        }
 
         #endregion
 
