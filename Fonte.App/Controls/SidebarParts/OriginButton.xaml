@@ -20,7 +20,7 @@
         <Style TargetType="local:OriginButton">
             <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
             <Setter Property="Accent" Value="#0078d7"/>
-            <Setter Property="Foreground" Value="#d8dce3"/>
+            <Setter Property="Foreground" Value="#cacfd9"/>
             <Setter Property="Background" Value="#f4f6f7"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>

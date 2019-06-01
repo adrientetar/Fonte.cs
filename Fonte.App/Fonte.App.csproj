@@ -119,6 +119,7 @@
     <Compile Include="Controls\Toolbar.xaml.cs">
       <DependentUpon>Toolbar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\StringToBooleanConverter.cs" />
     <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
     <Compile Include="Delegates\PenTool.cs" />

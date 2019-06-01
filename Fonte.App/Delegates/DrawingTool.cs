@@ -22,13 +22,8 @@ namespace Fonte.App.Delegates
     {
         private bool _drawLine;
         private Data.Path _path;
-        private List<Point> _points;
+        private List<Point> _points = new List<Point>();
         Point _p1, _p2;
-
-        public DrawingTool()
-        {
-            _points = new List<Point>();
-        }
 
         public override void OnDisabled(DesignCanvas canvas)
         {

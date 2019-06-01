@@ -2,6 +2,7 @@
     x:Class="Fonte.App.Controls.Sidebar"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:Fonte.App.Converters"
     xmlns:local="using:Fonte.App.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -17,10 +18,14 @@
                 <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <converters:StringToBooleanConverter x:Key="StringToBooleanConverterKey"/>
+
             <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent"/>
             <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="Transparent"/>
             <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="White"/>
             <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource BorderColor}"/>
+            <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#f5f4f7"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource BorderColor}"/>
 
             <Style TargetType="sidebarparts:ButtonPair">
                 <Setter Property="Background" Value="White"/>
@@ -50,12 +55,6 @@
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
             </Style>
 
-            <Style x:Key="FlatButtonPairStyle" TargetType="sidebarparts:ButtonPair">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderBrush" Value="Transparent"/>
-                <Setter Property="Height" Value="26"/>
-                <Setter Property="Width" Value="60"/>
-            </Style>
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -171,35 +170,45 @@
             </Grid.ColumnDefinitions>
 
             <sidebarparts:OriginControl x:Name="Origin" Margin="4" Grid.Column="1"/>
-            <sidebarparts:ButtonPair LeftClick="OnHorzMirrorButtonClick"
-                                     LeftToolTip="Mirror horizontally"
-                                     RightClick="OnVertMirrorButtonClick"
-                                     RightToolTip="Mirror vertically"
-                                     Style="{StaticResource FlatButtonPairStyle}"
-                                     Grid.Column="2">
-                <sidebarparts:ButtonPair.LeftContent>
+            <Grid Grid.Column="2" Margin="4" Padding="1,0,1,0">
+                <Grid.Resources>
+                    <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+                </Grid.Resources>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <Button Click="OnHorzMirrorButtonClick"
+                        ToolTipService.ToolTip="Mirror horizontally">
                     <Grid>
                         <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M2,4.5 l3.5,3 l-3.5,3 Z"/>
                         <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M14,4.5 l-3.5,3 l3.5,3 Z"/>
                         <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M8,2 v11"/>
                     </Grid>
-                </sidebarparts:ButtonPair.LeftContent>
-                <sidebarparts:ButtonPair.RightContent>
+                </Button>
+                <Button Click="OnVertMirrorButtonClick"
+                        ToolTipService.ToolTip="Mirror vertically"
+                        Grid.Column="1">
                     <Grid>
                         <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M4.5,1.5 l3,3.5 l3,-3.5 Z"/>
                         <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M4.5,13.5 l3,-3.5 l3,3.5 Z"/>
                         <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M2,7.5 h11"/>
                     </Grid>
-                </sidebarparts:ButtonPair.RightContent>
-            </sidebarparts:ButtonPair>
+                </Button>
+            </Grid>
 
             <TextBlock Text="Position" Grid.Row="1"/>
-            <TextBox Text="{x:Bind XPosition, Mode=OneWay}" LosingFocus="OnXPositionChanged" Grid.Row="1" Grid.Column="1"/>
-            <TextBox Text="{x:Bind YPosition, Mode=OneWay}" LosingFocus="OnYPositionChanged" Grid.Row="1" Grid.Column="2"/>
+            <TextBox IsEnabled="{x:Bind XPosition, Converter={StaticResource StringToBooleanConverterKey}, Mode=OneWay}"
+                     Text="{x:Bind XPosition, Mode=OneWay}" LosingFocus="OnXPositionChanged" Grid.Row="1" Grid.Column="1"/>
+            <TextBox IsEnabled="{x:Bind YPosition, Converter={StaticResource StringToBooleanConverterKey}, Mode=OneWay}"
+                     Text="{x:Bind YPosition, Mode=OneWay}" LosingFocus="OnYPositionChanged" Grid.Row="1" Grid.Column="2"/>
 
             <TextBlock Text="Size" Grid.Row="2"/>
-            <TextBox Text="{x:Bind XSize, Mode=OneWay}" LosingFocus="OnXSizeChanged" Grid.Row="2" Grid.Column="1"/>
-            <TextBox Text="{x:Bind YSize, Mode=OneWay}" LosingFocus="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
+            <TextBox IsEnabled="{x:Bind XSize, Converter={StaticResource StringToBooleanConverterKey}, Mode=OneWay}"
+                     Text="{x:Bind XSize, Mode=OneWay}" LosingFocus="OnXSizeChanged" Grid.Row="2" Grid.Column="1"/>
+            <TextBox IsEnabled="{x:Bind YSize, Converter={StaticResource StringToBooleanConverterKey}, Mode=OneWay}"
+                     Text="{x:Bind YSize, Mode=OneWay}" LosingFocus="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
         </Grid>
         <Grid Padding="4" Background="{StaticResource AltBackgroundColor}" BorderBrush="{StaticResource SpacingColor}" BorderThickness="0,1,0,1" Grid.Row="4">
             <TextBlock Margin="4,1,4,1" Padding="0" Text="Transform"/>
@@ -217,8 +226,10 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Scale"/>
-            <TextBox x:Name="XScaleTextBox" Grid.Column="1"/>
-            <sidebarparts:ButtonPair Grid.Column="2">
+            <TextBox x:Name="XScaleTextBox" Text="2" Grid.Column="1"/>
+            <sidebarparts:ButtonPair LeftClick="OnScaleButtonClick"
+                                     RightClick="OnScaleButtonClick"
+                                     Grid.Column="2">
                 <sidebarparts:ButtonPair.LeftContent>
                     <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
                 </sidebarparts:ButtonPair.LeftContent>
@@ -227,11 +238,13 @@
                 </sidebarparts:ButtonPair.RightContent>
             </sidebarparts:ButtonPair>
 
-            <TextBox x:Name="YScaleTextBox" Grid.Row="1" Grid.Column="1"/>
+            <TextBox x:Name="YScaleTextBox" Text="2" Grid.Row="1" Grid.Column="1"/>
 
             <TextBlock Text="Rotation" Grid.Row="2"/>
-            <TextBox x:Name="RotationTextBox" Grid.Row="2" Grid.Column="1"/>
-            <sidebarparts:ButtonPair Grid.Row="2" Grid.Column="2">
+            <TextBox x:Name="RotationTextBox" Text="40" Grid.Row="2" Grid.Column="1"/>
+            <sidebarparts:ButtonPair x:Name="RotationButtons"
+                                     LeftClick="OnRotationButtonClick" RightClick="OnRotationButtonClick"
+                                     Grid.Row="2" Grid.Column="2">
                 <sidebarparts:ButtonPair.LeftContent>
                     <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
                 </sidebarparts:ButtonPair.LeftContent>
@@ -241,8 +254,10 @@
             </sidebarparts:ButtonPair>
 
             <TextBlock Text="Skew" Grid.Row="3"/>
-            <TextBox x:Name="SkewTextBox" Grid.Row="3" Grid.Column="1"/>
-            <sidebarparts:ButtonPair Grid.Row="3" Grid.Column="2">
+            <TextBox x:Name="SkewTextBox" Text="6" Grid.Row="3" Grid.Column="1"/>
+            <sidebarparts:ButtonPair LeftClick="OnSkewButtonClick"
+                                     RightClick="OnSkewButtonClick"
+                                     Grid.Row="3" Grid.Column="2">
                 <sidebarparts:ButtonPair.LeftContent>
                     <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
                 </sidebarparts:ButtonPair.LeftContent>

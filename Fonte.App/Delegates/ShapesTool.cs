@@ -74,10 +74,6 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public ShapesTool()
-        {
-        }
-
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (_origin.HasValue)

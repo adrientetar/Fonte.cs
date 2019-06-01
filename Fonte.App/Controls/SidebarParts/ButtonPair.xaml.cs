@@ -59,12 +59,12 @@ namespace Fonte.App.Controls.SidebarParts
 
         void OnLeftButtonClick(object sender, RoutedEventArgs e)
         {
-            LeftClick?.Invoke(sender, e);
+            LeftClick?.Invoke(this, e);
         }
 
         void OnRightButtonClick(object sender, RoutedEventArgs e)
         {
-            RightClick?.Invoke(sender, e);
+            RightClick?.Invoke(this, e);
         }
     }
 }

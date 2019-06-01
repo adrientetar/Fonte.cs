@@ -11,7 +11,6 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
 
     using System;
-    using System.Collections;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
@@ -25,10 +24,6 @@ namespace Fonte.App.Delegates
         private Point? _previousPoint;
 
         public virtual CoreCursor Cursor { get; } = new CoreCursor(CoreCursorType.Arrow, 0);
-
-        public BaseTool()
-        {
-        }
 
         public virtual object FindResource(DesignCanvas canvas, object resourceKey)
         {

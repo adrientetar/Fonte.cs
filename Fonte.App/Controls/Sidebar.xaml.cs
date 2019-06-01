@@ -223,7 +223,7 @@ namespace Fonte.App.Controls
         {
             var origin = Origin.GetOrigin(Layer);
             var matrix = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(2 * origin.X, 0);
-            Layer.Transform(matrix, true);
+            Layer.Transform(matrix, Layer.Selection.Count > 0);
 
             ((App)Application.Current).InvalidateData();
         }
@@ -232,7 +232,7 @@ namespace Fonte.App.Controls
         {
             var origin = Origin.GetOrigin(Layer);
             var matrix = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, 2 * origin.Y);
-            Layer.Transform(matrix, true);
+            Layer.Transform(matrix, Layer.Selection.Count > 0);
 
             ((App)Application.Current).InvalidateData();
         }
@@ -275,7 +275,8 @@ namespace Fonte.App.Controls
             if (Layer.SelectionBounds.Width > 0 && float.TryParse(textBox.Text, out float result))
             {
                 var wr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Width;
-                Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)), selected: true);
+                Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
+                                selected: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -291,7 +292,8 @@ namespace Fonte.App.Controls
             if (Layer.SelectionBounds.Height > 0 && float.TryParse(textBox.Text, out float result))
             {
                 var hr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Height;
-                Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)), selected: true);
+                Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
+                                selected: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -299,6 +301,47 @@ namespace Fonte.App.Controls
             {
                 OnDataRefreshing();
             }
+        }
+
+        void OnRotationButtonClick(object sender, RoutedEventArgs e)
+        {
+            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
+            var result = float.Parse(RotationTextBox.Text);
+            var rad = result * (float)Math.PI / 180 * sign;
+
+            Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
+                            selected: Layer.Selection.Count > 0);
+
+            ((App)Application.Current).InvalidateData();
+
+            // TODO: else restore oldValue
+            // -- actually the value should be validated/restored on textbox input, not here
+        }
+
+        void OnScaleButtonClick(object sender, RoutedEventArgs e)
+        {
+            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
+            var xScale = 1f / (1 - sign * .01f * float.Parse(XScaleTextBox.Text));
+            var yScale = YScaleTextBox.IsEnabled ?
+                         1f / (1 - sign * .01f * float.Parse(YScaleTextBox.Text)) :
+                         xScale;
+
+            Layer.Transform(Matrix3x2.CreateScale(xScale, yScale, Origin.GetOrigin(Layer)),
+                            selected: Layer.Selection.Count > 0);
+
+            ((App)Application.Current).InvalidateData();
+        }
+
+        void OnSkewButtonClick(object sender, RoutedEventArgs e)
+        {
+            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
+
+            var result = float.Parse(SkewTextBox.Text);
+            var rad = result * (float)Math.PI / 180 * sign;
+            Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
+                            selected: Layer.Selection.Count > 0);
+
+            ((App)Application.Current).InvalidateData();
         }
 
         /**/

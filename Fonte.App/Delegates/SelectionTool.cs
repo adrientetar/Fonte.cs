@@ -54,14 +54,11 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public SelectionTool()
-        {
-        }
-
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (CurrentAction == ActionType.DraggingPoint)
             {
+                // to parametrize this, could do a GetResource(key) that uses App.Resources[key]
                 var color = Color.FromArgb(255, 210, 210, 210);
                 ds.DrawGeometry(_oldPaths.Item1, color, strokeWidth: rescale);
                 ds.DrawGeometry(_oldPaths.Item2, color, strokeWidth: rescale);
