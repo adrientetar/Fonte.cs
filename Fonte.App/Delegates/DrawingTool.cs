@@ -111,7 +111,7 @@ namespace Fonte.App.Delegates
             var ptPoint = e.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(ptPoint.Position);
+                var pos = canvas.GetCanvasPosition(ptPoint.Position);
 
                 if (_path != null)
                 {
@@ -160,7 +160,7 @@ namespace Fonte.App.Delegates
             var ptPoint = e.GetCurrentPoint(canvas);
             if (_path != null && !ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(ptPoint.Position);
+                var pos = canvas.GetCanvasPosition(ptPoint.Position);
 
                 if (_points.Count >= 2)
                 {

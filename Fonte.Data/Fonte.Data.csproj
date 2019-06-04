@@ -125,6 +125,7 @@
     <Compile Include="Changes\LayerPathsReplaceChange.cs" />
     <Compile Include="Changes\LayerPathsRangeChange.cs" />
     <Compile Include="Changes\LayerGuidelinesResetChange.cs" />
+    <Compile Include="Changes\PathPointsRangeReplaceChange.cs" />
     <Compile Include="Changes\PathPointsReplaceChange.cs" />
     <Compile Include="Changes\PathPointsRangeChange.cs" />
     <Compile Include="Changes\LayerPathsResetChange.cs" />
@@ -160,6 +161,7 @@
     <Compile Include="Point.cs" />
     <Compile Include="Glyph.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utilities\BezierMath.cs" />
     <Compile Include="Utilities\Conversion.cs" />
     <Compile Include="Utilities\UndoStore.cs" />
     <Compile Include="Utilities\Sequence.cs" />

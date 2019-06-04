@@ -95,18 +95,18 @@ namespace Fonte.App.Delegates
             var ptPoint = e.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(ptPoint.Position);
-                var mouseItem = canvas.FindItemAt(pos);
+                var pos = canvas.GetCanvasPosition(ptPoint.Position);
+                var tappedItem = canvas.HitTest(pos);
                 var selPoint = GetSelectedPoint(canvas);
 
                 _undoGroup = canvas.Layer.CreateUndoGroup();
-                if (mouseItem is Data.Point mousePoint)
+                if (tappedItem is Data.Point tappedPoint)
                 {
-                    var mousePath = mousePoint.Parent;
+                    var tappedPath = tappedPoint.Parent;
                     // If we click an open path boundary and the point at the other boundary is selected, close the path.
-                    if (Is.AtOpenBoundary(mousePoint))
+                    if (Is.AtOpenBoundary(tappedPoint))
                     {
-                        if (selPoint != null && selPoint != mousePoint &&
+                        if (selPoint != null && selPoint != tappedPoint &&
                             Is.AtOpenBoundary(selPoint))
                         {
                             var selPath = selPoint.Parent;
@@ -120,7 +120,7 @@ namespace Fonte.App.Delegates
                                 _lastOn.Smooth = false;
                             }
                             Outline.JoinPaths(selPath, selPoints[0] == selPoint,
-                                              mousePath, mousePath.Points[0] == mousePoint);
+                                              tappedPath, tappedPath.Points[0] == tappedPoint);
                             _path = selPath;
                             _screenOrigin = ptPoint.Position;
                         }
@@ -129,14 +129,14 @@ namespace Fonte.App.Delegates
                     // If we just clicked on a closed point, break the path open.
                     else
                     {
-                        Outline.BreakPath(mousePath, mousePath.Points.IndexOf(mousePoint));
+                        Outline.BreakPath(tappedPath, tappedPath.Points.IndexOf(tappedPoint));
                     }
                     
                     if (selPoint != null)
                     {
                         selPoint.Selected = false;
                     }
-                    mousePoint.Selected = true;
+                    tappedPoint.Selected = true;
                 }
                 else
                 {
@@ -161,7 +161,7 @@ namespace Fonte.App.Delegates
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
-                            pos = ClampToOrigin(new Point(lastPoint.X, lastPoint.Y), pos);
+                            pos = ClampToOrigin(pos, new Point(lastPoint.X, lastPoint.Y));
                         }
                         type = Data.PointType.Line;
                     }
@@ -196,11 +196,11 @@ namespace Fonte.App.Delegates
             var ptPoint = e.GetCurrentPoint(canvas);
             if (_path != null && ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetLocalPosition(ptPoint.Position);
+                var pos = canvas.GetCanvasPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint();
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
-                    if (!CanStartDragging(_screenOrigin.Value, ptPoint.Position))
+                    if (!CanStartDragging(ptPoint.Position, _screenOrigin.Value))
                     {
                         return;
                     }
@@ -210,7 +210,7 @@ namespace Fonte.App.Delegates
 
                     if (selPoint.Type == Data.PointType.Line && makeOnSmooth)
                     {
-                        CoerceSegmentToCurve(_path, selPoint, pos);
+                        CoerceSegmentToCurve(selPoint, pos);
                     }
                     else if (selPoint.Smooth && _path.IsOpen)
                     {
@@ -262,7 +262,7 @@ namespace Fonte.App.Delegates
                     var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                     if (shift.HasFlag(CoreVirtualKeyStates.Down))
                     {
-                        pos = ClampToOrigin(new Point(onCurve.X, onCurve.Y), pos);
+                        pos = ClampToOrigin(pos, new Point(onCurve.X, onCurve.Y));
                     }
                     if (_shouldMoveOnCurve)
                     {
@@ -297,7 +297,7 @@ namespace Fonte.App.Delegates
                         {
                             if (onCurve.Type == Data.PointType.Line)
                             {
-                                CoerceSegmentToCurve(_path, onCurve, pos);
+                                CoerceSegmentToCurve(onCurve, pos);
                             }
                             var otherSidePoint = _path.Points[_path.Points.Count - 3];
                             otherSidePoint.X = Outline.RoundToGrid(2 * onCurve.X - (float)pos.X);
@@ -313,23 +313,20 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerReleased(canvas, e);
 
-            if (_path != null)
-            {
-                _path = null;
-                _screenOrigin = null;
-                _shouldMoveOnCurve = false;
-                _stashedOffCurve = null;
-            }
             if (_undoGroup != null)
             {
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
+            _path = null;
+            _screenOrigin = null;
+            _shouldMoveOnCurve = false;
+            _stashedOffCurve = null;
         }
 
         /**/
 
-        void CoerceSegmentToCurve(Data.Path path, Data.Point onCurve, Point pos)
+        void CoerceSegmentToCurve(Data.Point onCurve, Point pos)
         {
             var index = _path.Points.IndexOf(onCurve);
             var prevOn = _path.Points[index - 1];

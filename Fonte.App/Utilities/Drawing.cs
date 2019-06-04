@@ -37,13 +37,23 @@ namespace Fonte.App.Utilities
 
         public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
-            throw new NotImplementedException();
+            var componentColor = Color.FromArgb(135, 90, 90, 90);
+            var selectedComponentColor = Color.FromArgb(135, 0, 0, 0);
+            foreach (var component in layer.Components)
+            {
+                ds.FillGeometry(component.ClosedCanvasPath, component.Selected ? selectedComponentColor : componentColor);
+                ds.DrawGeometry(component.OpenCanvasPath, componentColor);
+
+                // TODO: disable on sizes < MinDetails
+                var origin = component.Origin;
+                ds.DrawLine(origin.X, origin.Y + 5 * rescale, origin.X, origin.Y, componentColor);
+                ds.DrawLine(origin.X, origin.Y, origin.X + 4.5f * rescale, origin.Y, componentColor);
+            }
         }
 
         public static void DrawFill(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
         {
             ds.FillGeometry(layer.ClosedCanvasPath, color);
-            ds.FillGeometry(layer.OpenCanvasPath, color);
         }
 
         public static void DrawMetrics(Data.Layer layer, CanvasDrawingSession ds, float rescale)
@@ -51,24 +61,23 @@ namespace Fonte.App.Utilities
             throw new NotImplementedException();
         }
 
-        public static void DrawPoints(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        public static void DrawPoints(Data.Layer layer, CanvasDrawingSession ds, float rescale,
+                                      Color pointColor, Color smoothPointColor)
         {
             // save these in the Drawing class state? or in a context class/struct
             var backgroundColor = Color.FromArgb(255, 255, 255, 255);
             var notchColor = Color.FromArgb(255, 68, 68, 68);
-            var onColor = Color.FromArgb(190, 4, 100, 166);
-            var smoothColor = Color.FromArgb(190, 41, 172, 118);
-            var offColor = Color.FromArgb(255, 116, 116, 116);
+            var controlPointColor = Color.FromArgb(255, 116, 116, 116);
             var otherColor = Color.FromArgb(240, 140, 140, 140);
 
-            var handlePathB = new CanvasPathBuilder(ds);
-            var notchPathB = new CanvasPathBuilder(ds);
-            var onPathB = new CanvasPathBuilder(ds);
-            var selectedOnPathB = new CanvasPathBuilder(ds);
-            var smoothPathB = new CanvasPathBuilder(ds);
-            var selectedSmoothPathB = new CanvasPathBuilder(ds);
-            var offPathB = new CanvasPathBuilder(ds);
-            var selectedOffPathB = new CanvasPathBuilder(ds);
+            var handlePath = new CanvasPathBuilder(ds);
+            var notchPath = new CanvasPathBuilder(ds);
+            var pointPath = new CanvasPathBuilder(ds);
+            var selectedPointPath = new CanvasPathBuilder(ds);
+            var smoothPointPath = new CanvasPathBuilder(ds);
+            var selectedSmoothPointPath = new CanvasPathBuilder(ds);
+            var controlPointPath = new CanvasPathBuilder(ds);
+            var selectedControlPointPath = new CanvasPathBuilder(ds);
             foreach (var path in layer.Paths)
             {
                 var points = path.Points;
@@ -89,13 +98,13 @@ namespace Fonte.App.Utilities
                     var angle = Math.Atan2(next.Y - start.Y, next.X - start.X);
                     if (start.Selected)
                     {
-                        (start.Smooth ? selectedSmoothPathB : selectedOnPathB).AddGeometry(
+                        (start.Smooth ? selectedSmoothPointPath : selectedPointPath).AddGeometry(
                             CreateTriangle(ds, start.X, start.Y, angle, 9 * rescale)
                         );
                     }
                     else
                     {
-                        (start.Smooth ? smoothPathB : onPathB).AddGeometry(
+                        (start.Smooth ? smoothPointPath : pointPath).AddGeometry(
                             CreateTriangle(ds, start.X, start.Y, angle, 7 * rescale)
                         );
                     }
@@ -112,9 +121,9 @@ namespace Fonte.App.Utilities
                     var isOffCurve = point.Type == Data.PointType.None;
                     if (!breakHandle && prev.Type == Data.PointType.None != isOffCurve)
                     {
-                        handlePathB.BeginFigure(prev.X, prev.Y);
-                        handlePathB.AddLine(point.X, point.Y);
-                        handlePathB.EndFigure(CanvasFigureLoop.Open);
+                        handlePath.BeginFigure(prev.X, prev.Y);
+                        handlePath.AddLine(point.X, point.Y);
+                        handlePath.EndFigure(CanvasFigureLoop.Open);
                     }
                     breakHandle = false;
 
@@ -122,13 +131,13 @@ namespace Fonte.App.Utilities
                     {
                         if (point.Selected)
                         {
-                            selectedOffPathB.AddGeometry(
+                            selectedControlPointPath.AddGeometry(
                                 CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
                             );
                         }
                         else
                         {
-                            offPathB.AddGeometry(
+                            controlPointPath.AddGeometry(
                                 CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 3 * rescale, 3 * rescale)
                             );
                         }
@@ -141,26 +150,26 @@ namespace Fonte.App.Utilities
                             var cos = (float)Math.Cos(angle);
                             var sin = (float)Math.Sin(angle);
                             var notchSize = 1.4f * rescale;
-                            notchPathB.BeginFigure(
+                            notchPath.BeginFigure(
                                 point.X - cos * notchSize, point.Y - sin * notchSize
                             );
-                            notchPathB.AddLine(
+                            notchPath.AddLine(
                                 point.X + cos * notchSize, point.Y + sin * notchSize
                             );
-                            notchPathB.EndFigure(CanvasFigureLoop.Open);
+                            notchPath.EndFigure(CanvasFigureLoop.Open);
 
                             if (ReferenceEquals(point, start))
                             {
                             }
                             else if (point.Selected)
                             {
-                                selectedSmoothPathB.AddGeometry(
+                                selectedSmoothPointPath.AddGeometry(
                                     CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 5.15f * rescale, 5.15f * rescale)
                                 );
                             }
                             else
                             {
-                                smoothPathB.AddGeometry(
+                                smoothPointPath.AddGeometry(
                                     CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
                                 );
                             }
@@ -173,14 +182,14 @@ namespace Fonte.App.Utilities
                             else if (point.Selected)
                             {
                                 var r = 4.25f * rescale;
-                                selectedOnPathB.AddGeometry(
+                                selectedPointPath.AddGeometry(
                                     CanvasGeometry.CreateRectangle(ds, point.X - r, point.Y - r, 2 * r, 2 * r)
                                 );
                             }
                             else
                             {
                                 var r = 3.25f * rescale;
-                                onPathB.AddGeometry(
+                                pointPath.AddGeometry(
                                     CanvasGeometry.CreateRectangle(ds, point.X - r, point.Y - r, 2 * r, 2 * r)
                                 );
                             }
@@ -193,25 +202,25 @@ namespace Fonte.App.Utilities
             // markers
             // ...
             // handles
-            ds.DrawGeometry(CanvasGeometry.CreatePath(handlePathB), otherColor, strokeWidth: rescale);
+            ds.DrawGeometry(CanvasGeometry.CreatePath(handlePath), otherColor, strokeWidth: rescale);
             // on curves
-            selectedOnPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-            ds.FillGeometry(CanvasGeometry.CreatePath(selectedOnPathB), onColor);
-            selectedSmoothPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-            ds.FillGeometry(CanvasGeometry.CreatePath(selectedSmoothPathB), smoothColor);
-            ds.DrawGeometry(CanvasGeometry.CreatePath(onPathB), onColor, strokeWidth: 1.3f * rescale);
-            ds.DrawGeometry(CanvasGeometry.CreatePath(smoothPathB), smoothColor, strokeWidth: 1.3f * rescale);
+            selectedPointPath.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+            ds.FillGeometry(CanvasGeometry.CreatePath(selectedPointPath), pointColor);
+            selectedSmoothPointPath.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+            ds.FillGeometry(CanvasGeometry.CreatePath(selectedSmoothPointPath), smoothPointColor);
+            ds.DrawGeometry(CanvasGeometry.CreatePath(pointPath), pointColor, strokeWidth: 1.3f * rescale);
+            ds.DrawGeometry(CanvasGeometry.CreatePath(smoothPointPath), smoothPointColor, strokeWidth: 1.3f * rescale);
             // notch
-            ds.DrawGeometry(CanvasGeometry.CreatePath(notchPathB), notchColor, strokeWidth: rescale);
+            ds.DrawGeometry(CanvasGeometry.CreatePath(notchPath), notchColor, strokeWidth: rescale);
             // off curves
-            offPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-            using (var offPath = CanvasGeometry.CreatePath(offPathB))
+            controlPointPath.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+            using (var controlPointGeometry = CanvasGeometry.CreatePath(controlPointPath))
             {
-                ds.FillGeometry(offPath, backgroundColor);
-                ds.DrawGeometry(offPath, offColor, strokeWidth: 1.3f * rescale);
+                ds.FillGeometry(controlPointGeometry, backgroundColor);
+                ds.DrawGeometry(controlPointGeometry, controlPointColor, strokeWidth: 1.3f * rescale);
             }
-            selectedOffPathB.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-            ds.FillGeometry(CanvasGeometry.CreatePath(selectedOffPathB), offColor);
+            selectedControlPointPath.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+            ds.FillGeometry(CanvasGeometry.CreatePath(selectedControlPointPath), controlPointColor);
         }
 
         public static void DrawSelection(Data.Layer layer, CanvasDrawingSession ds, float rescale)

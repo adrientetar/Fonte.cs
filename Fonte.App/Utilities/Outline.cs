@@ -243,6 +243,46 @@ namespace Fonte.App.Utilities
             return (float)Math.Round(value);
         }
 
+        public static bool TryTogglePointSmoothness(Data.Path path, int index)
+        {
+            var point = path.Points[index];
+            if (point.Selected && point.Type != PointType.None)
+            {
+                var value = !point.Smooth;
+                if (value)
+                {
+                    if (Is.AtOpenBoundary(point))
+                    {
+                        return false;
+                    }
+
+                    var before = Sequence.PreviousItem(path.Points, index);
+                    var after = Sequence.NextItem(path.Points, index);
+                    if (before.Type != PointType.None && after.Type != PointType.None)
+                    {
+                        return false;
+                    }
+                    else if (before.Type != PointType.None)
+                    {
+                        VectorRotation(after, before.ToVector2(), point.ToVector2());
+                    }
+                    else if (after.Type != PointType.None)
+                    {
+                        VectorRotation(before, after.ToVector2(), point.ToVector2());
+                    }
+                }
+
+                point.Smooth = !point.Smooth;
+                return true;
+            }
+            return false;
+        }
+        public static bool TryTogglePointSmoothness(Data.Point point)
+        {
+            var path = point.Parent;
+            return TryTogglePointSmoothness(path, path.Points.IndexOf(point));
+        }
+
         /**/
 
         static bool AnyOffCurveSelected(Data.Segment segment)
@@ -295,7 +335,6 @@ namespace Fonte.App.Utilities
                             outPaths.Add(outPath);
                         }
                         outPath = new Data.Path();
-                        outPath.Parent = path.Parent;  // XXX
 
                         var point = segment.OnCurve;
                         point.Smooth = false;

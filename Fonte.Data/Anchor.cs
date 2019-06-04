@@ -59,6 +59,8 @@ namespace Fonte.Data
             }
         }
 
+        /**/
+
         [JsonIgnore]
         public Layer Parent
         { get; internal set; }

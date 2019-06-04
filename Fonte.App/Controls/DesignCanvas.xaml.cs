@@ -40,6 +40,8 @@ namespace Fonte.App.Controls
         internal static readonly string DrawSelectionBoundsKey = "DrawSelectionBounds";
         internal static readonly string DrawStrokeKey = "DrawStroke";
         internal static readonly string FillColorKey = "FillColor";
+        internal static readonly string PointColorKey = "PointColor";
+        internal static readonly string SmoothPointColorKey = "SmoothPointColor";
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register("Layer", typeof(Data.Layer), typeof(DesignCanvas), null);
 
@@ -150,14 +152,14 @@ namespace Fonte.App.Controls
                     ds.Transform = _matrix;
 
                     var rescale = 1f / sender.DpiScale;
-
                     Tool.OnDraw(this, ds, rescale);
+
                     //Drawing.DrawMetrics(Layer, ds, rescale);
                     Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
 
                     //Drawing.DrawComponents(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawSelectionKey)) Drawing.DrawSelection(Layer, ds, rescale);
-                    if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale);
+                    if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale, (Color)Tool.FindResource(this, PointColorKey), (Color)Tool.FindResource(this, SmoothPointColorKey));
                     if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
                     Tool.OnDrawCompleted(this, ds, rescale);
@@ -229,22 +231,26 @@ namespace Fonte.App.Controls
             Tool.OnRightTapped(this, e);
         }
 
-        Matrix3x2 GetInverseMatrix()
+        Matrix3x2 GetMatrix()
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var m1 = Matrix3x2.CreateScale(1, -1);
             m1.Translation += _matrix.Translation;
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var m2 = Matrix3x2.CreateScale(Root.ZoomFactor);
             m2.Translation -= new Vector2((float)Root.HorizontalOffset, (float)Root.VerticalOffset);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             m1 *= m2;
 
-            if (!Matrix3x2.Invert(m1, out m2))
-            {
-                throw new Exception("Couldn't invert _matrix");
-            }
+            return m1;
+        }
 
-            return m2;
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        Matrix3x2 GetInverseMatrix()
+        {
+            if (Matrix3x2.Invert(GetMatrix(), out Matrix3x2 result))
+            {
+                return result;
+            }
+            throw new InvalidOperationException("Couldn't invert matrix");
         }
 
         public void CenterOnMetrics()
@@ -260,32 +266,93 @@ namespace Fonte.App.Controls
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
-        public Point GetLocalPosition(Point pos)
+        public Point GetClientPosition(Point canvasPos)
         {
-            return Vector2.Transform(pos.ToVector2(), GetInverseMatrix()).ToPoint();
+            return Vector2.Transform(canvasPos.ToVector2(), GetMatrix()).ToPoint();
         }
 
-        public object FindItemAt(Point pos, object ignoreItem = null)
+        public Point GetCanvasPosition(Point clientPos)
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var halfSize = 4.0 / Root.ZoomFactor;
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            return Vector2.Transform(clientPos.ToVector2(), GetInverseMatrix()).ToPoint();
+        }
+
+        // not sure that this oughta be in the view layer
+        // -- if we want to avoid expensive recreation of paths, we could spinoff this function + drawing functions to a new kind of DrawingController class
+        //    and retain the paths used for drawing for hit testing
+        // -- caveat: at least for points I tend to dilate the hit-testing area compared to the drawing path, and use a square (don't need ellipse area tests)
+        //    in which case we could create hit-testing paths but only make them once to avoid redoing it on every cursor move (for cursor markers)
+        public object HitTest(Point pos, object ignoreItem = null, bool testSegments = true)
+        {
+            var rescale = 1f / Canvas.DpiScale;
+            var halfSize = 4 * rescale;
+
+            foreach (var anchor in Layer.Anchors)
+            {
+                if (anchor != ignoreItem)
+                {
+                    var dx = anchor.X - pos.X;
+                    var dy = anchor.Y - pos.Y;
+                    if (-halfSize <= dx && dx <= halfSize &&
+                        -halfSize <= dy && dy <= halfSize)
+                    {
+                        return anchor;
+                    }
+                }
+            }
             foreach (var path in Layer.Paths)
             {
                 foreach (var point in path.Points)
                 {
-                    if (point == ignoreItem)
+                    if (point != ignoreItem)
                     {
-                        continue;
+                        var dx = point.X - pos.X;
+                        var dy = point.Y - pos.Y;
+                        if (-halfSize <= dx && dx <= halfSize &&
+                            -halfSize <= dy && dy <= halfSize)
+                        {
+                            return point;
+                        }
                     }
-                    var dx = point.X - pos.X;
-                    var dy = point.Y - pos.Y;
+                }
+            }
+            var p = pos.ToVector2();
+            foreach (var component in Layer.Components)
+            {
+                if (component != ignoreItem && component.ClosedCanvasPath.FillContainsPoint(p))
+                {
+                    return component;
+                }
+            }
+            // TODO: add master guidelines
+            foreach (var guideline in Layer.Guidelines)
+            {
+                if (guideline != ignoreItem)
+                {
+                    var dx = guideline.X - pos.X;
+                    var dy = guideline.Y - pos.Y;
                     if (-halfSize <= dx && dx <= halfSize &&
                         -halfSize <= dy && dy <= halfSize)
                     {
-                        return point;
+                        return guideline;
                     }
                 }
+            }
+
+            if (testSegments)
+            {
+                var tol_2 = 9 + rescale * (6 + rescale);
+                foreach (var path in Layer.Paths)
+                {
+                    foreach (var segment in path.Segments)
+                    {
+                        var proj = segment.ProjectPoint(p);
+                        if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
+                        {
+                            return segment;
+                        }
+                    }
+                }
+                // TODO: add guideline segment
             }
 
             return null;

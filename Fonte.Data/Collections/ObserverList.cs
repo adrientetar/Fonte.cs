@@ -143,7 +143,7 @@ namespace Fonte.Data.Collections
             replacedItems.Reverse();
             //List.Reverse();
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Replace, List, replacedItems);
+            OnCollectionChanged(NotifyCollectionChangedAction.Replace, List, replacedItems, 0);
         }
 
         public T First()
@@ -194,9 +194,9 @@ namespace Fonte.Data.Collections
             CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems, index));
         }
 
-        void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems)
+        void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems, int index)
         {
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems));
+            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems, index));
         }
     }
 

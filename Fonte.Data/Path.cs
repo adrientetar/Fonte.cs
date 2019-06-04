@@ -63,9 +63,14 @@ namespace Fonte.Data
                     }
                     else if (e.Action == NotifyCollectionChangedAction.Replace)
                     {
-                        Debug.Assert(e.NewItems.Count == 1);
-
-                        new PathPointsReplaceChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
+                        if (e.NewItems.Count > 1)
+                        {
+                            new PathPointsRangeReplaceChange(this, e.NewStartingIndex, e.NewItems.Cast<Point>().ToList()).Apply();
+                        }
+                        else
+                        {
+                            new PathPointsReplaceChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
+                        }
                     }
                     else if (e.Action == NotifyCollectionChangedAction.Reset)
                     {
@@ -89,7 +94,7 @@ namespace Fonte.Data
         }
 
         public Layer Parent
-        { get; /*internal*/ set; }
+        { get; internal set; }
 
         /**/
 
@@ -253,9 +258,7 @@ namespace Fonte.Data
                     {
                         if (point.Type != PointType.None)
                         {
-                            var pType = point.Type;
-                            point.Type = type;
-                            type = pType;
+                            (point.Type, type) = (type, point.Type);
                         }
                     }
                 }
@@ -275,7 +278,7 @@ namespace Fonte.Data
                     var end = Points.GetRange(0, index + 1);
                     if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
                     {
-                        throw new InvalidOperationException($"Index {index} breaks a segment");
+                        throw new InvalidOperationException($"Index {index} isn't at segment boundary");
                     }
                     Points.RemoveRange(0, index + 1);
                     Points.AddRange(end);
@@ -333,6 +336,14 @@ namespace Fonte.Data
             }
         }
 
+        public Path Parent
+        {
+            get
+            {
+                return _points[_index].Parent;
+            }
+        }
+
         public List<Point> Points
         {
             get
@@ -345,15 +356,32 @@ namespace Fonte.Data
         {
             get
             {
-                var index = _index - (OnCurve.Type != PointType.Move ? 1 : 0);
-                /* Start point on the other end */
-                if (index < 0)
+                if (_index == 0)
                 {
-                    var list = _points.GetRange(index, _count);
-                    list.Insert(0, _points[_points.Count - 1]);
-                    return list;
+                    var points = Points;
+                    if (OnCurve.Type != PointType.Move)
+                    {
+                        points.Insert(0, _points[_points.Count - 1]);
+                    }
+                    return points;
                 }
-                return _points.GetRange(index, _count);
+                return _points.GetRange(_index - 1, _count + 1);
+            }
+        }
+
+        public bool Selected
+        {
+            get
+            {
+                var points = PointsInclusive;
+                return points[0].Selected && points[points.Count - 1].Selected;
+            }
+            set
+            {
+                foreach (var point in PointsInclusive)
+                {
+                    point.Selected = value;
+                }
             }
         }
 
@@ -386,14 +414,15 @@ namespace Fonte.Data
                     ok = true;
                 }
             }
-            if (type == PointType.Line)
+            else if (type == PointType.Line)
             {
                 if (OnCurve.Type == PointType.Curve)
                 {
+                    PointsInclusive[0].Smooth = false;
                     _points.RemoveRange(_index, _count - 1);
-                    var start = _points[_index];
-                    start.Smooth = false;
-                    start.Type = PointType.Line;
+                    var onCurve = _points[_index];
+                    onCurve.Smooth = false;
+                    onCurve.Type = PointType.Line;
 
                     ok = true;
                 }
@@ -436,7 +465,16 @@ namespace Fonte.Data
 
         public Vector2? ProjectPoint(Vector2 p)
         {
-            throw new NotImplementedException();
+            if (OnCurve.Type == PointType.Curve)
+            {
+                return BezierMath.ProjectPointOnCurve(p, PointsInclusive);
+            }
+            else if (OnCurve.Type == PointType.Line)
+            {
+                return BezierMath.ProjectPointOnLine(p, PointsInclusive);
+            }
+
+            return null;
         }
 
         public void SplitAt(float t)

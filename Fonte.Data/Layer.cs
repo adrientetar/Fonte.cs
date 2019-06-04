@@ -8,7 +8,6 @@ namespace Fonte.Data
     using Fonte.Data.Collections;
     using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
-    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
@@ -489,10 +488,9 @@ namespace Fonte.Data
 
         internal void OnChange(IChange change)
         {
-            _selectionBounds = Rect.Empty;
-            _selectedPaths = null;
-            _bounds = Rect.Empty;
+            _bounds = _selectionBounds = Rect.Empty;
             _closedCanvasPath = _openCanvasPath = null;
+            _selectedPaths = null;
 
             if (change.ClearSelection)  // .AffectsSelection ?
             {

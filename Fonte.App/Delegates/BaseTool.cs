@@ -104,25 +104,10 @@ namespace Fonte.App.Delegates
                 {
                     foreach (var path in canvas.Layer.Paths)
                     {
-                        var index = -1;
+                        var index = 0;
                         foreach (var point in path.Points)
                         {
-                            ++index;
-
-                            if (point.Selected && point.Type != Data.PointType.None)
-                            {
-                                var before = Sequence.PreviousItem(path.Points, index);
-                                if (before.Type != Data.PointType.None)
-                                {
-                                    var after = Sequence.NextItem(path.Points, index);
-                                    if (after.Type != Data.PointType.None)
-                                    {
-                                        continue;
-                                    }
-                                }
-
-                                point.Smooth = !point.Smooth;
-                            }
+                            Outline.TryTogglePointSmoothness(path, index++);
                         }
                     }
                 }
@@ -212,9 +197,9 @@ namespace Fonte.App.Delegates
             };
 
             var pos = e.GetPosition(canvas);
-            var focusItem = canvas.FindItemAt(canvas.GetLocalPosition(pos));
+            var tappedItem = canvas.HitTest(canvas.GetCanvasPosition(pos));
 
-            if (focusItem is Data.Point point)
+            if (tappedItem is Data.Point point)
             {
                 flyout.Items.Add(new MenuFlyoutItem()
                 {
@@ -227,7 +212,7 @@ namespace Fonte.App.Delegates
                     CommandParameter = point.Parent
                 });
             }
-            else if (focusItem is Data.Component component)
+            else if (tappedItem is Data.Component component)
             {
                 flyout.Items.Add(new MenuFlyoutItem()
                 {
@@ -290,16 +275,15 @@ namespace Fonte.App.Delegates
         /**/
 
         // origin and pos should be in screen coordinates
-        // XXX: should we convert internally? tools need to maintain screen pos only for this check ;(
-        protected bool CanStartDragging(Point origin, Point pos)
+        protected bool CanStartDragging(Point pos, Point origin, int px = 5)
         {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;
 
-            return Math.Abs(dx) >= 8 || Math.Abs(dy) >= 9;
+            return Math.Abs(dx) >= px || Math.Abs(dy) >= 1.2f * px;
         }
 
-        protected Point ClampToOrigin(Point origin, Point pos)
+        protected Point ClampToOrigin(Point pos, Point origin)
         {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;

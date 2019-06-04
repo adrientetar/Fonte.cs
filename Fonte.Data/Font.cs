@@ -64,6 +64,19 @@ namespace Fonte.Data
             }
         }
 
+        // TODO: add accelerator
+        public Glyph GetGlyph(string name)
+        {
+            foreach (var glyph in Glyphs)
+            {
+                if (glyph.Name == name)
+                {
+                    return glyph;
+                }
+            }
+            return null;
+        }
+
         public override string ToString()
         {
             return $"{nameof(Font)}({FamilyName}, v{VersionMajor}.{VersionMinor})";

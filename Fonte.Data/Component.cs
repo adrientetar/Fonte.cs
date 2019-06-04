@@ -6,6 +6,8 @@ namespace Fonte.Data
 {
     using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
+    using Microsoft.Graphics.Canvas;
+    using Microsoft.Graphics.Canvas.Geometry;
     using Newtonsoft.Json;
 
     using System;
@@ -62,6 +64,61 @@ namespace Fonte.Data
         }
 
         /**/
+
+        [JsonIgnore]
+        public CanvasGeometry ClosedCanvasPath
+        {
+            get
+            {
+                var device = CanvasDevice.GetSharedDevice();
+                var builder = new CanvasPathBuilder(device);
+                builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+
+                var layer = Layer;
+                if (layer != null)
+                {
+                    builder.AddGeometry(layer.ClosedCanvasPath);
+                }
+
+                return CanvasGeometry.CreatePath(builder).Transform(Transformation);
+            }
+        }
+
+        [JsonIgnore]
+        public Layer Layer
+        {
+            get
+            {
+                try
+                {
+                    var font = Parent?.Parent.Parent;
+                    return font.GetGlyph(GlyphName).Layers[0];
+                }
+                catch (Exception) { }
+                return null;
+            }
+        }
+
+        [JsonIgnore]
+        public CanvasGeometry OpenCanvasPath
+        {
+            get
+            {
+                var device = CanvasDevice.GetSharedDevice();
+                var builder = new CanvasPathBuilder(device);
+                builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+
+                var layer = Layer;
+                if (layer != null)
+                {
+                    builder.AddGeometry(layer.OpenCanvasPath);
+                }
+
+                return CanvasGeometry.CreatePath(builder).Transform(Transformation);
+            }
+        }
+
+
 
         [JsonIgnore]
         public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);

@@ -16,10 +16,12 @@
     <UserControl.Resources>
         <x:Boolean x:Key="DrawPoints">true</x:Boolean>
         <x:Boolean x:Key="DrawSelection">true</x:Boolean>
-        <x:Boolean x:Key="DrawSelectionBounds">true</x:Boolean>
+        <x:Boolean x:Key="DrawSelectionBounds">false</x:Boolean>
         <x:Boolean x:Key="DrawStroke">true</x:Boolean>
 
         <Color x:Key="FillColor">#4DF4F4F4</Color>
+        <Color x:Key="PointColor">#BE3448AD</Color>
+        <Color x:Key="SmoothPointColor">#BEFF5E52</Color>
     </UserControl.Resources>
 
     <muxprimitives:Scroller x:Name="Root"
