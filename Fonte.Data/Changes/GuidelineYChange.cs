@@ -23,7 +23,7 @@ namespace Fonte.Data.Changes
             _target._y = _value;
             _value = oldValue;
 
-            _target.Parent?.OnChange(this);
+            (_target.Parent as Layer)?.OnChange(this);
         }
     }
 }

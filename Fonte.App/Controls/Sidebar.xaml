@@ -225,6 +225,7 @@
                 <ColumnDefinition/>
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
+
             <TextBlock Text="Scale"/>
             <TextBox x:Name="XScaleTextBox" Text="2" Grid.Column="1"/>
             <sidebarparts:ButtonPair LeftClick="OnScaleButtonClick"

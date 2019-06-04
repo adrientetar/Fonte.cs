@@ -14,14 +14,17 @@
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>
+        <x:Boolean x:Key="DrawFill">true</x:Boolean>
+        <x:Boolean x:Key="DrawMetrics">true</x:Boolean>
         <x:Boolean x:Key="DrawPoints">true</x:Boolean>
         <x:Boolean x:Key="DrawSelection">true</x:Boolean>
         <x:Boolean x:Key="DrawSelectionBounds">false</x:Boolean>
         <x:Boolean x:Key="DrawStroke">true</x:Boolean>
 
+        <Color x:Key="ComponentColor">#875A5A5A</Color>
         <Color x:Key="FillColor">#4DF4F4F4</Color>
         <Color x:Key="PointColor">#BE3448AD</Color>
-        <Color x:Key="SmoothPointColor">#BEFF5E52</Color>
+        <Color x:Key="SmoothPointColor">#BEFF5855</Color>
     </UserControl.Resources>
 
     <muxprimitives:Scroller x:Name="Root"
@@ -38,8 +41,8 @@
              be unnecessary in the vast majority of cases.
              -->
         <canvas:CanvasVirtualControl x:Name="Canvas"
-                                     Height="800000"
-                                     Width="800000"
+                                     Height="500000"
+                                     Width="600000"
                                      RegionsInvalidated="OnRegionsInvalidated"
                                      IsTabStop="True"
                                      KeyDown="OnKeyDown"

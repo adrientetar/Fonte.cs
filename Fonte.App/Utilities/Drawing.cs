@@ -35,13 +35,13 @@ namespace Fonte.App.Utilities
             return CanvasGeometry.CreatePath(builder);
         }
 
-        public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color componentColor, bool drawSelection)
         {
-            var componentColor = Color.FromArgb(135, 90, 90, 90);
-            var selectedComponentColor = Color.FromArgb(135, 0, 0, 0);
+            var val = (byte)Math.Max(componentColor.R - 90, 0);
+            var selectedComponentColor = Color.FromArgb(135, val, val, val);
             foreach (var component in layer.Components)
             {
-                ds.FillGeometry(component.ClosedCanvasPath, component.Selected ? selectedComponentColor : componentColor);
+                ds.FillGeometry(component.ClosedCanvasPath, drawSelection && component.Selected ? selectedComponentColor : componentColor);
                 ds.DrawGeometry(component.OpenCanvasPath, componentColor);
 
                 // TODO: disable on sizes < MinDetails
@@ -54,11 +54,33 @@ namespace Fonte.App.Utilities
         public static void DrawFill(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
         {
             ds.FillGeometry(layer.ClosedCanvasPath, color);
+            // Also stroke open paths here, since they don't fill
+            ds.DrawGeometry(layer.OpenCanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
         }
 
         public static void DrawMetrics(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
-            throw new NotImplementedException();
+            if (layer.Master is Data.Master master)
+            {
+                var color = Color.FromArgb(255, 204, 206, 200);
+
+                var ascender = master.Ascender;
+                var capHeight = master.CapHeight;
+                var descender = master.Descender;
+                var xHeight = master.XHeight;
+
+                var width = layer.Width;
+                var hi = Math.Max(ascender, capHeight);
+
+                ds.DrawLine(0, ascender, width, ascender, color, strokeWidth: rescale);
+                ds.DrawLine(0, capHeight, width, capHeight, color, strokeWidth: rescale);
+                ds.DrawLine(0, xHeight, width, xHeight, color, strokeWidth: rescale);
+                ds.DrawLine(0, 0, width, 0, color, strokeWidth: rescale);
+                ds.DrawLine(0, descender, width, descender, color, strokeWidth: rescale);
+
+                ds.DrawLine(0, hi, 0, descender, color, strokeWidth: rescale);
+                ds.DrawLine(width, hi, width, descender, color, strokeWidth: rescale);
+            }
         }
 
         public static void DrawPoints(Data.Layer layer, CanvasDrawingSession ds, float rescale,
@@ -287,7 +309,7 @@ namespace Fonte.App.Utilities
         public static void DrawStroke(Data.Layer layer, CanvasDrawingSession ds, float rescale)
         {
             ds.DrawGeometry(layer.ClosedCanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
-            ds.DrawGeometry(layer.OpenCanvasPath, Color.FromArgb(255, 34, 34, 34), strokeWidth: rescale);
+            // Open paths are stroked in DrawFill
         }
     }
 }

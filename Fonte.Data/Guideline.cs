@@ -75,9 +75,8 @@ namespace Fonte.Data
 
         /**/
 
-        // XXX: Parent can be either Layer or Master
         [JsonIgnore]
-        public Layer Parent { get; internal set; }
+        public object Parent { get; internal set; }
 
         [JsonIgnore]
         public bool Selected

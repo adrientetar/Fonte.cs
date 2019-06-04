@@ -310,6 +310,21 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
+        public Master Master
+        {
+            get
+            {
+                try
+                {
+                    var font = Parent?.Parent;
+                    return font.Masters[0]; // XXX
+                }
+                catch (Exception) { }
+                return null;
+            }
+        }
+
+        [JsonIgnore]
         public CanvasGeometry OpenCanvasPath
         {
             get

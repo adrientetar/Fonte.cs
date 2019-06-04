@@ -13,6 +13,9 @@ namespace Fonte.Data
         [JsonProperty("glyphs")]
         public List<Glyph> Glyphs { get; }
 
+        [JsonProperty("masters")]
+        public List<Master> Masters { get; }
+
         [JsonProperty("copyright")]
         public string Copyright { get; set; }
 
@@ -41,11 +44,12 @@ namespace Fonte.Data
         public int VersionMinor { get; set; }
 
         [JsonConstructor]
-        public Font(List<Glyph> glyphs = null, string copyright = null, string designer = null, string designerURL = null,
+        public Font(List<Glyph> glyphs = null, List<Master> masters = null, string copyright = null, string designer = null, string designerURL = null,
                     string familyName = null, string manufacturer = null, string manufacturerURL = null, int unitsPerEm = 1000,
                     int versionMajor = 1, int versionMinor = 0)
         {
             Glyphs = glyphs ?? new List<Glyph>();
+            Masters = masters ?? new List<Master>() { new Master(name: "Regular") };
 
             Copyright = copyright ?? string.Empty;
             Designer = designer ?? string.Empty;
@@ -61,6 +65,10 @@ namespace Fonte.Data
             foreach (var glyph in Glyphs)
             {
                 glyph.Parent = this;
+            }
+            foreach (var master in Masters)
+            {
+                master.Parent = this;
             }
         }
 

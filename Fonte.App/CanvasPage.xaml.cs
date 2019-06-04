@@ -5,8 +5,10 @@
 namespace Fonte.App
 {
     using Fonte.App.Interfaces;
+    using Newtonsoft.Json;
 
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using Windows.System;
     using Windows.UI.Core;
@@ -16,9 +18,38 @@ namespace Fonte.App
 
     public sealed partial class CanvasPage : Page
     {
+        public static DependencyProperty FontProperty = DependencyProperty.Register(
+            "Font", typeof(Data.Font), typeof(CanvasPage), null);
+
+        public Data.Font Font
+        {
+            get => (Data.Font)GetValue(FontProperty);
+            set { SetValue(FontProperty, value); }
+        }
+
+        public static DependencyProperty CurrentLayerProperty = DependencyProperty.Register(
+            "CurrentLayer", typeof(Data.Layer), typeof(CanvasPage), null);
+
+        public Data.Layer CurrentLayer
+        {
+            get => (Data.Layer)GetValue(CurrentLayerProperty);
+            set { SetValue(CurrentLayerProperty, value); }
+        }
+
         public CanvasPage()
         {
             InitializeComponent();
+
+            // TODO: create standard glyphset in font and foreground layer in glyph by default?
+            var layer = new Data.Layer();
+
+            Font = new Data.Font(
+                glyphs: new List<Data.Glyph>()
+                {
+                    new Data.Glyph(layers: new List<Data.Layer>() { layer })
+                });
+
+            CurrentLayer = layer;
 
 #if DEBUG
             Loaded += OnPageLoaded;

@@ -4,9 +4,6 @@
 
 namespace Fonte.Data.Utilities
 {
-    using Fonte.Data.Geometry;
-
-    using System;
     using System.Collections.Generic;
     using System.Numerics;
 
@@ -23,7 +20,7 @@ namespace Fonte.Data.Utilities
             var steps = 100;
             float minDistance_2 = float.PositiveInfinity;
             Vector2 minValue = Vector2.Zero;
-            float minT = float.NaN;
+            float minT = 0;
 
             bool refineProjection(float t)
             {
@@ -34,8 +31,7 @@ namespace Fonte.Data.Utilities
                             3 * ot * ot *  t * p1 +
                             3 * ot *  t *  t * p2 +
                                  t *  t *  t * p3;
-                    var delta = value - point;
-                    var distance_2 = delta.LengthSquared();
+                    var distance_2 = (value - point).LengthSquared();
                     if (distance_2 < minDistance_2)
                     {
                         minDistance_2 = distance_2;

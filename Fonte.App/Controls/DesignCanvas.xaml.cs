@@ -10,10 +10,8 @@ namespace Fonte.App.Controls
     using Microsoft.Graphics.Canvas.UI.Xaml;
     using muxc = Microsoft.UI.Xaml.Controls;
     using muxp = Microsoft.UI.Xaml.Controls.Primitives;
-    using Newtonsoft.Json;
 
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Numerics;
     using Windows.ApplicationModel;
@@ -27,23 +25,26 @@ namespace Fonte.App.Controls
 
     public partial class DesignCanvas : UserControl
     {
-        private static readonly string LayerContents = @"{""masterName"":""Regular"",""width"":520,""paths"":[[[65,388],[78,331],[124,331,""curve"",true],[152,331],[177,348],[177,376,""curve"",true],[177,405],[167,429],[157,448,""curve""],[180,471],[212,481],[239,481,""curve"",true],[307,481],[335,434],[335,356,""curve"",true],[335,286,""line""],[250,265,""line"",true],[93,229],[45,189],[45,110,""curve"",true],[45,46],[97,-6],[187,-6,""curve"",true],[253,-6],[310,34],[335,101,""curve""],[335,73,""line"",true],[335,29],[354,-2],[396,-5,""curve"",true],[453,-9],[484,25],[501,64,""curve""],[487,73,""line""],[475,48],[461,38],[446,38,""curve"",true],[427,38],[421,63],[421,95,""curve"",true],[421,351,""line"",true],[421,472],[358,510],[265,510,""curve"",true],[197,510],[128,476],[89,420,""curve"",true]],[[310,57],[259,35],[214,35,""curve"",true],[169,35],[133,68],[133,126,""curve"",true],[133,167],[157,218],[257,243,""curve"",true],[335,263,""line""],[335,131,""line""]]]}";
-        private static readonly ICanvasDelegate PreviewTool = new PreviewTool();
-
-        private CoreCursor _previousCursor;
-        private Matrix3x2 _matrix;
-        private ICanvasDelegate _tool;
-        private bool _inPreview;
-
+        internal static readonly string DrawFillKey = "DrawFill";
+        internal static readonly string DrawMetricsKey = "DrawMetrics";
         internal static readonly string DrawPointsKey = "DrawPoints";
         internal static readonly string DrawSelectionKey = "DrawSelection";
         internal static readonly string DrawSelectionBoundsKey = "DrawSelectionBounds";
         internal static readonly string DrawStrokeKey = "DrawStroke";
+        internal static readonly string ComponentColorKey = "ComponentColor";
         internal static readonly string FillColorKey = "FillColor";
         internal static readonly string PointColorKey = "PointColor";
         internal static readonly string SmoothPointColorKey = "SmoothPointColor";
 
-        public static DependencyProperty LayerProperty = DependencyProperty.Register("Layer", typeof(Data.Layer), typeof(DesignCanvas), null);
+        private static readonly ICanvasDelegate PreviewTool = new PreviewTool();
+
+        private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
+        private ICanvasDelegate _tool = new BaseTool();
+        private bool _inPreview;
+        private CoreCursor _previousCursor;
+
+        public static DependencyProperty LayerProperty = DependencyProperty.Register(
+            "Layer", typeof(Data.Layer), typeof(DesignCanvas), null);
 
         public Data.Layer Layer
         {
@@ -77,29 +78,22 @@ namespace Fonte.App.Controls
         public DesignCanvas()
         {
             InitializeComponent();
-
-            // XXX later we'll only do this if we're in design mode
-            Layer = JsonConvert.DeserializeObject<Data.Layer>(LayerContents);
-            new Data.Glyph(layers: new List<Data.Layer>() { Layer });
-
-            Tool = new BaseTool();
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
         {
-            _matrix = Matrix3x2.CreateScale(1, -1);
-            // should be based on metrics, not bounds
+            // Set the canvas origin
             _matrix.Translation = new Vector2(
-                .5f * ((float)Canvas.ActualWidth - Layer.Width),
-                .5f * (float)(Canvas.ActualHeight + Layer.Bounds.Height)
+                 .5f * (float)Canvas.ActualWidth,
+                 .5f * (float)Canvas.ActualHeight
             );
 
             CenterOnMetrics();
 
-            if (DesignMode.DesignMode2Enabled)
-                return;
-
-            ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+            if (!DesignMode.DesignMode2Enabled)
+            {
+                ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+            }
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -115,7 +109,10 @@ namespace Fonte.App.Controls
 
         void OnControlUnloaded(object sender, RoutedEventArgs e)
         {
-            ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+            if (!DesignMode.DesignMode2Enabled)
+            {
+                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+            }
 
             Canvas.RemoveFromVisualTree();
             Canvas = null;
@@ -154,11 +151,11 @@ namespace Fonte.App.Controls
                     var rescale = 1f / sender.DpiScale;
                     Tool.OnDraw(this, ds, rescale);
 
-                    //Drawing.DrawMetrics(Layer, ds, rescale);
-                    Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
-
-                    //Drawing.DrawComponents(Layer, ds, rescale);
-                    if ((bool)Tool.FindResource(this, DrawSelectionKey)) Drawing.DrawSelection(Layer, ds, rescale);
+                    if ((bool)Tool.FindResource(this, DrawMetricsKey)) Drawing.DrawMetrics(Layer, ds, rescale);
+                    if ((bool)Tool.FindResource(this, DrawFillKey)) Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
+                    var drawSelection = (bool)Tool.FindResource(this, DrawSelectionKey);
+                    Drawing.DrawComponents(Layer, ds, rescale, (Color)Tool.FindResource(this, ComponentColorKey), drawSelection);
+                    if (drawSelection) Drawing.DrawSelection(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale, (Color)Tool.FindResource(this, PointColorKey), (Color)Tool.FindResource(this, SmoothPointColorKey));
                     if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
                     if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
@@ -255,14 +252,18 @@ namespace Fonte.App.Controls
 
         public void CenterOnMetrics()
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            Root.ZoomTo(1.0f, null);
+            var master = Layer.Master;
+            var fontHeight = master.Ascender - master.Descender;
 
-            var options = new muxc.ScrollOptions(muxc.AnimationMode.Disabled);
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             Root.ScrollTo(
-                .5f * (Canvas.ActualWidth - Root.ActualWidth),
-                .5f * (Canvas.ActualHeight - Root.ActualHeight),
-                options);
+                .5f * (Canvas.ActualWidth - Root.ActualWidth + Layer.Width),
+                .5f * (Canvas.ActualHeight - Root.ActualHeight - fontHeight) - master.Descender,
+                new muxc.ScrollOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
+
+            //Root.ZoomTo(
+            //    (float)(ActualHeight / Math.Round(fontHeight * 1.4)), null,
+            //    new muxc.ZoomOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 

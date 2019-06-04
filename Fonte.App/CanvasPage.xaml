@@ -41,7 +41,7 @@
             <controls:TitleBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"/>
             <controls:Toolbar x:Name="Toolbar" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1" Grid.Column="1"/>
         </Grid>
-        <controls:DesignCanvas x:Name="Canvas" Grid.Row="1"/>
-        <controls:Sidebar x:Name="Sidebar" Layer="{x:Bind Path=Canvas.Layer, Mode=OneWay}" Grid.Column="1" Grid.Row="1"/>
+        <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind CurrentLayer, Mode=OneWay}" Grid.Row="1"/>
+        <controls:Sidebar x:Name="Sidebar" Layer="{x:Bind CurrentLayer, Mode=OneWay}" Grid.Column="1" Grid.Row="1"/>
     </Grid>
 </Page>

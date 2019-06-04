@@ -13,13 +13,15 @@ namespace Fonte.App.Delegates
         public override object FindResource(DesignCanvas canvas, object resourceKey)
         {
             var key = (string)resourceKey;
-            if (key == DesignCanvas.DrawPointsKey ||
+            if (key == DesignCanvas.DrawMetricsKey ||
+                key == DesignCanvas.DrawPointsKey ||
                 key == DesignCanvas.DrawSelectionKey ||
                 key == DesignCanvas.DrawStrokeKey)
             {
                 return false;
             }
-            else if (key == DesignCanvas.FillColorKey)
+            else if (key == DesignCanvas.ComponentColorKey ||
+                     key == DesignCanvas.FillColorKey)
             {
                 return Colors.Black;
             }
