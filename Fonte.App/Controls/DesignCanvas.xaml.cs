@@ -10,7 +10,6 @@ namespace Fonte.App.Controls
     using Microsoft.Graphics.Canvas.UI.Xaml;
     using muxc = Microsoft.UI.Xaml.Controls;
     using muxp = Microsoft.UI.Xaml.Controls.Primitives;
-    using Windows.Graphics.DirectX.Direct3D11;
 
     using System;
     using System.Diagnostics;

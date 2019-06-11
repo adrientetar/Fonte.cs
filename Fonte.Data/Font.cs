@@ -7,7 +7,6 @@ namespace Fonte.Data
     using Newtonsoft.Json;
 
     using System.Collections.Generic;
-    using Windows.Graphics.DirectX.Direct3D11;
 
     public partial class Font
     {
