@@ -180,7 +180,7 @@ namespace Fonte.App.Delegates
 
 #region IToolBarEntry implementation
 
-        public override IconElement Icon { get; } = new FontIcon() { Glyph = "\uec87" };
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uec87" };
 
         public override string Name => "Drawing";
 

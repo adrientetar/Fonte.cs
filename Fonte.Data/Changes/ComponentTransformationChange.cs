@@ -7,7 +7,7 @@ namespace Fonte.Data.Changes
 
     internal struct ComponentTransformationChange : IChange
     {
-        private Component _target;
+        private readonly Component _target;
         private Matrix3x2 _value;
 
         public bool ClearSelection => false;

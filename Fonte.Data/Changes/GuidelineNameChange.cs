@@ -5,7 +5,7 @@ namespace Fonte.Data.Changes
 
     internal struct GuidelineNameChange : IChange
     {
-        private Guideline _target;
+        private readonly Guideline _target;
         private string _value;
 
         public bool ClearSelection => false;

@@ -88,8 +88,7 @@ namespace Fonte.Data
             }
         }
 
-        // XXX: add mutation
-        public IReadOnlyDictionary<string, object> ExtraData
+        public Dictionary<string, object> ExtraData
         {
             get
             {
@@ -116,7 +115,8 @@ namespace Fonte.Data
             }
         }
 
-        public Point(float x, float y, PointType type = PointType.None, bool smooth = false, Dictionary<string, object> extraData = null)
+        public Point(float x, float y, PointType type = default, bool smooth = default,
+                     Dictionary<string, object> extraData = default)
         {
             _x = x;
             _y = y;

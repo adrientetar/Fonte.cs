@@ -5,7 +5,7 @@ namespace Fonte.Data.Changes
 
     internal struct ComponentGlyphNameChange : IChange
     {
-        private Component _target;
+        private readonly Component _target;
         private string _value;
 
         public bool ClearSelection => false;

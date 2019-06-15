@@ -20,7 +20,6 @@ namespace Fonte.Data
     using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection;
 
     [JsonConverter(typeof(PathConverter))]
     public partial class Path
@@ -81,7 +80,7 @@ namespace Fonte.Data
             }
         }
 
-        public IReadOnlyDictionary<string, object> ExtraData
+        public Dictionary<string, object> ExtraData
         {
             get
             {
@@ -208,7 +207,7 @@ namespace Fonte.Data
             }
         }
 
-        public Path(List<Point> points = null, Dictionary<string, object> extraData = null)
+        public Path(List<Point> points = default, Dictionary<string, object> extraData = default)
         {
             _points = points ?? new List<Point>();
             _extraData = extraData;
@@ -288,7 +287,7 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            return $"{nameof(Path)}({Points})";
+            return $"{nameof(Path)}({string.Join(", ", Points)})";
         }
 
         public void Transform(Matrix3x2 matrix, bool selected = false)

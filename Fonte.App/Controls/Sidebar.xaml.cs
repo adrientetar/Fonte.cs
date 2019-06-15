@@ -6,6 +6,7 @@ namespace Fonte.App.Controls
 
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Numerics;
     using Windows.ApplicationModel;
@@ -23,6 +24,15 @@ namespace Fonte.App.Controls
         {
             get => (Data.Layer)GetValue(LayerProperty);
             set { SetValue(LayerProperty, value); }
+        }
+
+        public static DependencyProperty LayersProperty = DependencyProperty.Register(
+            "Layers", typeof(IList<Data.Layer>), typeof(Sidebar), null);
+
+        public IList<Data.Layer> Layers
+        {
+            get => (IList<Data.Layer>)GetValue(LayersProperty);
+            set { SetValue(LayersProperty, value); }
         }
 
         public static DependencyProperty XPositionProperty = DependencyProperty.Register(
@@ -64,6 +74,16 @@ namespace Fonte.App.Controls
         public Sidebar()
         {
             InitializeComponent();
+
+            if (DesignMode.DesignMode2Enabled)
+            {
+                Layers = new List<Data.Layer>()
+                {
+                    new Data.Layer() { Name = "Regular" },
+                    new Data.Layer() { Name = "Bold" },
+                    new Data.Layer() { Name = "Heavy" }
+                };
+            }
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
@@ -88,19 +108,24 @@ namespace Fonte.App.Controls
 
         void OnDataRefreshing()
         {
-            if (Layer != null && !Layer.SelectionBounds.IsEmpty)
-            {
-                var origin = Origin.GetOrigin(Layer);
-                XPosition = Math.Round(origin.X, 2).ToString();
-                YPosition = Math.Round(origin.Y, 2).ToString();
+            var layer = Layer;
 
-                XSize = Math.Round(Layer.SelectionBounds.Width, 2).ToString();
-                YSize = Math.Round(Layer.SelectionBounds.Height, 2).ToString();
+            if (layer != null && !layer.SelectionBounds.IsEmpty)
+            {
+                var culture = CultureInfo.CurrentUICulture;
+                var origin = Origin.GetOrigin(layer);
+                XPosition = Math.Round(origin.X, 2).ToString(culture);
+                YPosition = Math.Round(origin.Y, 2).ToString(culture);
+
+                XSize = Math.Round(layer.SelectionBounds.Width, 2).ToString(culture);
+                YSize = Math.Round(layer.SelectionBounds.Height, 2).ToString(culture);
             }
             else
             {
                 XPosition = YPosition = XSize = YSize = string.Empty;
             }
+
+            Layers = layer?.Parent?.Layers;
         }
 
         /**/

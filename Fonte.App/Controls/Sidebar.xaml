@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:Fonte.App.Converters"
     xmlns:local="using:Fonte.App.Controls"
+    xmlns:muxcontrols="using:Microsoft.UI.Xaml.Controls"
+    xmlns:data="using:Fonte.Data"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sidebarparts="using:Fonte.App.Controls.SidebarParts"
@@ -53,6 +55,7 @@
                 <Setter Property="MinWidth" Value="60"/>
                 <Setter Property="Width" Value="60"/>
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
+                <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
 
             <Style x:Key="IconButtonStyle" TargetType="Button">
@@ -62,18 +65,28 @@
                 <Setter Property="Margin" Value="2,0,2,0"/>
                 <Setter Property="Padding" Value="4"/>
             </Style>
-            <Style x:Key="IconGridStyle" TargetType="Grid">
+            <Style x:Key="HeaderGridStyle" TargetType="Grid">
                 <Setter Property="Background" Value="{StaticResource AltBackgroundColor}"/>
-                <Setter Property="Height" Value="37"/>
-                <Setter Property="VerticalAlignment" Value="Top"/>
                 <Setter Property="BorderBrush" Value="{StaticResource SpacingColor}"/>
+                <Setter Property="BorderThickness" Value="0,1,0,1"/>
+                <Setter Property="Padding" Value="4"/>
+            </Style>
+            <Style x:Key="HeaderTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Margin" Value="4,1,4,1"/>
+                <Setter Property="Padding" Value="0"/>
+            </Style>
+            <Style x:Key="IconGridStyle" BasedOn="{StaticResource HeaderGridStyle}" TargetType="Grid">
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                <Setter Property="Padding" Value="6"/>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Background="{StaticResource BackgroundColor}" Width="220">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -210,8 +223,8 @@
             <TextBox IsEnabled="{x:Bind YSize, Converter={StaticResource StringToBooleanConverterKey}, Mode=OneWay}"
                      Text="{x:Bind YSize, Mode=OneWay}" LosingFocus="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
         </Grid>
-        <Grid Padding="4" Background="{StaticResource AltBackgroundColor}" BorderBrush="{StaticResource SpacingColor}" BorderThickness="0,1,0,1" Grid.Row="4">
-            <TextBlock Margin="4,1,4,1" Padding="0" Text="Transform"/>
+        <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="4">
+            <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Transform"/>
         </Grid>
         <Grid Padding="4" Grid.Row="5">
             <Grid.RowDefinitions>
@@ -267,5 +280,17 @@
                 </sidebarparts:ButtonPair.RightContent>
             </sidebarparts:ButtonPair>
         </Grid>
+        <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="6">
+            <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Layers"/>
+        </Grid>
+        <ListView ItemsSource="{x:Bind Layers, Mode=OneWay}" Grid.Row="7">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="data:Layer">
+                    <Grid>
+                        <TextBlock FontSize="12" Text="{x:Bind ActualName}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
     </Grid>
 </UserControl>

@@ -27,16 +27,19 @@ namespace Fonte.App.Utilities
         {
             var points = path.Points;
             var point = points[index];
+            if (point.Type == PointType.None)
+            {
+                throw new InvalidOperationException($"Index {index} isn't at segment boundary");
+            }
             point.Smooth = false;
 
             var after = points.GetRange(index, points.Count - index);
             if (path.IsOpen)
             {
-                var otherPath = new Data.Path();
-                otherPath.Points.Clear();
-                otherPath.Points.AddRange(after);
                 points.RemoveRange(index, points.Count - index);
-                path.Parent.Paths.Add(otherPath);
+                path.Parent.Paths.Add(
+                    new Data.Path(points: after)
+                );
             }
             else
             {
@@ -202,11 +205,11 @@ namespace Fonte.App.Utilities
             }
 
             // Second pass: project
-            Data.Point prevOn = null;
+            var prevOn = point;
             foreach (var next in path.Points)
             {
                 var atNode = point.Type != PointType.None &&
-                             prev.Type == PointType.None || next.Type == PointType.None;
+                             (prev.Type == PointType.None || next.Type == PointType.None);
 
                 if (mode == MoveMode.InterpolateCurve)
                 {
@@ -222,12 +225,14 @@ namespace Fonte.App.Utilities
                         ConstrainStaticHandles(prev, point, next, dx, dy);
                     }
                 }
-
-                if (atNode && point.Smooth && point.Type != PointType.Move)
+                else
                 {
-                    ConstrainSmoothPoint(prev, point, next, mode != MoveMode.StaticHandles);
+                    if (atNode && point.Type != PointType.Move && point.Smooth)
+                    {
+                        ConstrainSmoothPoint(prev, point, next, mode != MoveMode.StaticHandles);
+                    }
                 }
-                // --
+
                 if (point.Type != PointType.None)
                 {
                     prevOn = point;
@@ -454,6 +459,7 @@ namespace Fonte.App.Utilities
                     }
                     else
                     {
+                        // XXX: now that we're rounding, this doesn't work so well anymore
                         var rvec = new Vector2(p3.X - dx, p3.Y - dy);
                         VectorProjection(p3, p2.ToVector2(), rvec);
                     }

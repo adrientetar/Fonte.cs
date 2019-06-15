@@ -38,7 +38,7 @@ namespace Fonte.Data
         public IUndoProvider UndoStore => _undoStore;
 
         [JsonConstructor]
-        public Glyph(List<Layer> layers = null, List<string> unicodes = null, string name = null)
+        public Glyph(string name, List<string> unicodes = default, List<Layer> layers = default)
         {
             Layers = layers ?? new List<Layer>();
             Unicodes = unicodes ?? new List<string>();

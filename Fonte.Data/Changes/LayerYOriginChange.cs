@@ -3,7 +3,7 @@ namespace Fonte.Data.Changes
 {
     using Fonte.Data.Interfaces;
 
-    internal struct LayerWidthChange : IChange
+    internal struct LayerYOriginChange : IChange
     {
         private readonly Layer _target;
         private float _value;
@@ -11,7 +11,7 @@ namespace Fonte.Data.Changes
         public bool ClearSelection => false;
         public bool IsShallow => false;
 
-        public LayerWidthChange(Layer target, float value)
+        public LayerYOriginChange(Layer target, float value)
         {
             _target = target;
             _value = value;
@@ -19,8 +19,8 @@ namespace Fonte.Data.Changes
 
         public void Apply()
         {
-            var oldValue = _target._width;
-            _target._width = _value;
+            var oldValue = _target._yOrigin;
+            _target._yOrigin = _value;
             _value = oldValue;
 
             _target.Parent?.OnChange(this);

@@ -45,7 +45,7 @@ namespace Fonte.Data.Utilities
 
             for (int i = 0; i <= steps; ++i)
             {
-                var t = i / steps;
+                var t = (float)i / steps;
                 refineProjection(t);
             }
 

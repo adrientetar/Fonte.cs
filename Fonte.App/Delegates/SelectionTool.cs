@@ -195,11 +195,10 @@ namespace Fonte.App.Delegates
 
                         Outline.MoveSelection(
                             canvas.Layer,
-                            (float)(pos.X - _anchor.X),
-                            (float)(pos.Y - _anchor.Y),
+                            (float)(pos.X - point.X),
+                            (float)(pos.Y - point.Y),
                             GetMoveMode()
                         );
-                        _anchor = pos;
                     }
                 }
                 else if (_tappedItem is Data.Segment segment)
@@ -333,7 +332,7 @@ namespace Fonte.App.Delegates
 
         #region IToolBarEntry implementation
 
-        public override IconElement Icon { get; } = new FontIcon() { Glyph = "\ue8b0" };
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\ue8b0" };
 
         public override string Name => "Selection";
 

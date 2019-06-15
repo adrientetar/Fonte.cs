@@ -5,7 +5,7 @@ namespace Fonte.Data.Changes
 
     internal struct AnchorNameChange : IChange
     {
-        private Anchor _target;
+        private readonly Anchor _target;
         private string _value;
 
         public bool ClearSelection => false;

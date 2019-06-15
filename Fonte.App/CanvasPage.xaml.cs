@@ -5,11 +5,14 @@
 namespace Fonte.App
 {
     using Fonte.App.Interfaces;
+    using Fonte.Data.Utilities;
     using Newtonsoft.Json;
 
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using Windows.Storage;
+    using Windows.Storage.Pickers;
     using Windows.System;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
@@ -19,7 +22,7 @@ namespace Fonte.App
     public sealed partial class CanvasPage : Page
     {
         public static DependencyProperty FontProperty = DependencyProperty.Register(
-            "Font", typeof(Data.Font), typeof(CanvasPage), null);
+            "Font", typeof(Data.Font), typeof(CanvasPage), new PropertyMetadata(null, OnFontChanged));
 
         public Data.Font Font
         {
@@ -27,29 +30,20 @@ namespace Fonte.App
             set { SetValue(FontProperty, value); }
         }
 
-        public static DependencyProperty CurrentLayerProperty = DependencyProperty.Register(
-            "CurrentLayer", typeof(Data.Layer), typeof(CanvasPage), null);
-
-        public Data.Layer CurrentLayer
-        {
-            get => (Data.Layer)GetValue(CurrentLayerProperty);
-            set { SetValue(CurrentLayerProperty, value); }
-        }
-
         public CanvasPage()
         {
             InitializeComponent();
 
-            // TODO: create standard glyphset in font and foreground layer in glyph by default?
-            var layer = new Data.Layer();
-
+            // Maybe have a standard glyphset?
             Font = new Data.Font(
-                glyphs: new List<Data.Glyph>()
-                {
-                    new Data.Glyph(layers: new List<Data.Layer>() { layer })
-                });
-
-            CurrentLayer = layer;
+                    glyphs: new List<Data.Glyph>()
+                    {
+                        new Data.Glyph("a", layers: new List<Data.Layer>()
+                        {
+                            new Data.Layer("Regular")
+                        })
+                    }
+                );
 
 #if DEBUG
             Loaded += OnPageLoaded;
@@ -158,6 +152,64 @@ namespace Fonte.App
             }
 
             e.Handled = true;
+        }
+
+        void OnNextGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
+            Canvas.Layer = Sequence.NextItem(Font.Glyphs, index).Layers[0];
+
+            e.Handled = true;
+            ((App)Application.Current).InvalidateData();
+        }
+
+        void OnPreviousGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        {
+            var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
+            Canvas.Layer = Sequence.PreviousItem(Font.Glyphs, index).Layers[0];
+
+            e.Handled = true;
+            ((App)Application.Current).InvalidateData();
+        }
+
+        /**/
+
+        void OnFontChanged()
+        {
+            try
+            {
+                Sidebar.Layer = Font.Glyphs[0].Layers[0];
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                Sidebar.Layer = null;
+            }
+        }
+
+        static void OnFontChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((CanvasPage)sender).OnFontChanged();
+        }
+
+        async void OnOpenItemClicked(object sender, RoutedEventArgs e)
+        {
+            var openPicker = new FileOpenPicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+            openPicker.FileTypeFilter.Add(".tfont");
+
+            if (await openPicker.PickSingleFileAsync() is StorageFile file)
+            {
+                var json = await FileIO.ReadTextAsync(file);
+
+                Font = JsonConvert.DeserializeObject<Data.Font>(json);
+            }
+        }
+
+        async void OnSaveItemClicked(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         /**/

@@ -14,9 +14,29 @@ namespace Fonte.App.Controls
 
     public partial class TitleBar : UserControl
     {
+        public static DependencyProperty UserTitleProperty = DependencyProperty.Register(
+           "UserTitle", typeof(string), typeof(TitleBar), new PropertyMetadata(null, OnUserTitleChanged));
+
+        public string UserTitle
+        {
+            get => (string)GetValue(UserTitleProperty);
+            set { SetValue(UserTitleProperty, value); }
+        }
+
+        public static DependencyProperty TitleProperty = DependencyProperty.Register(
+           "Title", typeof(string), typeof(TitleBar), null);
+
+        public string Title
+        {
+            get => (string)GetValue(TitleProperty);
+            set { SetValue(TitleProperty, value); }
+        }
+
         public TitleBar()
         {
             InitializeComponent();
+
+            OnUserTitleChanged(null);
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs e)
@@ -89,6 +109,28 @@ namespace Fonte.App.Controls
             {
                 margin.Top = topMargin;
                 AppTitle.Margin = margin;
+            }
+        }
+
+        /**/
+
+        void OnUserTitleChanged(string userTitle)
+        {
+            if (string.IsNullOrEmpty(userTitle))
+            {
+                Title = Package.Current.DisplayName;
+            }
+            else
+            {
+                Title = $"{userTitle} – {Package.Current.DisplayName}";
+            }
+        }
+
+        static void OnUserTitleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue != e.NewValue)
+            {
+                ((TitleBar)sender).OnUserTitleChanged((string)e.NewValue);
             }
         }
     }

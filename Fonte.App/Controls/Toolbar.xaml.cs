@@ -4,6 +4,7 @@
 
 namespace Fonte.App.Controls
 {
+    using Fonte.App.Controls.ToolbarParts;
     using Fonte.App.Delegates;
     using Fonte.App.Interfaces;
 
@@ -11,7 +12,6 @@ namespace Fonte.App.Controls
     using System.Collections.ObjectModel;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Media;
 
     public partial class Toolbar : UserControl
     {
@@ -63,10 +63,9 @@ namespace Fonte.App.Controls
             SelectedIndex = 0;
         }
 
-        void OnButtonChecked(object sender, RoutedEventArgs e)
+        void OnButtonClicked(object sender, RoutedEventArgs e)
         {
-            var parent = VisualTreeHelper.GetParent((UIElement)sender);
-            SelectedIndex = ItemsControl.IndexFromContainer(parent);
+            SelectedIndex = Repeater.GetElementIndex((UIElement)sender);
         }
 
         /**/
@@ -75,9 +74,14 @@ namespace Fonte.App.Controls
         {
             for (int index = 0; index < Items.Count; ++index)
             {
-                var presenter = ItemsControl.ContainerFromIndex(index);
-                var button = (AppBarToggleButton)VisualTreeHelper.GetChild(presenter, 0);
-                button.IsChecked = index == _selectedIndex;
+                if (Repeater.TryGetElement(index) is IconButton button)
+                {
+                    button.IsChecked = index == _selectedIndex;
+                }
+                else
+                {
+                    break;
+                }
             }
         }
     }

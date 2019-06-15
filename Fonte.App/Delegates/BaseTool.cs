@@ -13,6 +13,7 @@ namespace Fonte.App.Delegates
     using System;
     using System.Diagnostics;
     using System.Linq;
+    using System.Numerics;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
@@ -55,6 +56,26 @@ namespace Fonte.App.Delegates
 
         public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e)
         {
+            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+            if (alt.HasFlag(CoreVirtualKeyStates.Down) && (
+                e.Key == VirtualKey.Left ||
+                e.Key == VirtualKey.Right))
+            {
+                var focusPoint = canvas.Layer.Selection.OfType<Data.Point>().LastOrDefault();
+
+                if (focusPoint != null)
+                {
+                    var path = focusPoint.Parent;
+                    var index = path.Points.IndexOf(focusPoint);
+
+                    var point = e.Key == VirtualKey.Right ?
+                                Sequence.NextItem(path.Points, index) :
+                                Sequence.PreviousItem(path.Points, index);
+
+                    canvas.Layer.ClearSelection();
+                    point.Selected = true;
+                }
+            }
             if (e.Key == VirtualKey.Left ||
                 e.Key == VirtualKey.Up ||
                 e.Key == VirtualKey.Right ||
@@ -95,7 +116,6 @@ namespace Fonte.App.Delegates
             else if (e.Key == VirtualKey.Back ||
                      e.Key == VirtualKey.Delete)
             {
-                var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
                 Outline.DeleteSelection(canvas.Layer, breakPaths: alt.HasFlag(CoreVirtualKeyStates.Down));
             }
             else if (e.Key == VirtualKey.Enter)
@@ -110,31 +130,6 @@ namespace Fonte.App.Delegates
                             Outline.TryTogglePointSmoothness(path, index++);
                         }
                     }
-                }
-            }
-            else if (e.Key == VirtualKey.Tab)
-            {
-                Data.Point focusPoint = null;
-                foreach (var item in canvas.Layer.Selection)
-                {
-                    if (item is Data.Point point)
-                    {
-                        focusPoint = point;
-                    }
-                }
-
-                if (focusPoint != null)
-                {
-                    var path = focusPoint.Parent;
-                    var index = path.Points.IndexOf(focusPoint);
-
-                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    var point = shift.HasFlag(CoreVirtualKeyStates.Down) ?
-                                Sequence.PreviousItem(path.Points, index) :
-                                Sequence.NextItem(path.Points, index);
-
-                    canvas.Layer.ClearSelection();
-                    point.Selected = true;
                 }
             }
             else
@@ -334,7 +329,7 @@ namespace Fonte.App.Delegates
 
         #region IToolBarEntry implementation
 
-        public virtual IconElement Icon { get; } = new SymbolIcon() { Symbol = Symbol.Add };
+        public virtual IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\ue8b0" };
 
         public virtual string Name => string.Empty;
 

@@ -26,7 +26,10 @@ namespace Fonte.Data
         internal List<Guideline> _guidelines;
         internal List<Path> _paths;
         internal string _masterName;
-        internal int _width;
+        internal string _name;
+        internal float _width;
+        internal float _height;
+        internal float _yOrigin;
 
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _closedCanvasPath;
@@ -170,8 +173,21 @@ namespace Fonte.Data
             }
         }
 
+        [JsonProperty("height")]
+        public float Height
+        {
+            get => _height;
+            set
+            {
+                if (value != _height)
+                {
+                    new LayerHeightChange(this, value).Apply();
+                }
+            }
+        }
+
         [JsonProperty("masterName")]
-        public string Name
+        public string MasterName
         {
             get => _masterName;
             set
@@ -183,16 +199,15 @@ namespace Fonte.Data
             }
         }
 
-        // XXX should this be a float?
-        [JsonProperty("width")]
-        public int Width
+        [JsonProperty("name")]
+        public string Name
         {
-            get => _width;
+            get => _name;
             set
             {
-                if (value != _width)
+                if (value != _name)
                 {
-                    new LayerWidthChange(this, value).Apply();
+                    new LayerNameChange(this, value).Apply();
                 }
             }
         }
@@ -242,7 +257,46 @@ namespace Fonte.Data
             }
         }
 
+        [JsonProperty("width")]
+        public float Width
+        {
+            get => _width;
+            set
+            {
+                if (value != _width)
+                {
+                    new LayerWidthChange(this, value).Apply();
+                }
+            }
+        }
+
+        [JsonProperty("yOrigin")]
+        public float YOrigin
+        {
+            get => _yOrigin;
+            set
+            {
+                if (value != _yOrigin)
+                {
+                    new LayerYOriginChange(this, value).Apply();
+                }
+            }
+        }
+
         /**/
+
+        [JsonIgnore]
+        public string ActualName
+        {
+            get
+            {
+                if (IsMasterLayer)
+                {
+                    return Master.Name;
+                }
+                return Name;
+            }
+        }
 
         [JsonIgnore]
         public Rect Bounds
@@ -280,6 +334,19 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
+        public bool IsMasterLayer
+        {
+            get
+            {
+                return !string.IsNullOrEmpty(MasterName) && string.IsNullOrEmpty(_name);
+            }
+        }
+
+        [JsonIgnore]
+        public bool IsVisible
+        { get; set; } = true;
+
+        [JsonIgnore]
         public Margins Margins
         {
             get
@@ -289,15 +356,15 @@ namespace Fonte.Data
                 {
                     var bottom = bounds.Bottom;
                     var top = bounds.Top;
-                    //if (YOrigin != null)
-                    //{
-                    //    bottom -= YOrigin - Height;
-                    //    top += YOrigin;
-                    //}
-                    //else
-                    //{
-                    //    top += Height;
-                    //}
+                    if (YOrigin != null)
+                    {
+                        bottom -= YOrigin - Height;
+                        top += YOrigin;
+                    }
+                    else
+                    {
+                        top += Height;
+                    }
                     return new Margins(
                             bounds.Left,
                             top,
@@ -420,7 +487,8 @@ namespace Fonte.Data
         }
 
         [JsonConstructor]
-        public Layer(List<Anchor> anchors = null, List<Component> components = null, List<Guideline> guidelines = null, List<Path> paths = null, string masterName = null, int width = 600)
+        public Layer(string masterName = default, string name = default, float width = 600, float height = 0, float yOrigin = 0,
+                     List<Anchor> anchors = default, List<Component> components = default, List<Guideline> guidelines = default, List<Path> paths = default)
         {
             _anchors = anchors ?? new List<Anchor>();
             _components = components ?? new List<Component>();
@@ -428,7 +496,10 @@ namespace Fonte.Data
             _paths = paths ?? new List<Path>();
 
             _masterName = masterName ?? string.Empty;
+            _name = name ?? string.Empty;
             _width = width;
+            _height = height;
+            _yOrigin = yOrigin;
 
             foreach (var anchor in _anchors)
             {
@@ -528,6 +599,7 @@ namespace Fonte.Data
                 }
             }
 
+            builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             return CanvasGeometry.CreatePath(builder);
         }
     }

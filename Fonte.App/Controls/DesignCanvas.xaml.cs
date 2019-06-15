@@ -44,7 +44,7 @@ namespace Fonte.App.Controls
         private CoreCursor _previousCursor;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
-            "Layer", typeof(Data.Layer), typeof(DesignCanvas), null);
+            "Layer", typeof(Data.Layer), typeof(DesignCanvas), new PropertyMetadata(null, OnLayerChanged));
 
         public Data.Layer Layer
         {
@@ -88,12 +88,37 @@ namespace Fonte.App.Controls
                  .5f * (float)Canvas.ActualHeight
             );
 
-            CenterOnMetrics();
+            Invalidate();
+            if (IsEnabled)
+            {
+                CenterOnMetrics();
+            }
 
             if (!DesignMode.DesignMode2Enabled)
             {
                 ((App)Application.Current).DataRefreshing += OnDataRefreshing;
             }
+        }
+
+        void OnLayerChanged()
+        {
+            IsEnabled = Layer != null;
+
+            Canvas.Invalidate();
+            if (IsEnabled)
+            {
+                CenterOnMetrics();
+            }
+        }
+
+        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((DesignCanvas)sender).OnLayerChanged();
+        }
+
+        protected override void OnApplyTemplate()
+        {
+            OnLayerChanged();
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -103,7 +128,7 @@ namespace Fonte.App.Controls
             {
                 Canvas.DpiScale = sender.ZoomFactor;
             }
-            Invalidate();
+            //Invalidate();
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
@@ -142,24 +167,27 @@ namespace Fonte.App.Controls
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
         {
-            foreach (var region in args.InvalidatedRegions)
+            if (Layer != null)
             {
-                using (var ds = sender.CreateDrawingSession(region))
+                foreach (var region in args.InvalidatedRegions)
                 {
-                    ds.Transform = _matrix;
+                    using (var ds = sender.CreateDrawingSession(region))
+                    {
+                        ds.Transform = _matrix;
 
-                    var rescale = 1f / sender.DpiScale;
-                    Tool.OnDraw(this, ds, rescale);
+                        var rescale = 1f / sender.DpiScale;
+                        Tool.OnDraw(this, ds, rescale);
 
-                    if ((bool)Tool.FindResource(this, DrawMetricsKey)) Drawing.DrawMetrics(Layer, ds, rescale);
-                    if ((bool)Tool.FindResource(this, DrawFillKey)) Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
-                    var drawSelection = (bool)Tool.FindResource(this, DrawSelectionKey);
-                    Drawing.DrawComponents(Layer, ds, rescale, (Color)Tool.FindResource(this, ComponentColorKey), drawSelection);
-                    if (drawSelection) Drawing.DrawSelection(Layer, ds, rescale);
-                    if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale, (Color)Tool.FindResource(this, PointColorKey), (Color)Tool.FindResource(this, SmoothPointColorKey));
-                    if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
-                    if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
-                    Tool.OnDrawCompleted(this, ds, rescale);
+                        if ((bool)Tool.FindResource(this, DrawMetricsKey)) Drawing.DrawMetrics(Layer, ds, rescale);
+                        if ((bool)Tool.FindResource(this, DrawFillKey)) Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
+                        var drawSelection = (bool)Tool.FindResource(this, DrawSelectionKey);
+                        Drawing.DrawComponents(Layer, ds, rescale, (Color)Tool.FindResource(this, ComponentColorKey), drawSelection);
+                        if (drawSelection) Drawing.DrawSelection(Layer, ds, rescale);
+                        if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale, (Color)Tool.FindResource(this, PointColorKey), (Color)Tool.FindResource(this, SmoothPointColorKey));
+                        if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
+                        if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
+                        Tool.OnDrawCompleted(this, ds, rescale);
+                    }
                 }
             }
         }
@@ -243,11 +271,12 @@ namespace Fonte.App.Controls
 
         Matrix3x2 GetInverseMatrix()
         {
-            if (Matrix3x2.Invert(GetMatrix(), out Matrix3x2 result))
+            var matrix = GetMatrix();
+            if (Matrix3x2.Invert(matrix, out Matrix3x2 result))
             {
                 return result;
             }
-            throw new InvalidOperationException("Couldn't invert matrix");
+            throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
         }
 
         public void CenterOnMetrics()
@@ -261,9 +290,9 @@ namespace Fonte.App.Controls
                 .5f * (Canvas.ActualHeight - Root.ActualHeight - fontHeight) - master.Descender,
                 new muxc.ScrollOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
 
-            //Root.ZoomTo(
-            //    (float)(ActualHeight / Math.Round(fontHeight * 1.4)), null,
-            //    new muxc.ZoomOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
+            Root.ZoomTo(
+                (float)(ActualHeight / Math.Round(fontHeight * 1.4)), null,
+                new muxc.ZoomOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 

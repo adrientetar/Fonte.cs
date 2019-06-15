@@ -7,16 +7,18 @@ namespace Fonte.App.Delegates
     using Fonte.App.Controls;
     using Fonte.App.Utilities;
     using Fonte.Data.Collections;
+    using Fonte.Data.Interfaces;
 
     using System;
+    using System.Diagnostics;
     using System.Linq;
+    using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
     using Windows.UI.Core;
+    using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
-    using Windows.UI.Xaml;
-    using Fonte.Data.Interfaces;
 
     public class PenTool : BaseTool
     {
@@ -31,21 +33,8 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas);
 
-            ObserverList<Data.Point> points;
-            try
+            if (TryRemoveTrailingOffCurve(canvas))
             {
-                points = canvas.Layer.Paths.Last().Points;
-            }
-            catch (InvalidOperationException)
-            {
-                return;
-            }
-            
-            if (points.Last().Type == Data.PointType.None)
-            {
-                points.Pop();
-                points.Last().Smooth = false;
-
                 ((App)Application.Current).InvalidateData();
             }
         }
@@ -54,26 +43,39 @@ namespace Fonte.App.Delegates
         {
             if (e.Key == VirtualKey.Menu)
             {
-                UpdateOnCurveSmoothness(canvas, false);
+                if (TrySetOnCurveSmoothness(canvas, false))
+                {
+                    ((App)Application.Current).InvalidateData();
+                }
             }
             else if (e.Key == VirtualKey.Space && _path != null)
             {
                 _shouldMoveOnCurve = true;
             }
+            else if (e.Key == VirtualKey.Escape)
+            {
+                TryRemoveTrailingOffCurve(canvas);
+                canvas.Layer.ClearSelection();
+
+                ((App)Application.Current).InvalidateData();
+            }
             else
             {
+                base.OnKeyDown(canvas, e);
                 return;
             }
 
             e.Handled = true;
-            //((App)Application.Current).InvalidateData();
         }
 
         public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
         {
             if (e.Key == VirtualKey.Menu)
             {
-                UpdateOnCurveSmoothness(canvas, true);
+                if (TrySetOnCurveSmoothness(canvas, true))
+                {
+                    ((App)Application.Current).InvalidateData();
+                }
             }
             else if (e.Key == VirtualKey.Space)
             {
@@ -81,11 +83,11 @@ namespace Fonte.App.Delegates
             }
             else
             {
+                base.OnKeyUp(canvas, e);
                 return;
             }
 
             e.Handled = true;
-            //((App)Application.Current).InvalidateData();
         }
 
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
@@ -99,15 +101,16 @@ namespace Fonte.App.Delegates
                 var tappedItem = canvas.HitTest(pos);
                 var selPoint = GetSelectedPoint(canvas);
 
+                _screenOrigin = ptPoint.Position;
                 _undoGroup = canvas.Layer.CreateUndoGroup();
-                if (tappedItem is Data.Point tappedPoint)
+                if (tappedItem is Data.Point tappedPoint && tappedPoint.Type != Data.PointType.None)
                 {
                     var tappedPath = tappedPoint.Parent;
-                    // If we click an open path boundary and the point at the other boundary is selected, close the path.
+
                     if (Is.AtOpenBoundary(tappedPoint))
                     {
-                        if (selPoint != null && selPoint != tappedPoint &&
-                            Is.AtOpenBoundary(selPoint))
+                        // If we click a boundary from another boundary, join the paths
+                        if (selPoint != null && Is.AtOpenBoundary(selPoint) && AreVisiblyDistinct(canvas, selPoint, tappedPoint))
                         {
                             var selPath = selPoint.Parent;
                             var selPoints = selPath.Points;
@@ -121,14 +124,29 @@ namespace Fonte.App.Delegates
                             }
                             Outline.JoinPaths(selPath, selPoints[0] == selPoint,
                                               tappedPath, tappedPath.Points[0] == tappedPoint);
-                            _path = selPath;
-                            _screenOrigin = ptPoint.Position;
+                            // Drag a control point, except if we're joining a different path (as we're not at boundary
+                            // of the resulting path)
+                            if (selPath == tappedPath)
+                            {
+                                _path = selPath;
+                            }
                         }
+                        // Otherwise reverse the path if needed and we'll drag the boundary point
+                        else
+                        {
+                            if (tappedPoint == tappedPath.Points.First())
+                            {
+                                tappedPath.Reverse();
+                            }
 
+                            _path = tappedPath;
+                        }
                     }
-                    // If we just clicked on a closed point, break the path open.
+                    // If we clicked on an inside point, just break its path open.
                     else
                     {
+                        TryRemoveTrailingOffCurve(canvas);
+
                         Outline.BreakPath(tappedPath, tappedPath.Points.IndexOf(tappedPoint));
                     }
                     
@@ -142,7 +160,7 @@ namespace Fonte.App.Delegates
                 {
                     ObserverList<Data.Point> points;
                     Data.PointType type;
-                    // Otherwise, add a point to current path if applicable
+                    // Add a point to the current path, if any
                     if (selPoint != null && Is.AtOpenBoundary(selPoint))
                     {
                         _path = selPoint.Parent;
@@ -165,7 +183,7 @@ namespace Fonte.App.Delegates
                         }
                         type = Data.PointType.Line;
                     }
-                    // Or create a new one
+                    // Else just create a new one
                     else
                     {
                         _path = new Data.Path();
@@ -173,16 +191,15 @@ namespace Fonte.App.Delegates
                         canvas.Layer.Paths.Add(_path);
                         type = Data.PointType.Move;
                     }
+
                     // In any case, unselect all points (*click*) and enable new point
                     canvas.Layer.ClearSelection();
                     var x = Outline.RoundToGrid((float)pos.X);
                     var y = Outline.RoundToGrid((float)pos.Y);
-                    var point = new Data.Point(x, y, type)
+                    points.Add(new Data.Point(x, y, type)
                     {
                         Selected = true
-                    };
-                    points.Add(point);
-                    _screenOrigin = ptPoint.Position;
+                    });
                 }
 
                 ((App)Application.Current).InvalidateData();
@@ -198,6 +215,8 @@ namespace Fonte.App.Delegates
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint();
+                Debug.Assert(selPoint.Parent == _path);
+
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
                     if (!CanStartDragging(ptPoint.Position, _screenOrigin.Value))
@@ -326,6 +345,14 @@ namespace Fonte.App.Delegates
 
         /**/
 
+        bool AreVisiblyDistinct(DesignCanvas canvas, Data.Point point, Data.Point other)
+        {
+            var pos = canvas.GetClientPosition(point.ToVector2().ToPoint());
+            var otherPos = canvas.GetClientPosition(other.ToVector2().ToPoint());
+
+            return CanStartDragging(pos, otherPos);
+        }
+
         void CoerceSegmentToCurve(Data.Point onCurve, Point pos)
         {
             var index = _path.Points.IndexOf(onCurve);
@@ -395,8 +422,8 @@ namespace Fonte.App.Delegates
             var selection = canvas.Layer.Selection;
             if (selection.Count == 1)
             {
-                var element = selection.First();
-                if (element is Data.Point point)
+                var item = selection.First();
+                if (item is Data.Point point)
                 {
                     return point;
                 }
@@ -404,7 +431,23 @@ namespace Fonte.App.Delegates
             return null;
         }
 
-        void UpdateOnCurveSmoothness(DesignCanvas canvas, bool value)
+        bool TryRemoveTrailingOffCurve(DesignCanvas canvas)
+        {
+            if (GetSelectedPoint(canvas) is Data.Point selPoint)
+            {
+                var selPath = selPoint.Parent;
+                var selPoints = selPath.Points;
+                if (selPoint.Type == Data.PointType.None && selPath.IsOpen && selPoints.Last() == selPoint)
+                {
+                    selPoints.Pop();
+                    selPoints.Last().Smooth = false;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        bool TrySetOnCurveSmoothness(DesignCanvas canvas, bool value)
         {
             if (_path != null && _path.Points.Count >= 2)
             {
@@ -416,18 +459,19 @@ namespace Fonte.App.Delegates
                         point = _path.Points[_path.Points.Count - 2];
                         if (point.Type == Data.PointType.None || point == _path.Points[0])
                         {
-                            return;
+                            return false;
                         }
                     }
                     point.Smooth = value;
-                    ((App)Application.Current).InvalidateData();
+                    return true;
                 }
             }
+            return false;
         }
 
 #region IToolBarEntry implementation
 
-        public override IconElement Icon { get; } = new FontIcon() { Glyph = "\uedfb" };
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uedfb" };
 
         public override string Name => "Pen";
 

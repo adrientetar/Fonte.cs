@@ -5,7 +5,7 @@ namespace Fonte.Data.Changes
 
     internal struct PointYChange : IChange
     {
-        private Point _target;
+        private readonly Point _target;
         private float _value;
 
         public bool ClearSelection => false;

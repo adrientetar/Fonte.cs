@@ -2,9 +2,9 @@
     x:Class="Fonte.App.CanvasPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="using:Fonte.App.Controls"
-    xmlns:interfaces="using:Fonte.App.Interfaces"
     xmlns:local="using:Fonte.App"
+    xmlns:controls="using:Fonte.App.Controls"
+    xmlns:toolbarparts="using:Fonte.App.Controls.ToolbarParts"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:Windows10version1803="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract, 6)"
@@ -17,6 +17,8 @@
         <KeyboardAccelerator Modifiers="Control" Key="A" Invoked="OnSelectAllInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="Number0" Invoked="OnResetZoomInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="P" Invoked="OnShowSidebarInvoked"/>
+        <KeyboardAccelerator Key="End" Invoked="OnNextGlyphInvoked"/>
+        <KeyboardAccelerator Key="Home" Invoked="OnPreviousGlyphInvoked"/>
     </Page.KeyboardAccelerators>
 
     <Grid Background="{StaticResource SpacingColor}" ColumnSpacing="1">
@@ -29,19 +31,33 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid RequestedTheme="Dark" Background="{ThemeResource SystemControlChromeMediumLowAcrylicWindowMediumBrush}" Grid.ColumnSpan="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <controls:TitleBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3"/>
-            <controls:Toolbar x:Name="Toolbar" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1" Grid.Column="1"/>
+            <controls:TitleBar Grid.Row="0"/>
+            <toolbarparts:IconButton Label="Menu" Grid.Row="1">
+                <toolbarparts:IconButton.Icon>
+                    <FontIconSource FontSize="16" FontWeight="Medium" Glyph="&#xEA37;"/>
+                </toolbarparts:IconButton.Icon>
+                <toolbarparts:IconButton.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Click="OnOpenItemClicked">
+                            <MenuFlyoutItem.Command>
+                                <StandardUICommand Kind="Open"/>
+                            </MenuFlyoutItem.Command>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Click="OnSaveItemClicked">
+                            <MenuFlyoutItem.Command>
+                                <StandardUICommand Kind="Save"/>
+                            </MenuFlyoutItem.Command>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </toolbarparts:IconButton.Flyout>
+            </toolbarparts:IconButton>
+            <controls:Toolbar x:Name="Toolbar" HorizontalAlignment="Center" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1"/>
         </Grid>
-        <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind CurrentLayer, Mode=OneWay}" Grid.Row="1"/>
-        <controls:Sidebar x:Name="Sidebar" Layer="{x:Bind CurrentLayer, Mode=OneWay}" Grid.Column="1" Grid.Row="1"/>
+        <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind Sidebar.Layer, Mode=TwoWay}" Grid.Row="1"/>
+        <controls:Sidebar x:Name="Sidebar" Grid.Column="1" Grid.Row="1"/>
     </Grid>
 </Page>

@@ -11,6 +11,7 @@
     mc:Ignorable="d"
     d:DesignHeight="300"
     d:DesignWidth="400"
+    IsEnabled="false"
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>

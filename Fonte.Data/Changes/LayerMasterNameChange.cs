@@ -5,7 +5,7 @@ namespace Fonte.Data.Changes
 
     internal struct LayerMasterNameChange : IChange
     {
-        private Layer _target;
+        private readonly Layer _target;
         private string _value;
 
         public bool ClearSelection => false;

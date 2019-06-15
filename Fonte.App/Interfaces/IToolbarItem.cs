@@ -10,7 +10,7 @@ namespace Fonte.App.Interfaces
     public interface IToolbarItem
     {
         string Name { get; }
-        IconElement Icon { get; }
+        IconSource Icon { get; }
         KeyboardAccelerator Shortcut { get; }
     }
 }

@@ -22,7 +22,7 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <TextBlock x:Name="AppTitle"
-                   Text="{x:Bind appmodel:Package.Current.DisplayName}"
+                   Text="{x:Bind Title, Mode=OneWay}"
                    Margin="10,5,0,0"
                    IsHitTestVisible="False"
                    Style="{StaticResource CaptionTextBlockStyle}"

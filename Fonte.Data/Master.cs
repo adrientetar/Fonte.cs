@@ -49,8 +49,8 @@ namespace Fonte.Data
         public Font Parent { get; internal set; }
 
         [JsonConstructor]
-        public Master(string name = null, Dictionary<string, int> location = null, List<Guideline> guidelines = null,
-                      List<int> hStems = null, List<int> vStems = null, int ascender = 800, int capHeight = 700,
+        public Master(string name = default, Dictionary<string, int> location = default, List<Guideline> guidelines = default,
+                      List<int> hStems = default, List<int> vStems = default, int ascender = 800, int capHeight = 700,
                       int descender = -200, float italicAngle = 0f, int xHeight = 500)
         {
             Name = name ?? string.Empty;

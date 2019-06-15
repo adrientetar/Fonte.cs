@@ -48,7 +48,7 @@ namespace Fonte.App.Delegates
                     var dy = y2 - y1;
                     if (Math.Abs(dx) > Math.Abs(dy))
                     {
-                        y2 = y1 + Math.Sign(dy) * dx;  //Math.CopySign(x2 - x1, y2 - y1); // .NET Core 3.0
+                        y2 = y1 + Math.Sign(dy) * dx;
                     }
                     else
                     {
@@ -74,7 +74,7 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (_origin.HasValue)
             {
@@ -123,6 +123,7 @@ namespace Fonte.App.Delegates
             }
             else
             {
+                base.OnKeyDown(canvas, e);
                 return;
             }
 
@@ -150,6 +151,7 @@ namespace Fonte.App.Delegates
             }
             else
             {
+                base.OnKeyUp(canvas, e);
                 return;
             }
 
@@ -257,7 +259,7 @@ namespace Fonte.App.Delegates
 
         #region IToolBarEntry implementation
 
-        public override IconElement Icon { get; } = new FontIcon() { Glyph = "\uf158" };
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uf158" };
 
         public override string Name => "Shapes";
 
