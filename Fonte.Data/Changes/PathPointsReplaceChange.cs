@@ -9,7 +9,7 @@ namespace Fonte.Data.Changes
         private readonly int _index;
         private Point _item;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public PathPointsReplaceChange(Path parent, int index, Point item)

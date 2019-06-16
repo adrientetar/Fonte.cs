@@ -116,7 +116,7 @@ namespace Fonte.App.Delegates
                             var selPoints = selPath.Points;
                             if (selPoint.Type == Data.PointType.None)
                             {
-                                selPoint.Selected = false;
+                                selPoint.IsSelected = false;
                                 selPoints.Pop();
                                 _lastOn = selPoints.Last();
                                 _stashedOffCurve = (selPoint, _lastOn.Smooth);
@@ -152,9 +152,9 @@ namespace Fonte.App.Delegates
                     
                     if (selPoint != null)
                     {
-                        selPoint.Selected = false;
+                        selPoint.IsSelected = false;
                     }
-                    tappedPoint.Selected = true;
+                    tappedPoint.IsSelected = true;
                 }
                 else
                 {
@@ -166,7 +166,7 @@ namespace Fonte.App.Delegates
                         _path = selPoint.Parent;
                         points = _path.Points;
                         var lastPoint = points.Last();
-                        lastPoint.Selected = false;
+                        lastPoint.IsSelected = false;
                         if (lastPoint.Type == Data.PointType.None)
                         {
                             points.Pop();
@@ -198,7 +198,7 @@ namespace Fonte.App.Delegates
                     var y = Outline.RoundToGrid((float)pos.Y);
                     points.Add(new Data.Point(x, y, type)
                     {
-                        Selected = true
+                        IsSelected = true
                     });
                 }
 
@@ -224,7 +224,7 @@ namespace Fonte.App.Delegates
                         return;
                     }
                     var makeOnSmooth = !Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
-                    selPoint.Selected = false;
+                    selPoint.IsSelected = false;
                     selPoint.Smooth = _path.Points.Count > 1 && makeOnSmooth;
 
                     if (selPoint.Type == Data.PointType.Line && makeOnSmooth)
@@ -249,14 +249,14 @@ namespace Fonte.App.Delegates
                         var y = Outline.RoundToGrid((float)pos.Y);
                         var point = new Data.Point(x, y)
                         {
-                            Selected = true
+                            IsSelected = true
                         };
                         _path.Points.Add(point);
                     }
                     else
                     {
-                        selPoint.Selected = false;
-                        _path.Points[_path.Points.Count - 2].Selected = true;
+                        selPoint.IsSelected = false;
+                        _path.Points[_path.Points.Count - 2].IsSelected = true;
                     }
                 }
                 else
@@ -409,7 +409,7 @@ namespace Fonte.App.Delegates
             if (!_path.IsOpen && point.Type == Data.PointType.Curve)
             {
                 var pt = _path.Points[_path.Points.Count - 2];
-                if (pt.Selected)
+                if (pt.IsSelected)
                 {
                     point = pt;
                 }
@@ -420,13 +420,10 @@ namespace Fonte.App.Delegates
         Data.Point GetSelectedPoint(DesignCanvas canvas)
         {
             var selection = canvas.Layer.Selection;
-            if (selection.Count == 1)
+
+            if (selection.Count == 1 && selection.First() is Data.Point point)
             {
-                var item = selection.First();
-                if (item is Data.Point point)
-                {
-                    return point;
-                }
+                return point;
             }
             return null;
         }
@@ -449,10 +446,10 @@ namespace Fonte.App.Delegates
 
         bool TrySetOnCurveSmoothness(DesignCanvas canvas, bool value)
         {
-            if (_path != null && _path.Points.Count >= 2)
+            if (_path?.Points.Count >= 2)
             {
                 var point = _path.Points.Last();
-                if (point.Selected)
+                if (point.IsSelected)
                 {
                     if (point.Type == Data.PointType.None)
                     {

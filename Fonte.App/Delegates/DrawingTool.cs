@@ -117,7 +117,7 @@ namespace Fonte.App.Delegates
                 {
                     var points = _path.Points;
 
-                    points[points.Count - 1].Selected = false;
+                    points[points.Count - 1].IsSelected = false;
                     if (_points.Count >= 2)
                     {
                         points.AddRange(
@@ -134,7 +134,7 @@ namespace Fonte.App.Delegates
                             new Data.Point((float)pos.X, (float)pos.Y, Data.PointType.Line)
                         );
                     }
-                    points[points.Count - 1].Selected = true;
+                    points[points.Count - 1].IsSelected = true;
                 }
                 else
                 {
@@ -145,7 +145,7 @@ namespace Fonte.App.Delegates
                     );
                     canvas.Layer.Paths.Add(_path);
 
-                    _path.Points[0].Selected = true;
+                    _path.Points[0].IsSelected = true;
                 }
 
                 _points.Clear();

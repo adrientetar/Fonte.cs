@@ -8,6 +8,7 @@ namespace Fonte.Data
     using Fonte.Data.Utilities;
     using Newtonsoft.Json;
 
+    using System;
     using System.Collections.Generic;
 
     public partial class Glyph
@@ -28,11 +29,24 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
-        public Font Parent
-        { get; internal set; }
+        public bool IsModified
+        {
+            get => !_undoStore.IsEmpty;
+            set
+            {
+                if (value)
+                    throw new InvalidOperationException($"Cannot set {nameof(IsModified)} to true");
+
+                _undoStore.Clear();
+            }
+        }
 
         [JsonIgnore]
-        public bool Selected { get; set; }
+        public bool IsSelected { get; set; }
+
+        [JsonIgnore]
+        public Font Parent
+        { get; internal set; }
 
         [JsonIgnore]
         public IUndoProvider UndoStore => _undoStore;

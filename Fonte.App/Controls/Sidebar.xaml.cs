@@ -213,7 +213,7 @@ namespace Fonte.App.Controls
                     }
                     else
                     {
-                        if (useSelection && !Enumerable.Any(path.Points, point => point.Selected))
+                        if (useSelection && !Enumerable.Any(path.Points, point => point.IsSelected))
                         {
                             retainPaths.Add(path);
                         }
@@ -266,7 +266,7 @@ namespace Fonte.App.Controls
             if (float.TryParse(textBox.Text, out float result))
             {
                 var dx = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).X;
-                Layer.Transform(Matrix3x2.CreateTranslation(dx, 0), selected: true);
+                Layer.Transform(Matrix3x2.CreateTranslation(dx, 0), selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -282,7 +282,7 @@ namespace Fonte.App.Controls
             if (float.TryParse(textBox.Text, out float result))
             {
                 var dy = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).Y;
-                Layer.Transform(Matrix3x2.CreateTranslation(0, dy), selected: true);
+                Layer.Transform(Matrix3x2.CreateTranslation(0, dy), selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -299,7 +299,7 @@ namespace Fonte.App.Controls
             {
                 var wr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Width;
                 Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
-                                selected: true);
+                                selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -316,7 +316,7 @@ namespace Fonte.App.Controls
             {
                 var hr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Height;
                 Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
-                                selected: true);
+                                selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -337,7 +337,7 @@ namespace Fonte.App.Controls
             {
                 var rad = result * (float)Math.PI / 180 * sign;
                 Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
-                                selected: Layer.Selection.Count > 0);
+                                selectionOnly: Layer.Selection.Count > 0);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -354,7 +354,7 @@ namespace Fonte.App.Controls
             if (xScale != 1f || yScale != 1f)
             {
                 Layer.Transform(Matrix3x2.CreateScale(xScale, yScale, Origin.GetOrigin(Layer)),
-                                selected: Layer.Selection.Count > 0);
+                                selectionOnly: Layer.Selection.Count > 0);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -369,7 +369,7 @@ namespace Fonte.App.Controls
             {
                 var rad = result * (float)Math.PI / 180 * sign;
                 Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
-                                selected: Layer.Selection.Count > 0);
+                                selectionOnly: Layer.Selection.Count > 0);
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -383,25 +383,22 @@ namespace Fonte.App.Controls
             var selectedPaths = new List<Data.Path>();
             foreach (var path in Layer.Paths)
             {
-                if (Enumerable.Any(path.Points, point => point.Selected))
+                if (Enumerable.Any(path.Points, point => point.IsSelected))
                 {
                     selectedBounds.Union(path.Bounds);
                     selectedPaths.Add(path);
                 }
             }
 
-            if (selectedPaths.Count > 0)
+            foreach (var path in selectedPaths)
             {
-                foreach (var path in selectedPaths)
+                var delta = transformFunc(path, selectedBounds);
+
+                if (delta.Length() != 0)
                 {
-                    var delta = transformFunc(path, selectedBounds);
+                    path.Transform(Matrix3x2.CreateTranslation(delta));
 
-                    if (delta.Length() != 0)
-                    {
-                        path.Transform(Matrix3x2.CreateTranslation(delta));
-
-                        ((App)Application.Current).InvalidateData();
-                    }
+                    ((App)Application.Current).InvalidateData();
                 }
             }
         }
@@ -423,7 +420,7 @@ namespace Fonte.App.Controls
                     }
                     //else
                     //{
-                    if (refPath == null && Enumerable.Any(path.Points, point => point.Selected))
+                    if (refPath == null && Enumerable.Any(path.Points, point => point.IsSelected))
                     {
                         refPath = path;
                     }

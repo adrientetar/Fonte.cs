@@ -100,6 +100,27 @@ namespace Fonte.App.Controls
             }
         }
 
+        void OnControlUnloaded(object sender, RoutedEventArgs e)
+        {
+            if (!DesignMode.DesignMode2Enabled)
+            {
+                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+            }
+
+            Canvas.RemoveFromVisualTree();
+            Canvas = null;
+        }
+
+        protected override void OnApplyTemplate()
+        {
+            OnLayerChanged();
+        }
+
+        void OnDataRefreshing()
+        {
+            Invalidate();
+        }
+
         void OnLayerChanged()
         {
             IsEnabled = Layer != null;
@@ -116,11 +137,6 @@ namespace Fonte.App.Controls
             ((DesignCanvas)sender).OnLayerChanged();
         }
 
-        protected override void OnApplyTemplate()
-        {
-            OnLayerChanged();
-        }
-
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         void OnRootViewChanged(muxp.Scroller sender, object args)
         {
@@ -131,22 +147,6 @@ namespace Fonte.App.Controls
             //Invalidate();
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-
-        void OnControlUnloaded(object sender, RoutedEventArgs e)
-        {
-            if (!DesignMode.DesignMode2Enabled)
-            {
-                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
-            }
-
-            Canvas.RemoveFromVisualTree();
-            Canvas = null;
-        }
-
-        void OnDataRefreshing()
-        {
-            Invalidate();
-        }
 
         void OnPointerEntered(object sender, PointerRoutedEventArgs e)
         {

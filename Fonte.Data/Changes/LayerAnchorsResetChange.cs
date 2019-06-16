@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
 
         bool Insert => _items != null;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerAnchorsResetChange(Layer parent)

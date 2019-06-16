@@ -5,20 +5,22 @@ namespace Fonte.Data.Changes
 
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     internal class ChangeGroup : IChange, IChangeGroup
     {
         private readonly Action<int> _callback;
         private readonly List<IChange> _changes = new List<IChange>();
         private bool _disposed = false;
-        private readonly int _index;
+        private int _index;
 
         public int Count => _changes.Count;
 
-        public bool ClearSelection => false;
-        public bool IsShallow => false;
-
-        public bool IsTopLevel => _index == 0;
+        public bool AffectsSelection => true;
+        // TODO: to avoid the >O(1) fetch, we can have _undoCounter similar to UndoStore's, but that
+        // wouldn't play well with cloning... need to refactor members to an aggregate ref type (shared)
+        // and an index (unique)
+        public bool IsShallow => !Enumerable.Any(_changes, change => !change.IsShallow);
 
         public ChangeGroup(Action<int> callback, int index)
         {
@@ -28,6 +30,11 @@ namespace Fonte.Data.Changes
 
         public void Add(IChange item)
         {
+            if (_disposed)
+            {
+                throw new InvalidOperationException($"Cannot add item to disposed {nameof(ChangeGroup)}");
+            }
+
             _changes.Add(item);
         }
 
@@ -41,9 +48,25 @@ namespace Fonte.Data.Changes
             _changes.Reverse();
         }
 
-        public void Clear()
+        public ChangeGroup CloneWithIndex(int index)
         {
-            _changes.Clear();
+            if (_disposed)
+            {
+                throw new InvalidOperationException($"Cannot clone disposed {nameof(ChangeGroup)}");
+            }
+
+            ChangeGroup other;
+            var oi = _index;
+            try
+            {
+                _index = index;
+                other = (ChangeGroup)MemberwiseClone();
+            }
+            finally
+            {
+                _index = oi;
+            }
+            return other;
         }
 
         public void Dispose()

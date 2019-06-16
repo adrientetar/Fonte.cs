@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
         private bool _insert;
         private List<Guideline> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerGuidelinesRangeChange(Layer parent, int index, List<Guideline> items, bool insert)

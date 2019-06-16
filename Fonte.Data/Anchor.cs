@@ -16,7 +16,7 @@ namespace Fonte.Data
         internal float _y;
         internal string _name;
 
-        internal bool _selected;
+        internal bool _isSelected;
 
         // XXX serialize to writesingle ; check that it's needed
         [JsonProperty("x")]
@@ -66,14 +66,14 @@ namespace Fonte.Data
         { get; internal set; }
 
         [JsonIgnore]
-        public bool Selected
+        public bool IsSelected
         {
-            get => _selected;
+            get => _isSelected;
             set
             {
-                if (value != _selected)
+                if (value != _isSelected)
                 {
-                    new AnchorSelectedChange(this, value).Apply();
+                    new AnchorIsSelectedChange(this, value).Apply();
                 }
             }
         }

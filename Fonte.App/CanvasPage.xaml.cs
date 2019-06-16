@@ -11,6 +11,8 @@ namespace Fonte.App
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
+    using Windows.ApplicationModel;
     using Windows.Storage;
     using Windows.Storage.Pickers;
     using Windows.System;
@@ -21,6 +23,8 @@ namespace Fonte.App
 
     public sealed partial class CanvasPage : Page
     {
+        private StorageFile _file;
+
         public static DependencyProperty FontProperty = DependencyProperty.Register(
             "Font", typeof(Data.Font), typeof(CanvasPage), new PropertyMetadata(null, OnFontChanged));
 
@@ -45,6 +49,8 @@ namespace Fonte.App
                     }
                 );
 
+            OnDataRefreshing();
+
 #if DEBUG
             Loaded += OnPageLoaded;
             Unloaded += OnPageUnloaded;
@@ -53,12 +59,34 @@ namespace Fonte.App
 
         void OnPageLoaded(object sender, RoutedEventArgs e)
         {
+            if (!DesignMode.DesignMode2Enabled)
+            {
+                ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+            }
+
             Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
         }
 
         void OnPageUnloaded(object sender, RoutedEventArgs e)
         {
+            if (!DesignMode.DesignMode2Enabled)
+            {
+                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+            }
+
             Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
+        }
+
+        void OnDataRefreshing()
+        {
+            if (Font.IsModified)
+            {
+                TitleBar.UserTitle = $"*{Font.FamilyName}";
+            }
+            else
+            {
+                TitleBar.UserTitle = Font.FamilyName;
+            }
         }
 
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs e)
@@ -130,11 +158,11 @@ namespace Fonte.App
             {
                 foreach (var anchor in Canvas.Layer.Anchors)
                 {
-                    anchor.Selected = true;
+                    anchor.IsSelected = true;
                 }
                 foreach (var component in Canvas.Layer.Components)
                 {
-                    component.Selected = true;
+                    component.IsSelected = true;
                 }
             }
 
@@ -157,7 +185,7 @@ namespace Fonte.App
         void OnNextGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
         {
             var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
-            Canvas.Layer = Sequence.NextItem(Font.Glyphs, index).Layers[0];
+            Canvas.Layer = Sequence.NextItem(Font.Glyphs, index).Layers.First();
 
             e.Handled = true;
             ((App)Application.Current).InvalidateData();
@@ -166,7 +194,7 @@ namespace Fonte.App
         void OnPreviousGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
         {
             var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
-            Canvas.Layer = Sequence.PreviousItem(Font.Glyphs, index).Layers[0];
+            Canvas.Layer = Sequence.PreviousItem(Font.Glyphs, index).Layers.First();
 
             e.Handled = true;
             ((App)Application.Current).InvalidateData();
@@ -193,23 +221,47 @@ namespace Fonte.App
 
         async void OnOpenItemClicked(object sender, RoutedEventArgs e)
         {
-            var openPicker = new FileOpenPicker
+            var picker = new FileOpenPicker
             {
                 SuggestedStartLocation = PickerLocationId.DocumentsLibrary
             };
-            openPicker.FileTypeFilter.Add(".tfont");
+            picker.FileTypeFilter.Add(".tfont");
 
-            if (await openPicker.PickSingleFileAsync() is StorageFile file)
+            if (await picker.PickSingleFileAsync() is StorageFile file)
             {
+
                 var json = await FileIO.ReadTextAsync(file);
 
                 Font = JsonConvert.DeserializeObject<Data.Font>(json);
+
+                _file = file;
+                OnDataRefreshing();
             }
         }
 
         async void OnSaveItemClicked(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var file = _file;
+            if (file is null)
+            {
+                var picker = new FileSavePicker
+                {
+                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+                };
+                picker.FileTypeChoices.Add("Font file", new List<string>() { ".tfont" });
+                picker.SuggestedFileName = Font.FamilyName;
+
+                file = await picker.PickSaveFileAsync();
+            }
+            if (file is StorageFile)
+            {
+                var json = JsonConvert.SerializeObject(Font);
+
+                await FileIO.WriteTextAsync(file, json);
+
+                _file = file;
+                OnDataRefreshing();
+            }
         }
 
         /**/

@@ -8,7 +8,7 @@ namespace Fonte.Data.Changes
         private readonly Anchor _target;
         private string _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
         public AnchorNameChange(Anchor target, string value)

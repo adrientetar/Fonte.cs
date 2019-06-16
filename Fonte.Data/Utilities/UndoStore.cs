@@ -19,26 +19,45 @@ namespace Fonte.Data.Utilities
             None
         };
 
+        private readonly List<IChange> _undoStack = new List<IChange>();
+        private readonly List<IChange> _redoStack = new List<IChange>();
         private int _undoCounter = 0;
         private int _redoCounter = 0;
         private ChangeGroup _undoGroup;
         private int _undoGroupIndex = 0;
-        private List<IChange> _undoStack = new List<IChange>();
-        private List<IChange> _redoStack = new List<IChange>();
         private UndoMode _undoMode = UndoMode.AddToUndoClearRedo;
 
         public bool CanRedo => _redoStack.Count > 0 && _redoCounter > 0 && _undoGroupIndex == 0;
         
         public bool CanUndo => _undoStack.Count > 0 && _undoCounter > 0 && _undoGroupIndex == 0;
 
+        public bool IsEmpty => !(CanUndo || _undoGroupIndex > 0 && !_undoGroup.IsShallow);
+
         public IChangeGroup CreateUndoGroup()
         {
-            /* XXX: for multilevel, we only stash the top level one */
+            if (_undoGroupIndex > 0)
+            {
+                return _undoGroup.CloneWithIndex(++_undoGroupIndex);
+            }
+
             _undoGroup = new ChangeGroup(
                 ix => OnUndoGroupDisposed(ix),
                 ++_undoGroupIndex
             );
             return _undoGroup;
+        }
+
+        public void Clear()
+        {
+            if (_undoGroupIndex == 0)
+                throw new InvalidOperationException($"Cannot clear stack with an open {nameof(ChangeGroup)}");
+            if (_undoMode == UndoMode.None)
+                throw new InvalidOperationException($"Cannot clear stack amidst special mode operation");
+
+            _undoStack.Clear();
+            _undoCounter = 0;
+            _redoStack.Clear();
+            _redoCounter = 0;
         }
 
         public void ProcessChange(IChange change)
@@ -64,8 +83,8 @@ namespace Fonte.Data.Utilities
 
         public void Redo()
         {
-            if (_redoStack.Count == 0)
-                throw new InvalidOperationException("Redo stack is empty");
+            if (_redoCounter <= 0)
+                throw new InvalidOperationException("Cannot redo at this time");
             if (_undoGroupIndex > 0)
                 throw new InvalidOperationException("Cannot redo while in undo group (" + _undoGroupIndex + ")");
 
@@ -97,8 +116,8 @@ namespace Fonte.Data.Utilities
 
         public void Undo()
         {
-            if (_undoStack.Count == 0)
-                throw new InvalidOperationException("Undo stack is empty");
+            if (_undoCounter <= 0)
+                throw new InvalidOperationException("Cannot undo at this time");
             if (_undoGroupIndex > 0)
                 throw new InvalidOperationException("Cannot undo while in undo group (" + _undoGroupIndex + ")");
 

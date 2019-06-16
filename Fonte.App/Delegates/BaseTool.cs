@@ -73,7 +73,7 @@ namespace Fonte.App.Delegates
                                 Sequence.PreviousItem(path.Points, index);
 
                     canvas.Layer.ClearSelection();
-                    point.Selected = true;
+                    point.IsSelected = true;
                 }
             }
             if (e.Key == VirtualKey.Left ||

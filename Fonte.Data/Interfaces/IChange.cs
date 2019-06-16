@@ -5,7 +5,7 @@ namespace Fonte.Data.Interfaces
 
     interface IChange
     {
-        bool ClearSelection { get; }
+        bool AffectsSelection { get; }
         bool IsShallow { get; }
 
         void Apply();
@@ -16,8 +16,5 @@ namespace Fonte.Data.Interfaces
     public interface IChangeGroup : IDisposable
     {
         int Count { get; }
-        bool IsTopLevel { get; }
-        
-        void Clear();
     }
 }

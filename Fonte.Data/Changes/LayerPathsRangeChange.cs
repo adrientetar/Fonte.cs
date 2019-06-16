@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
         private bool _insert;
         private List<Path> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerPathsRangeChange(Layer parent, int index, List<Path> items, bool insert)

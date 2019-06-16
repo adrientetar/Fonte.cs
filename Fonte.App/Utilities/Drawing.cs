@@ -41,7 +41,7 @@ namespace Fonte.App.Utilities
             var selectedComponentColor = Color.FromArgb(135, val, val, val);
             foreach (var component in layer.Components)
             {
-                ds.FillGeometry(component.ClosedCanvasPath, drawSelection && component.Selected ? selectedComponentColor : componentColor);
+                ds.FillGeometry(component.ClosedCanvasPath, drawSelection && component.IsSelected ? selectedComponentColor : componentColor);
                 ds.DrawGeometry(component.OpenCanvasPath, componentColor);
 
                 // TODO: disable on sizes < MinDetails
@@ -118,7 +118,7 @@ namespace Fonte.App.Utilities
                         next = points[1];
                     }
                     var angle = Math.Atan2(next.Y - start.Y, next.X - start.X);
-                    if (start.Selected)
+                    if (start.IsSelected)
                     {
                         (start.Smooth ? selectedSmoothPointPath : selectedPointPath).AddGeometry(
                             CreateTriangle(ds, start.X, start.Y, angle, 9 * rescale)
@@ -151,7 +151,7 @@ namespace Fonte.App.Utilities
 
                     if (isOffCurve)
                     {
-                        if (point.Selected)
+                        if (point.IsSelected)
                         {
                             selectedControlPointPath.AddGeometry(
                                 CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
@@ -183,7 +183,7 @@ namespace Fonte.App.Utilities
                             if (ReferenceEquals(point, start))
                             {
                             }
-                            else if (point.Selected)
+                            else if (point.IsSelected)
                             {
                                 selectedSmoothPointPath.AddGeometry(
                                     CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 5.15f * rescale, 5.15f * rescale)
@@ -201,7 +201,7 @@ namespace Fonte.App.Utilities
                             if (ReferenceEquals(point, start))
                             {
                             }
-                            else if (point.Selected)
+                            else if (point.IsSelected)
                             {
                                 var r = 4.25f * rescale;
                                 selectedPointPath.AddGeometry(
@@ -266,7 +266,7 @@ namespace Fonte.App.Utilities
 
                 var pathBuilder = new CanvasPathBuilder(ds);
                 var radius = 4 * rescale;
-                var margin = 4;
+                var margin = 4 * rescale;
                 var loX = rect.Left - radius - margin;
                 var loY = rect.Bottom - radius - margin;
                 var hiX = rect.Right + radius + margin;
@@ -286,17 +286,17 @@ namespace Fonte.App.Utilities
                 {
                     var midY = .5f * (loY + hiY);
                     pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, midY), radius));
+                        CanvasGeometry.CreateCircle(ds, new Vector2(loX - rescale, midY), radius));
                     pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, midY), radius));
+                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX + rescale, midY), radius));
                 }
                 if (rect.Height > 0)
                 {
                     var midX = .5f * (loX + hiX);
                     pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, loY), radius));
+                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, loY - rescale), radius));
                     pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, hiY), radius));
+                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, hiY + rescale), radius));
                 }
                 using (var path = CanvasGeometry.CreatePath(pathBuilder))
                 {

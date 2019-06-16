@@ -38,7 +38,7 @@ namespace Fonte.Data
 
         internal Dictionary<string, object> _extraData;
 
-        internal bool _selected;
+        internal bool _isSelected;
 
         public float X
         {
@@ -100,20 +100,22 @@ namespace Fonte.Data
             }
         }
 
-        public Path Parent
-        { get; internal set; }
+        /**/
 
-        public bool Selected
+        public bool IsSelected
         {
-            get => _selected;
+            get => _isSelected;
             set
             {
-                if (value != _selected)
+                if (value != _isSelected)
                 {
-                    new PointSelectedChange(this, value).Apply();
+                    new PointIsSelectedChange(this, value).Apply();
                 }
             }
         }
+
+        public Path Parent
+        { get; internal set; }
 
         public Point(float x, float y, PointType type = default, bool smooth = default,
                      Dictionary<string, object> extraData = default)

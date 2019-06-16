@@ -19,7 +19,7 @@ namespace Fonte.Data
         internal string _glyphName;
         internal Matrix3x2 _transformation;
 
-        internal bool _selected;
+        internal bool _isSelected;
 
         [JsonProperty("glyphName")]
         public string GlyphName
@@ -53,14 +53,14 @@ namespace Fonte.Data
         { get; internal set; }
 
         [JsonIgnore]
-        public bool Selected
+        public bool IsSelected
         {
-            get => _selected;
+            get => _isSelected;
             set
             {
-                if (value != _selected)
+                if (value != _isSelected)
                 {
-                    new ComponentSelectedChange(this, value).Apply();
+                    new ComponentIsSelectedChange(this, value).Apply();
                 }
             }
         }

@@ -6,12 +6,12 @@ namespace Fonte.Data.Changes
     internal struct LayerYOriginChange : IChange
     {
         private readonly Layer _target;
-        private float _value;
+        private float? _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
-        public LayerYOriginChange(Layer target, float value)
+        public LayerYOriginChange(Layer target, float? value)
         {
             _target = target;
             _value = value;

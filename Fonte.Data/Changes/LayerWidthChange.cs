@@ -8,7 +8,7 @@ namespace Fonte.Data.Changes
         private readonly Layer _target;
         private float _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
         public LayerWidthChange(Layer target, float value)

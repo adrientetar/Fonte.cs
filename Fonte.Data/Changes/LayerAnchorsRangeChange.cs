@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
         private bool _insert;
         private List<Anchor> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerAnchorsRangeChange(Layer parent, int index, List<Anchor> items, bool insert)

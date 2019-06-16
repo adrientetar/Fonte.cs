@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
         private bool _insert;
         private List<Point> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public PathPointsRangeChange(Path parent, int index, List<Point> items, bool insert)

@@ -9,7 +9,7 @@ namespace Fonte.Data.Changes
         private readonly int _index;
         private Guideline _item;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerGuidelinesReplaceChange(Layer parent, int index, Guideline item)

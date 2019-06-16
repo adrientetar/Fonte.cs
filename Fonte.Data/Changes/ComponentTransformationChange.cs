@@ -10,7 +10,7 @@ namespace Fonte.Data.Changes
         private readonly Component _target;
         private Matrix3x2 _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
         public ComponentTransformationChange(Component target, Matrix3x2 value)

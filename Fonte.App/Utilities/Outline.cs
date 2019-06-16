@@ -118,54 +118,54 @@ namespace Fonte.App.Utilities
                 layer.Paths.Remove(otherPath);
                 var otherFirstPoint = otherPoints[0];
                 otherFirstPoint.Type = type;
-                otherFirstPoint.Selected = true;
+                otherFirstPoint.IsSelected = true;
             }
         }
 
         public static void MoveSelection(Data.Layer layer, float dx, float dy, MoveMode mode = MoveMode.Normal)
         {
-            // XXX: for multi-level undo, add a PhantomChangeGroup
-            //var group = layer.CreateUndoGroup();
-            foreach (var anchor in layer.Anchors)
+            using (var group = layer.CreateUndoGroup())
             {
-                if (anchor.Selected)
+                foreach (var anchor in layer.Anchors)
                 {
-                    anchor.X = RoundToGrid(anchor.X + dx);
-                    anchor.Y = RoundToGrid(anchor.Y + dy);
+                    if (anchor.IsSelected)
+                    {
+                        anchor.X = RoundToGrid(anchor.X + dx);
+                        anchor.Y = RoundToGrid(anchor.Y + dy);
+                    }
+                }
+                foreach (var component in layer.Components)
+                {
+                    if (component.IsSelected)
+                    {
+                        var t = component.Transformation;
+                        t.M31 = RoundToGrid(t.M31 + dx);
+                        t.M32 = RoundToGrid(t.M32 + dy);
+                        component.Transformation = t;
+                    }
+                }
+                // XXX: add master guidelines
+                foreach (var guideline in layer.Guidelines)
+                {
+                    if (guideline.IsSelected)
+                    {
+                        guideline.X = RoundToGrid(guideline.X + dx);
+                        guideline.Y = RoundToGrid(guideline.Y + dy);
+                    }
+                }
+                foreach (var path in layer.Paths)
+                {
+                    MoveSelection(path, dx, dy, mode);
                 }
             }
-            foreach (var component in layer.Components)
-            {
-                if (component.Selected)
-                {
-                    var t = component.Transformation;
-                    t.M31 = RoundToGrid(t.M31 + dx);
-                    t.M32 = RoundToGrid(t.M32 + dy);
-                    component.Transformation = t;
-                }
-            }
-            // XXX: add master guidelines
-            foreach (var guideline in layer.Guidelines)
-            {
-                if (guideline.Selected)
-                {
-                    guideline.X = RoundToGrid(guideline.X + dx);
-                    guideline.Y = RoundToGrid(guideline.Y + dy);
-                }
-            }
-            foreach (var path in layer.Paths)
-            {
-                MoveSelection(path, dx, dy, mode);
-            }
-            //group.Dispose();
         }
 
-        public static void MoveSelection(Data.Path path, float dx, float dy, MoveMode mode = MoveMode.Normal)
+        /*public*/ static void MoveSelection(Data.Path path, float dx, float dy, MoveMode mode = MoveMode.Normal)
         {
             if (path.Points.Count < 2)
             {
                 var lonePoint = path.Points.First();
-                if (lonePoint.Selected)
+                if (lonePoint.IsSelected)
                 {
                     lonePoint.X = RoundToGrid(lonePoint.X + dx);
                     lonePoint.Y = RoundToGrid(lonePoint.Y + dy);
@@ -177,19 +177,19 @@ namespace Fonte.App.Utilities
             var point = path.Points.Last();
             foreach (var next in path.Points)
             {
-                if (point.Selected)
+                if (point.IsSelected)
                 {
                     point.X = RoundToGrid(point.X + dx);
                     point.Y = RoundToGrid(point.Y + dy);
 
                     if (point.Type != PointType.None && mode != MoveMode.StaticHandles)
                     {
-                        if (!prev.Selected && prev.Type == PointType.None && point.Type != PointType.Move)
+                        if (!prev.IsSelected && prev.Type == PointType.None && point.Type != PointType.Move)
                         {
                             prev.X = RoundToGrid(prev.X + dx);
                             prev.Y = RoundToGrid(prev.Y + dy);
                         }
-                        if (!next.Selected && next.Type == PointType.None)
+                        if (!next.IsSelected && next.Type == PointType.None)
                         {
                             next.X = RoundToGrid(next.X + dx);
                             next.Y = RoundToGrid(next.Y + dy);
@@ -251,7 +251,7 @@ namespace Fonte.App.Utilities
         public static bool TryTogglePointSmoothness(Data.Path path, int index)
         {
             var point = path.Points[index];
-            if (point.Selected && point.Type != PointType.None)
+            if (point.IsSelected && point.Type != PointType.None)
             {
                 var value = !point.Smooth;
                 if (value)
@@ -292,7 +292,7 @@ namespace Fonte.App.Utilities
 
         static bool AnyOffCurveSelected(Data.Segment segment)
         {
-            return Enumerable.Any(segment.OffCurves, offCurve => offCurve.Selected);
+            return Enumerable.Any(segment.OffCurves, offCurve => offCurve.IsSelected);
         }
 
         static List<Data.Path> DeleteSelection(IEnumerable<Data.Path> paths)
@@ -367,7 +367,7 @@ namespace Fonte.App.Utilities
                 for (int ix = segments.Count - 1; ix >= 0; --ix)
                 {
                     var segment = segments[ix];
-                    if (segment.OnCurve.Selected)
+                    if (segment.OnCurve.IsSelected)
                     {
                         forwardMove = ix == 0 && segment.OnCurve.Type == PointType.Move;
 
@@ -394,7 +394,7 @@ namespace Fonte.App.Utilities
 
         static void ConstrainSmoothPoint(Data.Point p1, Data.Point p2, Data.Point p3, bool handleMovement)
         {
-            if (p2.Selected)
+            if (p2.IsSelected)
             {
                 if (p1.Type == PointType.None)
                 {
@@ -405,9 +405,9 @@ namespace Fonte.App.Utilities
                     VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
                 }
             }
-            else if (p1.Selected != p3.Selected)
+            else if (p1.IsSelected != p3.IsSelected)
             {
-                if (p1.Selected)
+                if (p1.IsSelected)
                 {
                     (p1, p3) = (p3, p1);
                 }
@@ -424,15 +424,15 @@ namespace Fonte.App.Utilities
 
         static void ConstrainStaticHandles(Data.Point p1, Data.Point p2, Data.Point p3, float dx, float dy)
         {
-            if (p2.Selected && p2.Type != PointType.Move)
+            if (p2.IsSelected && p2.Type != PointType.Move)
             {
-                if (p1.Selected || p3.Selected)
+                if (p1.IsSelected || p3.IsSelected)
                 {
-                    if (p1.Selected)
+                    if (p1.IsSelected)
                     {
                         (p1, p3) = (p3, p1);
                     }
-                    if (!p1.Selected && p3.Type == PointType.None)
+                    if (!p1.IsSelected && p3.Type == PointType.None)
                     {
                         VectorRotation(p3, p1.ToVector2(), p2.ToVector2());
                     }
@@ -445,9 +445,9 @@ namespace Fonte.App.Utilities
                     }
                 }
             }
-            else if (p1.Selected != p3.Selected)
+            else if (p1.IsSelected != p3.IsSelected)
             {
-                if (p1.Selected)
+                if (p1.IsSelected)
                 {
                     (p1, p3) = (p3, p1);
                 }
@@ -469,9 +469,9 @@ namespace Fonte.App.Utilities
 
         static void InterpolateCurve(Data.Point on1, Data.Point off1, Data.Point off2, Data.Point on2, float dx, float dy)
         {
-            if (on2.Selected != on1.Selected)
+            if (on2.IsSelected != on1.IsSelected)
             {
-                var sign = on1.Selected ? -1 : 1;
+                var sign = on1.IsSelected ? -1 : 1;
                 var sdelta = new Vector2(sign * dx, sign * dy);
 
                 var ondelta = on2.ToVector2() - on1.ToVector2();
@@ -481,12 +481,12 @@ namespace Fonte.App.Utilities
                     factor = ondelta / factor;
                 }
 
-                if (!off1.Selected)
+                if (!off1.IsSelected)
                 {
                     off1.X = RoundToGrid(on1.X + factor.X * (off1.X - on1.X));
                     off1.Y = RoundToGrid(on1.Y + factor.Y * (off1.Y - on1.Y));
                 }
-                if (!off2.Selected)
+                if (!off2.IsSelected)
                 {
                     off2.X = RoundToGrid(on1.X + factor.X * (off2.X - on1.X - sdelta.X));
                     off2.Y = RoundToGrid(on1.Y + factor.Y * (off2.Y - on1.Y - sdelta.Y));

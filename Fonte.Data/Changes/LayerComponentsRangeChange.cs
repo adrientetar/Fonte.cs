@@ -12,7 +12,7 @@ namespace Fonte.Data.Changes
         private bool _insert;
         private List<Component> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerComponentsRangeChange(Layer parent, int index, List<Component> items, bool insert)

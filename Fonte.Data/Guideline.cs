@@ -17,7 +17,7 @@ namespace Fonte.Data
         internal float _angle;
         internal string _name;
 
-        internal bool _selected;
+        internal bool _isSelected;
 
         // XXX serialize to writesingle ; check that it's needed
         [JsonProperty("x")]
@@ -76,20 +76,20 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
-        public object Parent { get; internal set; }
-
-        [JsonIgnore]
-        public bool Selected
+        public bool IsSelected
         {
-            get => _selected;
+            get => _isSelected;
             set
             {
-                if (value != _selected)
+                if (value != _isSelected)
                 {
-                    new GuidelineSelectedChange(this, value).Apply();
+                    new GuidelineIsSelectedChange(this, value).Apply();
                 }
             }
         }
+
+        [JsonIgnore]
+        public object Parent { get; internal set; }
 
         [JsonConstructor]
         public Guideline(float x, float y, float angle, string name = null)

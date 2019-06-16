@@ -127,14 +127,14 @@ namespace Fonte.App.Delegates
 
                             if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
                             {
-                                point.Selected = !point.Selected;
+                                point.IsSelected = !point.IsSelected;
                             }
                             else
                             {
-                                if (!point.Selected)
+                                if (!point.IsSelected)
                                 {
                                     canvas.Layer.ClearSelection();
-                                    point.Selected = true;
+                                    point.IsSelected = true;
                                 }
                             }
                         }
@@ -148,14 +148,14 @@ namespace Fonte.App.Delegates
 
                             if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
                             {
-                                segment.Selected = !segment.Selected;
+                                segment.IsSelected = !segment.IsSelected;
                             }
                             else
                             {
-                                if (!segment.Selected)
+                                if (!segment.IsSelected)
                                 {
                                     canvas.Layer.ClearSelection();
-                                    segment.Selected = true;
+                                    segment.IsSelected = true;
                                 }
                             }
                         }
@@ -183,7 +183,7 @@ namespace Fonte.App.Delegates
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = point.Selected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
+                        _canDrag = point.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
                     }
                     if (_canDrag)
                     {
@@ -205,7 +205,7 @@ namespace Fonte.App.Delegates
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = segment.Selected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
+                        _canDrag = segment.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
                     }
                     if (_canDrag)
                     {
@@ -254,7 +254,7 @@ namespace Fonte.App.Delegates
                 {
                     foreach (var point in path.Points)
                     {
-                        point.Selected = rect.Contains(point.ToVector2().ToPoint());
+                        point.IsSelected = rect.Contains(point.ToVector2().ToPoint());
                     }
                 }
             }

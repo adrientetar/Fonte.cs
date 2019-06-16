@@ -8,7 +8,7 @@ namespace Fonte.Data.Changes
         private readonly Guideline _target;
         private string _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
         public GuidelineNameChange(Guideline target, string value)

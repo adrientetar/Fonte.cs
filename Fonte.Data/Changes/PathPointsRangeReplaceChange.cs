@@ -11,7 +11,7 @@ namespace Fonte.Data.Changes
         private readonly int _index;
         private List<Point> _items;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public PathPointsRangeReplaceChange(Path parent, int index, List<Point> item)

@@ -8,7 +8,7 @@ namespace Fonte.Data.Changes
         private readonly Point _target;
         private PointType _value;
 
-        public bool ClearSelection => false;
+        public bool AffectsSelection => false;
         public bool IsShallow => false;
 
         public PointTypeChange(Point target, PointType value)

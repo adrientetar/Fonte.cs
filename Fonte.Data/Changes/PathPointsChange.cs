@@ -11,7 +11,7 @@ namespace Fonte.Data.Changes
 
         bool Insert => _item != null;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public PathPointsChange(Path parent, int index, Point item)

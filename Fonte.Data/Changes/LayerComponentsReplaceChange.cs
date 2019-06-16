@@ -9,7 +9,7 @@ namespace Fonte.Data.Changes
         private readonly int _index;
         private Component _item;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerComponentsReplaceChange(Layer parent, int index, Component item)

@@ -9,7 +9,7 @@ namespace Fonte.Data.Changes
         private readonly int _index;
         private Path _item;
 
-        public bool ClearSelection => true;
+        public bool AffectsSelection => true;
         public bool IsShallow => false;
 
         public LayerPathsReplaceChange(Layer parent, int index, Path item)

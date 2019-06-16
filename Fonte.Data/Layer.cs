@@ -29,7 +29,7 @@ namespace Fonte.Data
         internal string _name;
         internal float _width;
         internal float _height;
-        internal float _yOrigin;
+        internal float? _yOrigin;
 
         private Rect _bounds = Rect.Empty;
         private CanvasGeometry _closedCanvasPath;
@@ -271,7 +271,7 @@ namespace Fonte.Data
         }
 
         [JsonProperty("yOrigin")]
-        public float YOrigin
+        public float? YOrigin
         {
             get => _yOrigin;
             set
@@ -356,10 +356,10 @@ namespace Fonte.Data
                 {
                     var bottom = bounds.Bottom;
                     var top = bounds.Top;
-                    if (YOrigin != null)
+                    if (YOrigin is float yOrigin)
                     {
-                        bottom -= YOrigin - Height;
-                        top += YOrigin;
+                        bottom -= yOrigin - Height;
+                        top += yOrigin;
                     }
                     else
                     {
@@ -432,21 +432,21 @@ namespace Fonte.Data
 
                     foreach (var anchor in _anchors)
                     {
-                        if (anchor.Selected)
+                        if (anchor.IsSelected)
                         {
                             _selection.Add(anchor);
                         }
                     }
                     foreach (var component in _components)
                     {
-                        if (component.Selected)
+                        if (component.IsSelected)
                         {
                             _selection.Add(component);
                         }
                     }
                     foreach (var guideline in _guidelines)
                     {
-                        if (guideline.Selected)
+                        if (guideline.IsSelected)
                         {
                             _selection.Add(guideline);
                         }
@@ -455,7 +455,7 @@ namespace Fonte.Data
                     {
                         foreach (var point in path.Points)
                         {
-                            if (point.Selected)
+                            if (point.IsSelected)
                             {
                                 _selection.Add(point);
                             }
@@ -487,7 +487,7 @@ namespace Fonte.Data
         }
 
         [JsonConstructor]
-        public Layer(string masterName = default, string name = default, float width = 600, float height = 0, float yOrigin = 0,
+        public Layer(string masterName = default, string name = default, float width = 600, float height = default, float? yOrigin = default,
                      List<Anchor> anchors = default, List<Component> components = default, List<Guideline> guidelines = default, List<Path> paths = default)
         {
             _anchors = anchors ?? new List<Anchor>();
@@ -523,12 +523,15 @@ namespace Fonte.Data
         {
             foreach (var item in Selection)
             {
-                item.Selected = false;
+                item.IsSelected = false;
             }
-            //foreach (var guideline in Master.Guidelines)
-            //{
-            //    guideline.Selected = false;
-            //}
+            if (Master is Master master)
+            {
+                foreach (var guideline in master.Guidelines)
+                {
+                    guideline.IsSelected = false;
+                }
+            }
         }
 
         public void Clone()
@@ -555,19 +558,19 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            var more = "";  // XXX
-            var name = "default";  // XXX
+            var more = Parent != null ? $" {Parent.Name}" : string.Empty;
+            var name = IsMasterLayer ? $"*{MasterName}" : Name;
             return $"{nameof(Layer)}({name}, {_paths.Count} paths{more})";
         }
 
         // XXX: impl more
-        public void Transform(Matrix3x2 matrix, bool selected = false)
+        public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
             using (var group = CreateUndoGroup())
             {
                 foreach (var path in Paths)
                 {
-                    path.Transform(matrix, selected);
+                    path.Transform(matrix, selectionOnly);
                 }
             }
         }
@@ -578,7 +581,7 @@ namespace Fonte.Data
             _closedCanvasPath = _openCanvasPath = null;
             _selectedPaths = null;
 
-            if (change.ClearSelection)  // .AffectsSelection ?
+            if (change.AffectsSelection)
             {
                 _selection = null;
             }

@@ -35,13 +35,13 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <controls:TitleBar Grid.Row="0"/>
+            <controls:TitleBar x:Name="TitleBar" Grid.Row="0"/>
             <toolbarparts:IconButton Label="Menu" Grid.Row="1">
                 <toolbarparts:IconButton.Icon>
                     <FontIconSource FontSize="16" FontWeight="Medium" Glyph="&#xEA37;"/>
                 </toolbarparts:IconButton.Icon>
                 <toolbarparts:IconButton.Flyout>
-                    <MenuFlyout>
+                    <MenuFlyout AreOpenCloseAnimationsEnabled="False" Placement="Bottom">
                         <MenuFlyoutItem Click="OnOpenItemClicked">
                             <MenuFlyoutItem.Command>
                                 <StandardUICommand Kind="Open"/>

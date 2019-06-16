@@ -6,6 +6,6 @@ namespace Fonte.Data.Interfaces
 {
     public interface ISelectable
     {
-        bool Selected { get; set; }
+        bool IsSelected { get; set; }
     }
 }

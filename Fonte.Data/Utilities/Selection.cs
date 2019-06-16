@@ -23,14 +23,14 @@ namespace Fonte.Data.Utilities
                 }
 
                 IEnumerable<Segment> iter;
-                if (!path.IsOpen && firstSegment.OnCurve.Selected == selValue)
+                if (!path.IsOpen && firstSegment.OnCurve.IsSelected == selValue)
                 {
                     var segmentsList = new List<Segment>(segments);
 
                     int index;
                     for (index = segmentsList.Count - 1; index >= 0; --index)
                     {
-                        if (segmentsList[index].OnCurve.Selected != selValue)
+                        if (segmentsList[index].OnCurve.IsSelected != selValue)
                         {
                             break;
                         }
@@ -56,7 +56,7 @@ namespace Fonte.Data.Utilities
                 var prevSelected = false;
                 foreach (var segment in iter)
                 {
-                    var selected = segment.OnCurve.Selected == selValue;
+                    var selected = segment.OnCurve.IsSelected == selValue;
                     if (selected)
                     {
                         if (prevSelected)

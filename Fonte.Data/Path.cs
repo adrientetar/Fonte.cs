@@ -174,7 +174,7 @@ namespace Fonte.Data
             {
                 foreach (var point in Points)
                 {
-                    if (!point.Selected) return false;
+                    if (!point.IsSelected) return false;
                 }
                 return true;
             }
@@ -182,7 +182,7 @@ namespace Fonte.Data
             {
                 foreach (var point in Points)
                 {
-                    point.Selected = value;
+                    point.IsSelected = value;
                 }
             }
         }
@@ -290,11 +290,11 @@ namespace Fonte.Data
             return $"{nameof(Path)}({string.Join(", ", Points)})";
         }
 
-        public void Transform(Matrix3x2 matrix, bool selected = false)
+        public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
             foreach (var point in Points)
             {
-                if (!selected || point.Selected)
+                if (!selectionOnly || point.IsSelected)
                 {
                     var pos = Vector2.Transform(point.ToVector2(), matrix);
 
@@ -318,6 +318,22 @@ namespace Fonte.Data
         private readonly int _count;
         private readonly int _index;
         private readonly ObserverList<Point> _points;
+
+        public bool IsSelected
+        {
+            get
+            {
+                var points = PointsInclusive;
+                return points[0].IsSelected && points[points.Count - 1].IsSelected;
+            }
+            set
+            {
+                foreach (var point in PointsInclusive)
+                {
+                    point.IsSelected = value;
+                }
+            }
+        }
 
         public List<Point> OffCurves
         {
@@ -365,22 +381,6 @@ namespace Fonte.Data
                     return points;
                 }
                 return _points.GetRange(_index - 1, _count + 1);
-            }
-        }
-
-        public bool Selected
-        {
-            get
-            {
-                var points = PointsInclusive;
-                return points[0].Selected && points[points.Count - 1].Selected;
-            }
-            set
-            {
-                foreach (var point in PointsInclusive)
-                {
-                    point.Selected = value;
-                }
             }
         }
 
