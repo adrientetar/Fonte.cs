@@ -381,13 +381,7 @@ namespace Fonte.Data
         {
             get
             {
-                try
-                {
-                    var font = Parent?.Parent;
-                    return font.Masters[0]; // XXX
-                }
-                catch (Exception) { }
-                return null;
+                return Parent?.Parent.GetMaster(MasterName);
             }
         }
 

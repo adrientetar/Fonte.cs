@@ -116,6 +116,18 @@ namespace Fonte.Data
             return null;
         }
 
+        public Master GetMaster(string name)
+        {
+            foreach (var master in Masters)
+            {
+                if (master.Name == name)
+                {
+                    return master;
+                }
+            }
+            return null;
+        }
+
         public override string ToString()
         {
             return $"{nameof(Font)}({FamilyName}, v{VersionMajor}.{VersionMinor})";
