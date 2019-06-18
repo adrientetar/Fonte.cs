@@ -25,7 +25,7 @@ namespace Fonte.App.Delegates
     {
         private Point _origin = EmptyPoint;
         private Point _anchor;
-        private Point? _screenOrigin;
+        private Point _screenOrigin;
         private bool _canDrag = false;
         private object _tappedItem;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
@@ -183,7 +183,7 @@ namespace Fonte.App.Delegates
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = point.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
+                        _canDrag = point.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
                     }
                     if (_canDrag)
                     {
@@ -205,7 +205,7 @@ namespace Fonte.App.Delegates
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = segment.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin.Value, 1);
+                        _canDrag = segment.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
                     }
                     if (_canDrag)
                     {
@@ -263,7 +263,7 @@ namespace Fonte.App.Delegates
                 return;
             }
 
-            _screenOrigin = null;
+            _screenOrigin = default;
             _origin = EmptyPoint;
             _canDrag = false;
             _tappedItem = null;

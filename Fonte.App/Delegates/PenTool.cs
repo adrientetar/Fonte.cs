@@ -24,7 +24,7 @@ namespace Fonte.App.Delegates
     {
         private Data.Point _lastOn;
         private Data.Path _path;
-        private Point? _screenOrigin;
+        private Point _screenOrigin;
         private bool _shouldMoveOnCurve;
         private ValueTuple<Data.Point, bool>? _stashedOffCurve;
         private IChangeGroup _undoGroup;
@@ -219,7 +219,7 @@ namespace Fonte.App.Delegates
 
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
-                    if (!CanStartDragging(ptPoint.Position, _screenOrigin.Value))
+                    if (!CanStartDragging(ptPoint.Position, _screenOrigin))
                     {
                         return;
                     }
@@ -338,7 +338,7 @@ namespace Fonte.App.Delegates
                 _undoGroup = null;
             }
             _path = null;
-            _screenOrigin = null;
+            _screenOrigin = default;
             _shouldMoveOnCurve = false;
             _stashedOffCurve = null;
         }

@@ -157,14 +157,17 @@ namespace Fonte.Data.Utilities
 
             if (_undoGroupIndex == 0)
             {
-                ++_undoCounter;
-                _redoCounter = 0;
-                _redoStack.Clear();
                 if (_undoGroup.Count > 0)
                 {
+                    if (!_undoGroup.IsShallow)
+                    {
+                        ++_undoCounter;
+                        _redoCounter = 0;
+                        _redoStack.Clear();
+                    }
                     _undoStack.Add(_undoGroup);
                 }
-                _undoGroup = null;
+                _undoGroup = default;
             }
         }
     }

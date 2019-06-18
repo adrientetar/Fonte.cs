@@ -5,37 +5,29 @@ namespace Fonte.Data.Changes
 
     using System;
     using System.Collections.Generic;
-    using System.Linq;
 
-    internal class ChangeGroup : IChange, IChangeGroup
+    class ChangeGroupInner
     {
         private readonly Action<int> _callback;
         private readonly List<IChange> _changes = new List<IChange>();
-        private bool _disposed = false;
-        private int _index;
+        private int _undoCounter = 0;
 
         public int Count => _changes.Count;
+        public bool IsShallow => _undoCounter <= 0;
 
-        public bool AffectsSelection => true;
-        // TODO: to avoid the >O(1) fetch, we can have _undoCounter similar to UndoStore's, but that
-        // wouldn't play well with cloning... need to refactor members to an aggregate ref type (shared)
-        // and an index (unique)
-        public bool IsShallow => !Enumerable.Any(_changes, change => !change.IsShallow);
-
-        public ChangeGroup(Action<int> callback, int index)
+        public ChangeGroupInner(Action<int> callback)
         {
             _callback = callback;
-            _index = index;
         }
 
         public void Add(IChange item)
         {
-            if (_disposed)
-            {
-                throw new InvalidOperationException($"Cannot add item to disposed {nameof(ChangeGroup)}");
-            }
-
             _changes.Add(item);
+
+            if (!item.IsShallow)
+            {
+                ++_undoCounter;
+            }
         }
 
         public void Apply()
@@ -48,6 +40,46 @@ namespace Fonte.Data.Changes
             _changes.Reverse();
         }
 
+        public void Dispose(int index)
+        {
+            _callback(index);
+        }
+    }
+
+    internal struct ChangeGroup : IChange, IChangeGroup
+    {
+        private readonly ChangeGroupInner _inner;
+        private readonly int _index;
+        private bool _disposed;
+
+        public int Count => _inner.Count;
+
+        public bool AffectsSelection => true;
+        public bool IsShallow => _inner.IsShallow;
+
+        public ChangeGroup(Action<int> callback, int index) : this(new ChangeGroupInner(callback), index)
+        {
+        }
+
+        ChangeGroup(ChangeGroupInner inner, int index)
+        {
+            _inner = inner;
+            _index = index;
+            _disposed = false;
+        }
+
+        public void Add(IChange item)
+        {
+            if (_disposed)
+            {
+                throw new InvalidOperationException($"Cannot add item to disposed {nameof(ChangeGroup)}");
+            }
+
+            _inner.Add(item);
+        }
+
+        public void Apply() => _inner.Apply();
+
         public ChangeGroup CloneWithIndex(int index)
         {
             if (_disposed)
@@ -55,25 +87,14 @@ namespace Fonte.Data.Changes
                 throw new InvalidOperationException($"Cannot clone disposed {nameof(ChangeGroup)}");
             }
 
-            ChangeGroup other;
-            var oi = _index;
-            try
-            {
-                _index = index;
-                other = (ChangeGroup)MemberwiseClone();
-            }
-            finally
-            {
-                _index = oi;
-            }
-            return other;
+            return new ChangeGroup(_inner, index);
         }
 
         public void Dispose()
         {
             if (!_disposed)
             {
-                _callback(_index);
+                _inner.Dispose(_index);
                 _disposed = true;
             }
         }
