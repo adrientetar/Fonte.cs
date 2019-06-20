@@ -7,7 +7,7 @@
          IgnorableNamespaces="uap uap5 mp rescap">
   <Identity Name="fa1f04e6-991c-402c-825e-dfd9563562ac"
             Publisher="CN=Adrien Tétar, L=Paris, C=FR"
-            Version="1.0.1.0" />
+            Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="fa1f04e6-991c-402c-825e-dfd9563562ac"
                     PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
