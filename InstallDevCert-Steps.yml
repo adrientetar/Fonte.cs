@@ -1,0 +1,7 @@
+
+steps:
+  - task: powershell@2
+    inputs:
+      targetType: filePath
+      filePath: build\Install-DevCert.ps1
+    displayName: 'Install Dev Certificate'

@@ -11,13 +11,15 @@ variables:
   appxPackageDir: '$(build.artifactStagingDirectory)\AppxPackages\\'
 
 steps:
-- template: MUX-InstallWindowsSDK-Steps.yml
+- template: InstallDevCert-Steps.yml
 
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
   inputs:
     restoreSolution: '$(solution)'
+
+- template: MUX-InstallWindowsSDK-Steps.yml
 
 - task: VSBuild@1
   inputs:
