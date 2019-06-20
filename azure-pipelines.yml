@@ -11,17 +11,20 @@ variables:
   appxPackageDir: '$(build.artifactStagingDirectory)\AppxPackages\\'
 
 steps:
-- template: InstallDevCert-Steps.yml
-
 - task: NuGetToolInstaller@1
+  displayName: 'Install NuGet'
 
 - task: NuGetCommand@2
+  displayName: 'Restore NuGet Packages'
   inputs:
     restoreSolution: '$(solution)'
+
+- template: InstallDevCert-Steps.yml
 
 - template: MUX-InstallWindowsSDK-Steps.yml
 
 - task: VSBuild@1
+  displayName: 'Build the Solution'
   inputs:
     platform: 'x64'
     solution: '$(solution)'
@@ -29,13 +32,14 @@ steps:
     msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload'
 
 - task: CopyFiles@2
-  displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+  displayName: 'Copy Files to Actifacts Directory'
   inputs:
     SourceFolder: '$(system.defaultworkingdirectory)'
     Contents: '**\bin\$(BuildConfiguration)\**'
     TargetFolder: '$(build.artifactstagingdirectory)'
 
 - task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact: drop'
+  displayName: 'Publish Build Artifacts (nightly)'
   inputs:
+    ArtifactName: 'nightly'
     PathtoPublish: '$(build.artifactstagingdirectory)'
