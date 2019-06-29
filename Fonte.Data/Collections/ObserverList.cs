@@ -8,15 +8,14 @@ namespace Fonte.Data.Collections
     using System.Collections;
     using System.Collections.Generic;
     using System.Collections.Specialized;
-    using System.ComponentModel;
 
     public class ObserverList<T> : IList<T>, INotifyCollectionChanged
     {
-        List<T> List { get; }
+        private List<T> _list;
 
         public ObserverList(List<T> items)
         {
-            List = items;
+            _list = items;
         }
 
         #region IList<T> Members
@@ -28,7 +27,7 @@ namespace Fonte.Data.Collections
 
         public void Clear()
         {
-            if (List.Count > 0)
+            if (_list.Count > 0)
             {
                 //List.Clear();
                 OnCollectionChanged();
@@ -37,22 +36,22 @@ namespace Fonte.Data.Collections
 
         public bool Contains(T item)
         {
-            return List.Contains(item);
+            return _list.Contains(item);
         }
 
         public void CopyTo(T[] array, int arrayIndex)
         {
-            List.CopyTo(array, arrayIndex);
+            _list.CopyTo(array, arrayIndex);
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            return List.GetEnumerator();
+            return _list.GetEnumerator();
         }
 
         public int IndexOf(T item)
         {
-            return List.IndexOf(item);
+            return _list.IndexOf(item);
         }
 
         public void Insert(int index, T item)
@@ -64,7 +63,7 @@ namespace Fonte.Data.Collections
 
         public bool Remove(T item)
         {
-            int index = List.IndexOf(item);
+            int index = _list.IndexOf(item);
             if (index < 0) return false;
             //List.RemoveAt(index);
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
@@ -73,7 +72,7 @@ namespace Fonte.Data.Collections
 
         public void RemoveAt(int index)
         {
-            var item = List[index];
+            var item = _list[index];
             //List.RemoveAt(index);
 
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
@@ -81,11 +80,11 @@ namespace Fonte.Data.Collections
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable)List).GetEnumerator();
+            return ((IEnumerable)_list).GetEnumerator();
         }
 
         public T this[int index] {
-            get => List[index];
+            get => _list[index];
             set
             {
                 T originalItem = this[index];
@@ -95,9 +94,9 @@ namespace Fonte.Data.Collections
             }
         }
 
-        public int Count => List.Count;
+        public int Count => _list.Count;
 
-        public bool IsReadOnly => ((IList)List).IsReadOnly;
+        public bool IsReadOnly => ((IList)_list).IsReadOnly;
 
         #endregion
 
@@ -113,7 +112,7 @@ namespace Fonte.Data.Collections
 
             if (list.Count > 0)
             {
-                int index = List.Count;
+                int index = _list.Count;
                 //List.AddRange(list);
 
                 OnCollectionChanged(NotifyCollectionChangedAction.Add, list, index);
@@ -121,17 +120,17 @@ namespace Fonte.Data.Collections
         }
         public void AddRange(ObserverList<T> list)
         {
-            AddRange(list.List);
+            AddRange(list._list);
         }
 
         public List<T> GetRange(int index, int count)
         {
-            return List.GetRange(index, count);
+            return _list.GetRange(index, count);
         }
 
         public void RemoveRange(int index, int count)
         {
-            var removedItems = List.GetRange(index, count);
+            var removedItems = _list.GetRange(index, count);
             //List.RemoveRange(index, count);
 
             OnCollectionChanged(NotifyCollectionChangedAction.Remove, removedItems, index);
@@ -139,11 +138,11 @@ namespace Fonte.Data.Collections
 
         public void Reverse()
         {
-            var replacedItems = List.GetRange(0, List.Count);
+            var replacedItems = _list.GetRange(0, _list.Count);
             replacedItems.Reverse();
             //List.Reverse();
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Replace, List, replacedItems, 0);
+            OnCollectionChanged(NotifyCollectionChangedAction.Replace, _list, replacedItems, 0);
         }
 
         public T First()

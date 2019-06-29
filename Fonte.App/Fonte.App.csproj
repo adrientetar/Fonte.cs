@@ -108,6 +108,9 @@
     <Compile Include="Controls\DesignCanvas.xaml.cs">
       <DependentUpon>DesignCanvas.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\DesignCanvasParts\AnchorNameTextBox.xaml.cs">
+      <DependentUpon>AnchorNameTextBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\Sidebar.xaml.cs">
       <DependentUpon>Sidebar.xaml</DependentUpon>
     </Compile>
@@ -129,6 +132,7 @@
     <Compile Include="Controls\ToolbarParts\IconButton.xaml.cs">
       <DependentUpon>IconButton.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\ObjectToVisibilityConverter.cs" />
     <Compile Include="Converters\StringToBooleanConverter.cs" />
     <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
@@ -171,6 +175,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\DesignCanvas.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\DesignCanvasParts\AnchorNameTextBox.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

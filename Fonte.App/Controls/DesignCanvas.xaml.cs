@@ -7,6 +7,7 @@ namespace Fonte.App.Controls
     using Fonte.App.Delegates;
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
+    using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas.UI.Xaml;
     using muxc = Microsoft.UI.Xaml.Controls;
     using muxp = Microsoft.UI.Xaml.Controls.Primitives;
@@ -16,7 +17,6 @@ namespace Fonte.App.Controls
     using System.Numerics;
     using Windows.ApplicationModel;
     using Windows.Foundation;
-    using Windows.System;
     using Windows.UI;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
@@ -25,22 +25,36 @@ namespace Fonte.App.Controls
 
     public partial class DesignCanvas : UserControl
     {
+        internal static readonly string DrawAlignmentZonesKey = "DrawAlignmentZones";
+        internal static readonly string DrawAnchorsKey = "DrawAnchors";
         internal static readonly string DrawFillKey = "DrawFill";
+        internal static readonly string DrawGuidelinesKey = "DrawGuidelines";
+        internal static readonly string DrawLayersKey = "DrawLayers";
         internal static readonly string DrawMetricsKey = "DrawMetrics";
         internal static readonly string DrawPointsKey = "DrawPoints";
         internal static readonly string DrawSelectionKey = "DrawSelection";
         internal static readonly string DrawSelectionBoundsKey = "DrawSelectionBounds";
         internal static readonly string DrawStrokeKey = "DrawStroke";
+
+        internal static readonly string AlignmentZoneColorKey = "AlignmentZoneColor";
+        internal static readonly string AnchorColorKey = "AnchorColor";
         internal static readonly string ComponentColorKey = "ComponentColor";
         internal static readonly string FillColorKey = "FillColor";
+        internal static readonly string LayersColorKey = "LayersColor";
+        internal static readonly string MarkerColorKey = "MarkerColor";
         internal static readonly string PointColorKey = "PointColor";
         internal static readonly string SmoothPointColorKey = "SmoothPointColor";
+        internal static readonly string StrokeColorKey = "StrokeColor";
+
+        internal static readonly int MinPointSizeForDetails = 175;
+        internal static readonly int MinPointSizeForGrid = 10000;
+        internal static readonly int MinPointSizeForGuidelines = 100;
 
         private static readonly ICanvasDelegate PreviewTool = new PreviewTool();
 
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
         private ICanvasDelegate _tool = new BaseTool();
-        private bool _inPreview;
+        private bool _isInPreview;
         private CoreCursor _previousCursor;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
@@ -52,11 +66,25 @@ namespace Fonte.App.Controls
             set { SetValue(LayerProperty, value); }
         }
 
+        public bool IsInPreview
+        {
+            get => _isInPreview;
+            set
+            {
+                if (value != _isInPreview)
+                {
+                    _isInPreview = value;
+
+                    Invalidate();
+                }
+            }
+        }
+
         public ICanvasDelegate Tool
         {
             get
             {
-                if (_inPreview)
+                if (_isInPreview)
                 {
                     return PreviewTool;
                 }
@@ -75,6 +103,12 @@ namespace Fonte.App.Controls
             }
         }
 
+        public int PointSize => (int)Math.Round(Layer.Parent.Parent.UnitsPerEm * ScaleFactor);
+
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        public float ScaleFactor => Scroller.ZoomFactor;
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+
         public DesignCanvas()
         {
             InitializeComponent();
@@ -91,7 +125,7 @@ namespace Fonte.App.Controls
             Invalidate();
             if (IsEnabled)
             {
-                CenterOnMetrics();
+                CenterOnMetrics(animated: false);
             }
 
             if (!DesignMode.DesignMode2Enabled)
@@ -128,7 +162,7 @@ namespace Fonte.App.Controls
             Canvas.Invalidate();
             if (IsEnabled)
             {
-                CenterOnMetrics();
+                //CenterOnMetrics();
             }
         }
 
@@ -138,7 +172,7 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnRootViewChanged(muxp.Scroller sender, object args)
+        void OnScrollerViewChanged(muxp.Scroller sender, object args)
         {
             if (sender.ZoomFactor != Canvas.DpiScale)
             {
@@ -167,7 +201,9 @@ namespace Fonte.App.Controls
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
         {
-            if (Layer != null)
+            var layer = Layer;
+
+            if (layer != null)
             {
                 foreach (var region in args.InvalidatedRegions)
                 {
@@ -175,17 +211,55 @@ namespace Fonte.App.Controls
                     {
                         ds.Transform = _matrix;
 
+                        var pointSize = PointSize;
                         var rescale = 1f / sender.DpiScale;
+
+                        var drawDetails = pointSize >= MinPointSizeForDetails;
+                        var drawFill = (bool)FindResource(DrawFillKey);
+
+                        var bottomLeft = GetCanvasPosition(new Point(0, ActualHeight));
+                        var topRight = GetCanvasPosition(new Point(ActualWidth, 0));
+
+                        if ((bool)FindResource(DrawMetricsKey))
+                        {
+                            // TODO: divide MinPointSizeForGrid by gridSize
+                            if (pointSize >= MinPointSizeForGrid) Drawing.DrawGrid(
+                                layer, ds, rescale, bottomLeft, topRight);
+                            Drawing.DrawMetrics(layer, ds, rescale, (bool)FindResource(DrawAlignmentZonesKey) ?
+                                                                    (Color?)FindResource(AlignmentZoneColorKey) :
+                                                                    null);
+                        }
+                        if (drawFill) Drawing.DrawFill(layer, ds, rescale, (Color)FindResource(FillColorKey));
+
                         Tool.OnDraw(this, ds, rescale);
 
-                        if ((bool)Tool.FindResource(this, DrawMetricsKey)) Drawing.DrawMetrics(Layer, ds, rescale);
-                        if ((bool)Tool.FindResource(this, DrawFillKey)) Drawing.DrawFill(Layer, ds, rescale, (Color)Tool.FindResource(this, FillColorKey));
-                        var drawSelection = (bool)Tool.FindResource(this, DrawSelectionKey);
-                        Drawing.DrawComponents(Layer, ds, rescale, (Color)Tool.FindResource(this, ComponentColorKey), drawSelection);
-                        if (drawSelection) Drawing.DrawSelection(Layer, ds, rescale);
-                        if ((bool)Tool.FindResource(this, DrawPointsKey)) Drawing.DrawPoints(Layer, ds, rescale, (Color)Tool.FindResource(this, PointColorKey), (Color)Tool.FindResource(this, SmoothPointColorKey));
-                        if ((bool)Tool.FindResource(this, DrawStrokeKey)) Drawing.DrawStroke(Layer, ds, rescale);
-                        if ((bool)Tool.FindResource(this, DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(Layer, ds, rescale);
+                        if ((bool)FindResource(DrawLayersKey)) Drawing.DrawLayers(layer, ds, rescale, (Color)FindResource(LayersColorKey));
+                        if (pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey)) Drawing.DrawGuidelines(
+                            layer, ds, rescale, bottomLeft, topRight);
+                        if (layer.Paths.Count > 0 || layer.Components.Count > 0)
+                        {
+                            var drawSelection = drawDetails && (bool)FindResource(DrawSelectionKey);
+                            var drawStroke = (bool)FindResource(DrawStrokeKey);
+
+                            Drawing.DrawComponents(layer, ds, rescale, (Color)FindResource(ComponentColorKey),
+                                                   drawSelection: drawSelection);
+                            if (drawSelection) Drawing.DrawSelection(layer, ds, rescale);
+                            if (drawDetails && (bool)FindResource(DrawPointsKey)) Drawing.DrawPoints(layer, ds, rescale,
+                                                                                                     (Color)FindResource(PointColorKey), (Color)FindResource(SmoothPointColorKey),
+                                                                                                     (Color)FindResource(MarkerColorKey));
+                            // If we only draw fill, we still want to stroke open paths as we don't fill them whatsoever
+                            if (drawFill || drawStroke) Drawing.DrawStroke(layer, ds, rescale,
+                                                                           (Color)FindResource(StrokeColorKey),
+                                                                           drawStroke ? Drawing.StrokePaths.ClosedOpen : Drawing.StrokePaths.Open);
+                            if (drawDetails && (bool)FindResource(DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(layer, ds, rescale);
+                        }
+                        else
+                        {
+                            Drawing.DrawUnicode(layer, ds, rescale);
+                        }
+                        if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey)) Drawing.DrawAnchors(
+                            layer, ds, rescale, (Color)Tool.FindResource(this, AnchorColorKey));
+
                         Tool.OnDrawCompleted(this, ds, rescale);
                     }
                 }
@@ -195,27 +269,11 @@ namespace Fonte.App.Controls
         void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
             Tool.OnKeyDown(this, e);
-
-            if (!e.Handled && e.Key == VirtualKey.Space && !e.KeyStatus.WasKeyDown)
-            {
-                _inPreview = true;
-
-                e.Handled = true;
-                ((App)Application.Current).InvalidateData();
-            }
         }
 
         void OnKeyUp(object sender, KeyRoutedEventArgs e)
         {
             Tool.OnKeyUp(this, e);
-
-            if (_inPreview && e.Key == VirtualKey.Space)
-            {
-                _inPreview = false;
-
-                e.Handled = true;
-                ((App)Application.Current).InvalidateData();
-            }
         }
 
         void OnPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -256,13 +314,18 @@ namespace Fonte.App.Controls
             Tool.OnRightTapped(this, e);
         }
 
+        object FindResource(string resourceKey)
+        {
+            return Tool.FindResource(this, resourceKey);
+        }
+
         Matrix3x2 GetMatrix()
         {
             var m1 = Matrix3x2.CreateScale(1, -1);
             m1.Translation += _matrix.Translation;
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var m2 = Matrix3x2.CreateScale(Root.ZoomFactor);
-            m2.Translation -= new Vector2((float)Root.HorizontalOffset, (float)Root.VerticalOffset);
+            var m2 = Matrix3x2.CreateScale(Scroller.ZoomFactor);
+            m2.Translation -= new Vector2((float)Scroller.HorizontalOffset, (float)Scroller.VerticalOffset);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             m1 *= m2;
 
@@ -279,21 +342,32 @@ namespace Fonte.App.Controls
             throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
         }
 
-        public void CenterOnMetrics()
+        public void CenterOnMetrics(bool animated = true)
         {
             var master = Layer.Master;
             var fontHeight = master.Ascender - master.Descender;
 
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            Root.ScrollTo(
-                .5f * (Canvas.ActualWidth - Root.ActualWidth + Layer.Width),
-                .5f * (Canvas.ActualHeight - Root.ActualHeight - fontHeight) - master.Descender,
-                new muxc.ScrollOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
+            //ZoomTo(
+            //    (float)(ActualHeight / Math.Round(fontHeight * 1.4)),
+            //    animated);
 
-            Root.ZoomTo(
-                (float)(ActualHeight / Math.Round(fontHeight * 1.4)), null,
-                new muxc.ZoomOptions(muxc.AnimationMode.Disabled, muxc.SnapPointsMode.Ignore));
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            ScrollTo(
+                _matrix.Translation.X - .5f * (Scroller.ViewportWidth - Layer.Width),
+                _matrix.Translation.Y - .5f * (Scroller.ViewportHeight + fontHeight) - master.Descender,
+                animated);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        }
+
+        public void EditAnchorName(Data.Anchor anchor)
+        {
+            if (anchor.Parent == null || anchor.Parent != Layer)
+                throw new InvalidOperationException($"{anchor} is not a member of {Layer}");
+
+            var pos = GetClientPosition(anchor.ToVector2().ToPoint());
+            pos.X += 10;
+            pos.Y -= 11;
+            AnchorTextBox.StartEditing(anchor, pos);
         }
 
         public Point GetClientPosition(Point canvasPos)
@@ -306,19 +380,17 @@ namespace Fonte.App.Controls
             return Vector2.Transform(clientPos.ToVector2(), GetInverseMatrix()).ToPoint();
         }
 
-        // not sure that this oughta be in the view layer
-        // -- if we want to avoid expensive recreation of paths, we could spinoff this function + drawing functions to a new kind of DrawingController class
-        //    and retain the paths used for drawing for hit testing
-        // -- caveat: at least for points I tend to dilate the hit-testing area compared to the drawing path, and use a square (don't need ellipse area tests)
-        //    in which case we could create hit-testing paths but only make them once to avoid redoing it on every cursor move (for cursor markers)
-        public object HitTest(Point pos, object ignoreItem = null, bool testSegments = true)
+        public object HitTest(Point pos, ILayerElement ignoreElement = null, bool testSegments = true)
         {
             var rescale = 1f / Canvas.DpiScale;
             var halfSize = 4 * rescale;
 
+            // XXX: given that Scale is computed off thread, we risk a discrepancy between drawing and hit testing
+            var drawDetails = PointSize >= MinPointSizeForDetails;
+
             foreach (var anchor in Layer.Anchors)
             {
-                if (anchor != ignoreItem)
+                if (!ReferenceEquals(anchor, ignoreElement))
                 {
                     var dx = anchor.X - pos.X;
                     var dy = anchor.Y - pos.Y;
@@ -333,7 +405,7 @@ namespace Fonte.App.Controls
             {
                 foreach (var point in path.Points)
                 {
-                    if (point != ignoreItem)
+                    if (!ReferenceEquals(point, ignoreElement))
                     {
                         var dx = point.X - pos.X;
                         var dy = point.Y - pos.Y;
@@ -348,7 +420,7 @@ namespace Fonte.App.Controls
             var p = pos.ToVector2();
             foreach (var component in Layer.Components)
             {
-                if (component != ignoreItem && component.ClosedCanvasPath.FillContainsPoint(p))
+                if (!ReferenceEquals(component, ignoreElement) && component.ClosedCanvasPath.FillContainsPoint(p))
                 {
                     return component;
                 }
@@ -356,7 +428,7 @@ namespace Fonte.App.Controls
             // TODO: add master guidelines
             foreach (var guideline in Layer.Guidelines)
             {
-                if (guideline != ignoreItem)
+                if (!ReferenceEquals(guideline, ignoreElement))
                 {
                     var dx = guideline.X - pos.X;
                     var dy = guideline.Y - pos.Y;
@@ -407,7 +479,7 @@ namespace Fonte.App.Controls
             var options = new muxc.ScrollOptions(
                 animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
                 muxc.SnapPointsMode.Ignore);
-            Root.ScrollTo(x, y, options);
+            Scroller.ScrollTo(x, y, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
@@ -417,7 +489,17 @@ namespace Fonte.App.Controls
             var options = new muxc.ScrollOptions(
                 animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
                 muxc.SnapPointsMode.Ignore);
-            Root.ScrollBy(dx, dy, options);
+            Scroller.ScrollBy(dx, dy, options);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        }
+
+        public void ZoomTo(float scale, bool animated = false)
+        {
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            var options = new muxc.ZoomOptions(
+                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                muxc.SnapPointsMode.Ignore);
+            Scroller.ZoomTo(scale, null, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
     }

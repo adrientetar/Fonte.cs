@@ -113,28 +113,28 @@ namespace Fonte.App.Delegates
                 }
                 else
                 {
-                    if (_tappedItem is Data.Point ||
+                    if (_tappedItem is ILayerElement ||
                         _tappedItem is Data.Segment)
                     {
                         _screenOrigin = ptPoint.Position;
                         _oldPaths = (canvas.Layer.ClosedCanvasPath, canvas.Layer.OpenCanvasPath);
                         _undoGroup = canvas.Layer.CreateUndoGroup();
 
-                        if (_tappedItem is Data.Point point)
+                        if (_tappedItem is ILayerElement element)
                         {
                             // Fix the origin to be the point coordinates, in case we start clamping against it with Shift.
-                            _origin = _anchor = new Point(point.X, point.Y);
+                            _origin = _anchor = new Point(element.X, element.Y);
 
                             if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
                             {
-                                point.IsSelected = !point.IsSelected;
+                                element.IsSelected = !element.IsSelected;
                             }
                             else
                             {
-                                if (!point.IsSelected)
+                                if (!element.IsSelected)
                                 {
                                     canvas.Layer.ClearSelection();
-                                    point.IsSelected = true;
+                                    element.IsSelected = true;
                                 }
                             }
                         }
@@ -179,24 +179,24 @@ namespace Fonte.App.Delegates
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
 
-                if (_tappedItem is Data.Point point)
+                if (_tappedItem is ILayerElement element)
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = point.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+                        _canDrag = element.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
                     }
                     if (_canDrag)
                     {
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
-                            pos = ClampToNodeOrOrigin(canvas, pos, point);
+                            pos = ClampToNodeOrOrigin(canvas, pos, element as Data.Point);
                         }
 
                         Outline.MoveSelection(
                             canvas.Layer,
-                            (float)(pos.X - point.X),
-                            (float)(pos.Y - point.Y),
+                            (float)(pos.X - element.X),
+                            (float)(pos.Y - element.Y),
                             GetMoveMode()
                         );
                     }
@@ -296,7 +296,7 @@ namespace Fonte.App.Delegates
         {
             // We clamp to the mousedown pos, unless we have a single offcurve
             // in which case we clamp it against its parent.
-            if (point.Type == Data.PointType.None && canvas.Layer.Selection.Count == 1)
+            if (point != null && point.Type == Data.PointType.None && canvas.Layer.Selection.Count == 1)
             {
                 var path = point.Parent;
                 var index = path.Points.IndexOf(point);
@@ -317,7 +317,7 @@ namespace Fonte.App.Delegates
         {
             if (_tappedItem is Data.Point point && Is.AtOpenBoundary(point))
             {
-                var otherItem = canvas.HitTest(pos, ignoreItem: point);
+                var otherItem = canvas.HitTest(pos, ignoreElement: point);
                 if (otherItem is Data.Point otherPoint && Is.AtOpenBoundary(otherPoint))
                 {
                     Outline.JoinPaths(point.Parent,

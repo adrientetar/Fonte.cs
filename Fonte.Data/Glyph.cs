@@ -10,6 +10,7 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
+    using System.Linq;
 
     public partial class Glyph
     {
@@ -31,7 +32,7 @@ namespace Fonte.Data
         [JsonIgnore]
         public bool IsModified
         {
-            get => !_undoStore.IsEmpty;
+            get => _undoStore.IsDirty;
             set
             {
                 if (value)
@@ -50,6 +51,9 @@ namespace Fonte.Data
 
         [JsonIgnore]
         public IUndoProvider UndoStore => _undoStore;
+
+        [JsonIgnore]
+        public string Unicode => Unicodes.FirstOrDefault();
 
         [JsonConstructor]
         public Glyph(string name, List<string> unicodes = default, List<Layer> layers = default)

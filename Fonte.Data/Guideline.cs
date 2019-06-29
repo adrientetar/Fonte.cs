@@ -10,7 +10,7 @@ namespace Fonte.Data
 
     using System.Numerics;
 
-    public partial class Guideline : ISelectable
+    public partial class Guideline : ILayerElement
     {
         internal float _x;
         internal float _y;

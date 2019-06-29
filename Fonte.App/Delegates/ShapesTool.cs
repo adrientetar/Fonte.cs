@@ -117,7 +117,7 @@ namespace Fonte.App.Delegates
             {
                 _shouldMoveOrigin = true;
             }
-            else if (e.Key == VirtualKey.Escape)
+            else if (e.Key == VirtualKey.Escape && _origin.HasValue)
             {
                 _origin = null;
             }

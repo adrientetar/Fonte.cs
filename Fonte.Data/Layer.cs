@@ -334,6 +334,9 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
+        public bool IsEditing => Parent?.UndoStore.HasOpenGroup ?? false;
+
+        [JsonIgnore]
         public bool IsMasterLayer
         {
             get
@@ -470,6 +473,7 @@ namespace Fonte.Data
                 {
                     foreach (var item in Selection)
                     {
+                        // XXX: impl more
                         if (item is Point point)
                         {
                             _selectionBounds.Union(point.ToVector2());
@@ -552,9 +556,9 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            var more = Parent != null ? $" {Parent.Name}" : string.Empty;
+            var more = Parent != null ? $"{Parent.Name}:" : string.Empty;
             var name = IsMasterLayer ? $"*{MasterName}" : Name;
-            return $"{nameof(Layer)}({name}, {_paths.Count} paths{more})";
+            return $"{nameof(Layer)}({more}{name}, {_paths.Count} paths)";
         }
 
         // XXX: impl more

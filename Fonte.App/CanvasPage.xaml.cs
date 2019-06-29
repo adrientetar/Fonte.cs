@@ -42,7 +42,7 @@ namespace Fonte.App
             Font = new Data.Font(
                     glyphs: new List<Data.Glyph>()
                     {
-                        new Data.Glyph("a", layers: new List<Data.Layer>()
+                        new Data.Glyph("a", new List<string>() { "0061" }, layers: new List<Data.Layer>()
                         {
                             new Data.Layer("Regular")
                         })
@@ -51,10 +51,8 @@ namespace Fonte.App
 
             OnDataRefreshing();
 
-#if DEBUG
             Loaded += OnPageLoaded;
             Unloaded += OnPageUnloaded;
-#endif
         }
 
         void OnPageLoaded(object sender, RoutedEventArgs e)
@@ -65,6 +63,7 @@ namespace Fonte.App
             }
 
             Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
+            Window.Current.CoreWindow.KeyUp += OnWindowKeyUp;
         }
 
         void OnPageUnloaded(object sender, RoutedEventArgs e)
@@ -74,7 +73,7 @@ namespace Fonte.App
                 ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
             }
 
-            Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
+            Window.Current.CoreWindow.KeyUp -= OnWindowKeyUp;
         }
 
         void OnDataRefreshing()
@@ -92,7 +91,12 @@ namespace Fonte.App
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs e)
         {
             var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
+            if (e.VirtualKey == VirtualKey.Space)
+            {
+                Canvas.IsInPreview = true;
+            }
+#if DEBUG
+            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
             {
                 try
                 {
@@ -108,6 +112,21 @@ namespace Fonte.App
                 {
                     return;
                 }
+            }
+#endif
+            else
+            {
+                return;
+            }
+
+            e.Handled = true;
+        }
+
+        void OnWindowKeyUp(CoreWindow sender, KeyEventArgs e)
+        {
+            if (e.VirtualKey == VirtualKey.Space)
+            {
+                Canvas.IsInPreview = false;
             }
             else
             {

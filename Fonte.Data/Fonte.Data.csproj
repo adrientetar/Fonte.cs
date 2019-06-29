@@ -152,6 +152,8 @@
     <Compile Include="Changes\PointYChange.cs" />
     <Compile Include="Changes\PointXChange.cs" />
     <Compile Include="Component.cs" />
+    <Compile Include="Converters\ObjectArrayConverter.cs" />
+    <Compile Include="Interfaces\ILayerElement.cs" />
     <Compile Include="Master.cs" />
     <Compile Include="Geometry\Margins.cs" />
     <Compile Include="Geometry\Rect.cs" />

@@ -18,7 +18,7 @@ namespace Fonte.App.Controls
     public partial class Sidebar : UserControl
     {
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
-            "Layer", typeof(Data.Layer), typeof(Sidebar), null);
+            "Layer", typeof(Data.Layer), typeof(Sidebar), new PropertyMetadata(null, OnLayerChanged));
 
         public Data.Layer Layer
         {
@@ -110,13 +110,17 @@ namespace Fonte.App.Controls
         {
             var layer = Layer;
 
+            if (layer != null && layer.IsEditing)
+            {
+                return;
+            }
             if (layer != null && !layer.SelectionBounds.IsEmpty)
             {
                 var culture = CultureInfo.CurrentUICulture;
                 var origin = Origin.GetOrigin(layer);
+
                 XPosition = Math.Round(origin.X, 2).ToString(culture);
                 YPosition = Math.Round(origin.Y, 2).ToString(culture);
-
                 XSize = Math.Round(layer.SelectionBounds.Width, 2).ToString(culture);
                 YSize = Math.Round(layer.SelectionBounds.Height, 2).ToString(culture);
             }
@@ -126,6 +130,11 @@ namespace Fonte.App.Controls
             }
 
             Layers = layer?.Parent?.Layers;
+        }
+
+        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((Sidebar)sender).OnDataRefreshing();
         }
 
         /**/

@@ -31,7 +31,9 @@ namespace Fonte.Data.Utilities
         
         public bool CanUndo => _undoStack.Count > 0 && _undoCounter > 0 && _undoGroupIndex == 0;
 
-        public bool IsEmpty => !(CanUndo || _undoGroupIndex > 0 && !_undoGroup.IsShallow);
+        public bool HasOpenGroup => _undoGroupIndex > 0;
+
+        public bool IsDirty => _undoCounter > 0 || _undoGroupIndex > 0 && !_undoGroup.IsShallow;
 
         public IChangeGroup CreateUndoGroup()
         {

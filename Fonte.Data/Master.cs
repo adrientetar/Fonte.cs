@@ -4,9 +4,20 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Converters;
     using Newtonsoft.Json;
 
     using System.Collections.Generic;
+
+    [JsonConverter(typeof(ObjectArrayConverter<AlignmentZone>))]
+    public struct AlignmentZone
+    {
+        [JsonProperty("position", Order = 1)]
+        public int Position { get; set; }
+
+        [JsonProperty("size", Order = 2)]
+        public int Size { get; set; }
+    }
 
     public partial class Master
     {
@@ -16,8 +27,8 @@ namespace Fonte.Data
         [JsonProperty("location")]
         public Dictionary<string, int> Location { get; set; }
 
-        //[JsonProperty("alignmentZones")]
-        //public string AlignmentZones { get; set; }
+        [JsonProperty("alignmentZones")]
+        public List<AlignmentZone> AlignmentZones { get; set; }
 
         [JsonProperty("guidelines")]
         public List<Guideline> Guidelines { get; }
@@ -48,13 +59,17 @@ namespace Fonte.Data
         [JsonIgnore]
         public Font Parent { get; internal set; }
 
+        [JsonIgnore]
+        public bool Visible { get; set; }
+
         [JsonConstructor]
-        public Master(string name = default, Dictionary<string, int> location = default, List<Guideline> guidelines = default,
-                      List<int> hStems = default, List<int> vStems = default, int ascender = 800, int capHeight = 700,
-                      int descender = -200, float italicAngle = 0f, int xHeight = 500)
+        public Master(string name = default, Dictionary<string, int> location = default, List<AlignmentZone> alignmentZones = null,
+                      List<Guideline> guidelines = default, List<int> hStems = default, List<int> vStems = default,
+                      int ascender = 800, int capHeight = 700, int descender = -200, float italicAngle = 0f, int xHeight = 500)
         {
             Name = name ?? string.Empty;
             Location = location ?? new Dictionary<string, int>();
+            AlignmentZones = alignmentZones ?? new List<AlignmentZone>();
             Guidelines = guidelines ?? new List<Guideline>();
             HStems = hStems ?? new List<int>();
             VStems = vStems ?? new List<int>();
@@ -73,7 +88,8 @@ namespace Fonte.Data
 
         public override string ToString()
         {
-            return $"{nameof(Master)}(...)";  // XXX
+            var more = string.Empty; // XXX
+            return $"{nameof(Master)}({Name}{more})";
         }
     }
 }

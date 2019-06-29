@@ -191,8 +191,9 @@ namespace Fonte.App.Delegates
                 AreOpenCloseAnimationsEnabled = false
             };
 
-            var pos = e.GetPosition(canvas);
-            var tappedItem = canvas.HitTest(canvas.GetCanvasPosition(pos));
+            var clientPos = e.GetPosition(canvas);
+            var pos = canvas.GetCanvasPosition(clientPos);
+            var tappedItem = canvas.HitTest(pos);
 
             if (tappedItem is Data.Point point)
             {
@@ -221,11 +222,38 @@ namespace Fonte.App.Delegates
                 CommandParameter = canvas.Layer
             });
 
-            flyout.ShowAt(canvas, pos);
+            flyout.Items.Add(new MenuFlyoutSeparator());
+
+            flyout.Items.Add(new MenuFlyoutItem()
+            {
+                Command = AddAnchorCommand,
+                CommandParameter = (canvas, pos)
+            });
+
+            flyout.ShowAt(canvas, clientPos);
             e.Handled = true;
         }
 
         /**/
+
+        static XamlUICommand AddAnchorCommand { get; } = MakeUICommand(
+            "Add Anchor",
+            (s, e) => {
+                var (canvas, pos) = (ValueTuple<DesignCanvas, Point>)e.Parameter;
+                var layer = canvas.Layer;
+
+                var anchor = new Data.Anchor(
+                    (float)pos.X,
+                    (float)pos.Y,
+                    "new anchor"
+                );
+                layer.Anchors.Add(anchor);
+                layer.ClearSelection();
+                anchor.IsSelected = true;
+                ((App)Application.Current).InvalidateData();
+
+                canvas.EditAnchorName(anchor);
+            });
 
         static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand(
             "Decompose",
@@ -270,7 +298,7 @@ namespace Fonte.App.Delegates
         /**/
 
         // origin and pos should be in screen coordinates
-        protected bool CanStartDragging(Point pos, Point origin, int px = 5)
+        protected bool CanStartDragging(Point pos, Point origin, int px = 7)
         {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;

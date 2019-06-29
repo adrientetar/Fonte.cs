@@ -14,7 +14,7 @@ namespace Fonte.Data
     using System;
     using System.Numerics;
 
-    public partial class Component : ISelectable
+    public partial class Component : ILayerElement
     {
         internal string _glyphName;
         internal Matrix3x2 _transformation;
@@ -120,10 +120,28 @@ namespace Fonte.Data
             }
         }
 
-
+        [JsonIgnore]
+        float ILocatable.X {
+            get => _transformation.Translation.X;
+            set
+            {
+                var t = Transformation;
+                t.M31 = value;
+                Transformation = t;
+            }
+        }
 
         [JsonIgnore]
-        public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);
+        float ILocatable.Y
+        {
+            get => _transformation.Translation.Y;
+            set
+            {
+                var t = Transformation;
+                t.M32 = value;
+                Transformation = t;
+            }
+        }
 
         [JsonConstructor]
         public Component(string glyphName, Matrix3x2 transformation = default)

@@ -336,6 +336,8 @@ namespace Fonte.App.Delegates
             {
                 _undoGroup.Dispose();
                 _undoGroup = null;
+
+                ((App)Application.Current).InvalidateData();
             }
             _path = null;
             _screenOrigin = default;
