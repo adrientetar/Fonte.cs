@@ -5,17 +5,17 @@ namespace Fonte.Data.Changes
 
     using System.Collections.Generic;
 
-    internal struct LayerComponentsRangeChange : IChange
+    internal struct MasterGuidelinesChange : IChange
     {
-        private readonly Layer _parent;
+        private readonly Master _parent;
         private readonly int _index;
         private bool _insert;
-        private List<Component> _items;
+        private readonly IList<Guideline> _items;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public LayerComponentsRangeChange(Layer parent, int index, List<Component> items, bool insert)
+        public MasterGuidelinesChange(Master parent, int index, IList<Guideline> items, bool insert)
         {
             _parent = parent;
             _index = index;
@@ -25,21 +25,20 @@ namespace Fonte.Data.Changes
 
         public void Apply()
         {
-            var items = _parent._components;
+            var items = _parent._guidelines;
             if (_insert)
             {
-                var parent = _parent;
                 items.InsertRange(_index, _items);
-                _items.ForEach(item => item.Parent = parent);
+                foreach (var item in _items) { item.Parent = _parent; }
             }
             else
             {
                 items.RemoveRange(_index, _items.Count);
-                _items.ForEach(item => item.Parent = null);
+                foreach (var item in _items) { item.Parent = null; }
             }
             _insert = !_insert;
 
-            _parent.OnChange(this);
+            //_parent.OnChange(this);
         }
     }
 }

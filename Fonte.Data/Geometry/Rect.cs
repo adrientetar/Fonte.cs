@@ -12,6 +12,7 @@ namespace Fonte.Data.Geometry
     // - Bottom/Top aren't inverted to account for topmost y origin
     // - methods return float rather than double, and consequently take Vector2 rather than Point
     // - location/size ctor is removed
+    // - added Transform method
     //
     // Foundation is used by Windows UI for things like window geometry, we're doing font geometry
     // so it makes sense to redefine whatsoever.
@@ -244,6 +245,23 @@ namespace Fonte.Data.Geometry
                                  _y,
                                  _width,
                                  _height);
+        }
+
+        public static Rect Transform(Rect rect, Matrix3x2 matrix)
+        {
+            var top = new Vector2(rect.Left, rect.Top);
+            var bottom = new Vector2(rect.Right, rect.Bottom);
+
+            var tRect = new Rect(
+                    Vector2.Transform(top, matrix),
+                    Vector2.Transform(bottom, matrix)
+                );
+            top.X = rect.Right;
+            tRect.Union(Vector2.Transform(top, matrix));
+            bottom.X = rect.Left;
+            tRect.Union(Vector2.Transform(bottom, matrix));
+
+            return tRect;
         }
 
         public bool Equals(Rect value)

@@ -5,16 +5,16 @@ namespace Fonte.Data.Changes
 
     using System.Collections.Generic;
 
-    internal struct PathPointsRangeReplaceChange : IChange
+    internal struct MasterGuidelinesReplaceChange : IChange
     {
-        private readonly Path _parent;
+        private readonly Master _parent;
         private readonly int _index;
-        private List<Point> _items;
+        private IList<Guideline> _items;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public PathPointsRangeReplaceChange(Path parent, int index, List<Point> item)
+        public MasterGuidelinesReplaceChange(Master parent, int index, IList<Guideline> item)
         {
             _parent = parent;
             _index = index;
@@ -23,18 +23,17 @@ namespace Fonte.Data.Changes
 
         public void Apply()
         {
-            var items = _parent._points;
+            var items = _parent._guidelines;
 
             var oldItems = items.GetRange(_index, _items.Count);
             items.RemoveRange(_index, _items.Count);
-            oldItems.ForEach(item => item.Parent = null);
+            foreach (var item in oldItems) { item.Parent = null; }
 
-            var parent = _parent;
             items.InsertRange(_index, _items);
-            _items.ForEach(item => item.Parent = parent);
+            foreach (var item in oldItems) { item.Parent = _parent; }
             _items = oldItems;
 
-            _parent.OnChange(this);
+            //_parent.OnChange(this);
         }
     }
 }

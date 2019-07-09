@@ -11,6 +11,7 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
+    using System;
     using System.Diagnostics;
     using System.Numerics;
     using Windows.Foundation;
@@ -36,7 +37,7 @@ namespace Fonte.App.Delegates
         enum ActionType
         {
             None = 0,
-            DraggingPoint,
+            DraggingItem,
             DraggingRect
         };
 
@@ -46,7 +47,7 @@ namespace Fonte.App.Delegates
             {
                 if (_undoGroup != null)
                 {
-                    return ActionType.DraggingPoint;
+                    return ActionType.DraggingItem;
                 }
                 else if (_origin != EmptyPoint)
                 {
@@ -79,7 +80,7 @@ namespace Fonte.App.Delegates
 
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
-            if (CurrentAction == ActionType.DraggingPoint)
+            if (CurrentAction == ActionType.DraggingItem && _tappedItem is ISelectable)
             {
                 // to parametrize this, could do a GetResource(key) that uses App.Resources[key]
                 // or just use FindResource, given that DesignCanvas takes on App's MergedDictionaries
@@ -98,71 +99,68 @@ namespace Fonte.App.Delegates
             base.OnPointerPressed(canvas, e);
 
             var ptPoint = e.GetCurrentPoint(canvas);
-            if (ptPoint.Properties.IsLeftButtonPressed)
+            if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var canvasPos = canvas.GetCanvasPosition(ptPoint.Position);
                 _tappedItem = canvas.HitTest(canvasPos);
 
-                if (_tappedItem == null)
+                if (_tappedItem != null)
                 {
-                    _origin = _anchor = canvasPos;
+                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+                    if (_tappedItem is Misc.GuidelineRule)
+                    {
+                        _screenOrigin = ptPoint.Position;
+                        _undoGroup = canvas.Layer.CreateUndoGroup();
 
-                    canvas.Layer.ClearSelection();
+                        Debug.Assert(CurrentAction == ActionType.DraggingItem);
+                    }
+                    if (_tappedItem is Data.Segment segment && alt.HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        segment.ConvertTo(Data.PointType.Curve);
 
-                    Debug.Assert(CurrentAction == ActionType.DraggingRect);
-                }
-                else
-                {
-                    if (_tappedItem is ILayerElement ||
-                        _tappedItem is Data.Segment)
+                        Debug.Assert(CurrentAction == ActionType.None);
+                    }
+                    else if (_tappedItem is ISelectable isel)
                     {
                         _screenOrigin = ptPoint.Position;
                         _oldPaths = (canvas.Layer.ClosedCanvasPath, canvas.Layer.OpenCanvasPath);
                         _undoGroup = canvas.Layer.CreateUndoGroup();
 
-                        if (_tappedItem is ILayerElement element)
-                        {
-                            // Fix the origin to be the point coordinates, in case we start clamping against it with Shift.
-                            _origin = _anchor = new Point(element.X, element.Y);
+                        // Origin is the canonical origin point, in case we need to Shift-clamp against it.
+                        // Anchor is the reference point against which each move is computed. As components and segments are
+                        // not points themselves, we need to subtract a reference point that moves to compute move deltas.
+                        _origin = GetOriginPoint(isel, canvasPos);
+                        _anchor = (_origin.ToVector2() - GetReferencePoint(isel)).ToPoint();
 
-                            if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
-                            {
-                                element.IsSelected = !element.IsSelected;
-                            }
-                            else
-                            {
-                                if (!element.IsSelected)
-                                {
-                                    canvas.Layer.ClearSelection();
-                                    element.IsSelected = true;
-                                }
-                            }
+                        if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
+                        {
+                            isel.IsSelected = !isel.IsSelected;
                         }
-                        else if (_tappedItem is Data.Segment segment)
+                        else
                         {
-                            // XXX: avoid reprojecting?
-                            var proj = segment.ProjectPoint(canvasPos.ToVector2()).Value;
-                            _origin = proj.ToPoint();
-                            // We need to track our projected point as the segment moves, so make it relative to the OnCurve.
-                            _anchor = (proj - segment.OnCurve.ToVector2()).ToPoint();
-
-                            if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
+                            if (!isel.IsSelected)
                             {
-                                segment.IsSelected = !segment.IsSelected;
-                            }
-                            else
-                            {
-                                if (!segment.IsSelected)
-                                {
-                                    canvas.Layer.ClearSelection();
-                                    segment.IsSelected = true;
-                                }
+                                canvas.Layer.ClearSelection();
+                                isel.IsSelected = true;
                             }
                         }
 
-                        Debug.Assert(CurrentAction == ActionType.DraggingPoint);
+                        Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
                 }
+                else
+                {
+                    _origin = _anchor = canvasPos;
+
+                    var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
+                    if (!ctrl.HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        layer.ClearSelection();
+                    }
+
+                    Debug.Assert(CurrentAction == ActionType.DraggingRect);
+                }
+
                 ((App)Application.Current).InvalidateData();
             }
         }
@@ -179,47 +177,43 @@ namespace Fonte.App.Delegates
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
 
-                if (_tappedItem is ILayerElement element)
+                if (_tappedItem is Misc.GuidelineRule rule)
                 {
-                    if (!_canDrag)
-                    {
-                        _canDrag = element.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
-                    }
-                    if (_canDrag)
-                    {
-                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
-                        {
-                            pos = ClampToNodeOrOrigin(canvas, pos, element as Data.Point);
-                        }
+                    var guideline = rule.Guideline;
+                    var angle = Math.Atan2(pos.Y - guideline.Y, pos.X - guideline.X);
+                    var deg = (float)Conversion.ToDegrees(angle);
 
-                        Outline.MoveSelection(
-                            canvas.Layer,
-                            (float)(pos.X - element.X),
-                            (float)(pos.Y - element.Y),
-                            GetMoveMode()
-                        );
+                    // TODO: we could always modulo 180 to normalize since 0-180 and 180-360 are equivalent
+                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                    if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        guideline.Angle = (int)(Conversion.ToDegrees(angle) + Math.Sign(deg) * 45) / 90 * 90;
+                    }
+                    else
+                    {
+                        guideline.Angle = .1f * Outline.RoundToGrid(10f * deg);
                     }
                 }
-                else if (_tappedItem is Data.Segment segment)
+                else if (_tappedItem is ISelectable isel)
                 {
                     if (!_canDrag)
                     {
-                        _canDrag = segment.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+                        _canDrag = isel.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
                     }
                     if (_canDrag)
                     {
+                        // TODO: clear the undoGroup here (clear = undo and remove changes) to avoid storing unneeded changes
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
-                            pos = ClampToOrigin(pos, _origin);
+                            pos = ClampToNodeOrOrigin(canvas, pos, isel as Data.Point);
                         }
 
-                        var actualAnchor = _anchor.ToVector2() + segment.OnCurve.ToVector2();
+                        var refPoint = _anchor.ToVector2() + GetReferencePoint(isel);
                         Outline.MoveSelection(
                             canvas.Layer,
-                            (float)pos.X - actualAnchor.X,
-                            (float)pos.Y - actualAnchor.Y,
+                            (float)(pos.X - refPoint.X),
+                            (float)(pos.Y - refPoint.Y),
                             GetMoveMode()
                         );
                     }
@@ -237,7 +231,7 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerReleased(canvas, e);
 
-            if (CurrentAction == ActionType.DraggingPoint)
+            if (CurrentAction == ActionType.DraggingItem)
             {
                 if (_tappedItem is Data.Point)
                 {
@@ -254,7 +248,10 @@ namespace Fonte.App.Delegates
                 {
                     foreach (var point in path.Points)
                     {
-                        point.IsSelected = rect.Contains(point.ToVector2().ToPoint());
+                        if (rect.Contains(point.ToVector2().ToPoint()))
+                        {
+                            point.IsSelected = !point.IsSelected;
+                        }
                     }
                 }
             }
@@ -274,14 +271,24 @@ namespace Fonte.App.Delegates
 
         public override void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs e)
         {
-            if (_tappedItem is Data.Point point)
+            if (_tappedItem is Data.Anchor anchor)
+            {
+                canvas.EditAnchorName(anchor);
+            }
+            else if (_tappedItem is Data.Guideline guideline)
+            {
+                guideline.Angle = (float)Math.Round(guideline.Angle + 90) % 360;
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else if (_tappedItem is Data.Point point)
             {
                 if (Outline.TryTogglePointSmoothness(point))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
             }
-            if (_tappedItem is Data.Segment segment)
+            else if (_tappedItem is Data.Segment segment)
             {
                 var path = segment.Parent;
                 path.IsSelected = true;
@@ -313,10 +320,47 @@ namespace Fonte.App.Delegates
             return ClampToOrigin(pos, _origin);
         }
 
+        Point GetOriginPoint(ISelectable item, Point pos)
+        {
+            if (item is Data.Component)
+            {
+                return pos;
+            }
+            else if (item is Data.Segment segment)
+            {
+                // XXX: avoid reprojecting?
+                return segment.ProjectPoint(pos.ToVector2()).Value.ToPoint();
+            }
+            else if (item is ILocatable iloc)
+            {
+                return iloc.ToVector2().ToPoint();
+            }
+            throw new ArgumentException($"{item} is not allowed here.");
+        }
+
+        Vector2 GetReferencePoint(ISelectable item)
+        {
+            if (item is Data.Component component)
+            {
+                return component.Origin;
+            }
+            else if (item is Data.Segment segment)
+            {
+                return segment.OnCurve.ToVector2();
+            }
+            else if (item is ILocatable iloc)
+            {
+                return iloc.ToVector2();
+            }
+            throw new ArgumentException($"{item} is not allowed here.");
+        }
+
+        // TODO: also need to join when moving with keyboard
         void TryJoinPath(DesignCanvas canvas, Point pos)
         {
             if (_tappedItem is Data.Point point && Is.AtOpenBoundary(point))
             {
+                // TODO: we could only HitTest points here
                 var otherItem = canvas.HitTest(pos, ignoreElement: point);
                 if (otherItem is Data.Point otherPoint && Is.AtOpenBoundary(otherPoint))
                 {

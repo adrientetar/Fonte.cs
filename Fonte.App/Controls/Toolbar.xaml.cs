@@ -52,9 +52,6 @@ namespace Fonte.App.Controls
                 new SelectionTool(),
                 new PenTool(),
                 new ShapesTool(),
-#if DEBUG
-                new DrawingTool(),
-#endif
             };
         }
 

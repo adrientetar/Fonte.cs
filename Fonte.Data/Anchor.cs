@@ -10,7 +10,7 @@ namespace Fonte.Data
 
     using System.Numerics;
 
-    public partial class Anchor : ILayerElement
+    public partial class Anchor : ILayerElement, ILocatable
     {
         internal float _x;
         internal float _y;

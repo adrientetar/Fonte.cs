@@ -9,9 +9,9 @@ namespace Fonte.Data.Collections
     using System.Collections.Generic;
     using System.Collections.Specialized;
 
-    public class ObserverList<T> : IList<T>, INotifyCollectionChanged
+    public class ObserverList<T> : IList<T>
     {
-        private List<T> _list;
+        private readonly List<T> _list;
 
         public ObserverList(List<T> items)
         {
@@ -30,7 +30,7 @@ namespace Fonte.Data.Collections
             if (_list.Count > 0)
             {
                 //List.Clear();
-                OnCollectionChanged();
+                OnChangeRequested();
             }
         }
 
@@ -58,7 +58,7 @@ namespace Fonte.Data.Collections
         {
             //List.Insert(index, item);
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Add, item, index);
+            OnChangeRequested(NotifyChangeRequestedAction.Add, item, index);
         }
 
         public bool Remove(T item)
@@ -66,7 +66,7 @@ namespace Fonte.Data.Collections
             int index = _list.IndexOf(item);
             if (index < 0) return false;
             //List.RemoveAt(index);
-            OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
+            OnChangeRequested(NotifyChangeRequestedAction.Remove, item, index);
             return true;
         }
 
@@ -75,7 +75,7 @@ namespace Fonte.Data.Collections
             var item = _list[index];
             //List.RemoveAt(index);
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Remove, item, index);
+            OnChangeRequested(NotifyChangeRequestedAction.Remove, item, index);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -90,7 +90,7 @@ namespace Fonte.Data.Collections
                 T originalItem = this[index];
                 //List[index] = value;
 
-                OnCollectionChanged(NotifyCollectionChangedAction.Replace, originalItem, value, index);
+                OnChangeRequested(NotifyChangeRequestedAction.Replace, originalItem, value, index);
             }
         }
 
@@ -100,11 +100,7 @@ namespace Fonte.Data.Collections
 
         #endregion
 
-        #region INotifyCollectionChanged Members
-
-        public event NotifyCollectionChangedEventHandler CollectionChanged;
-
-        #endregion
+        public event NotifyChangeRequestedEventHandler<T> ChangeRequested;
 
         public void AddRange(List<T> list)
         {
@@ -115,7 +111,7 @@ namespace Fonte.Data.Collections
                 int index = _list.Count;
                 //List.AddRange(list);
 
-                OnCollectionChanged(NotifyCollectionChangedAction.Add, list, index);
+                OnChangeRequested(NotifyChangeRequestedAction.Add, list, index);
             }
         }
         public void AddRange(ObserverList<T> list)
@@ -133,7 +129,7 @@ namespace Fonte.Data.Collections
             var removedItems = _list.GetRange(index, count);
             //List.RemoveRange(index, count);
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Remove, removedItems, index);
+            OnChangeRequested(NotifyChangeRequestedAction.Remove, removedItems, index);
         }
 
         public void Reverse()
@@ -142,7 +138,7 @@ namespace Fonte.Data.Collections
             replacedItems.Reverse();
             //List.Reverse();
 
-            OnCollectionChanged(NotifyCollectionChangedAction.Replace, _list, replacedItems, 0);
+            OnChangeRequested(NotifyChangeRequestedAction.Replace, _list, replacedItems, 0);
         }
 
         public T First()
@@ -173,37 +169,29 @@ namespace Fonte.Data.Collections
             return r;
         }
 
-        void OnCollectionChanged()
+        void OnChangeRequested()
         {
-            CollectionChanged?.Invoke(this, EventArgsCache.ResetCollectionChanged);
+            ChangeRequested?.Invoke(this, new NotifyChangeRequestedEventArgs<T>(NotifyChangeRequestedAction.Reset));
         }
 
-        void OnCollectionChanged(NotifyCollectionChangedAction action, object item, int index)
+        void OnChangeRequested(NotifyChangeRequestedAction action, T item, int index)
         {
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, item, index));
+            ChangeRequested?.Invoke(this, new NotifyChangeRequestedEventArgs<T>(action, item, index));
         }
 
-        void OnCollectionChanged(NotifyCollectionChangedAction action, object oldItem, object newItem, int index)
+        void OnChangeRequested(NotifyChangeRequestedAction action, T oldItem, T newItem, int index)
         {
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItem, oldItem, index));
+            ChangeRequested?.Invoke(this, new NotifyChangeRequestedEventArgs<T>(action, newItem, oldItem, index));
         }
 
-        void OnCollectionChanged(NotifyCollectionChangedAction action, IList changedItems, int index)
+        void OnChangeRequested(NotifyChangeRequestedAction action, IList<T> changedItems, int index)
         {
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, changedItems, index));
+            ChangeRequested?.Invoke(this, new NotifyChangeRequestedEventArgs<T>(action, changedItems, index));
         }
 
-        void OnCollectionChanged(NotifyCollectionChangedAction action, IList oldItems, IList newItems, int index)
+        void OnChangeRequested(NotifyChangeRequestedAction action, IList<T> oldItems, IList<T> newItems, int index)
         {
-            CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(action, newItems, oldItems, index));
+            ChangeRequested?.Invoke(this, new NotifyChangeRequestedEventArgs<T>(action, newItems, oldItems, index));
         }
-    }
-
-    /// <remarks>
-    /// To be kept outside <see cref="ObserverList{T}"/>, since otherwise, a new instance will be created for each generic type used.
-    /// </remarks>
-    internal static class EventArgsCache
-    {
-        internal static readonly NotifyCollectionChangedEventArgs ResetCollectionChanged = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset);
     }
 }

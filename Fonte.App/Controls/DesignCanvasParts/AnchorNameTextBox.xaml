@@ -13,6 +13,15 @@
     KeyDown="OnKeyDown"
     LostFocus="OnLostFocus">
     <TextBox.Resources>
-        <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style TargetType="local:AnchorNameTextBox">
+                <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+        </ResourceDictionary>
     </TextBox.Resources>
 </TextBox>

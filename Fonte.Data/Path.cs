@@ -16,9 +16,7 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
     using System.Diagnostics;
-    using System.Linq;
     using System.Numerics;
 
     [JsonConverter(typeof(PathConverter))]
@@ -36,42 +34,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Point>(_points);
-                items.CollectionChanged += (sender, e) =>
+                items.ChangeRequested += (sender, e) =>
                 {
-                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    if (e.Action == NotifyChangeRequestedAction.Add)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new PathPointsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Point>().ToList(), true).Apply();
-                        }
-                        else
-                        {
-                            new PathPointsChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
-                        }
+                        new PathPointsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        if (e.OldItems.Count > 1)
-                        {
-                            new PathPointsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Point>().ToList(), false).Apply();
-                        }
-                        else
-                        {
-                            new PathPointsChange(this, e.OldStartingIndex, null).Apply();
-                        }
+                        new PathPointsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new PathPointsRangeReplaceChange(this, e.NewStartingIndex, e.NewItems.Cast<Point>().ToList()).Apply();
-                        }
-                        else
-                        {
-                            new PathPointsReplaceChange(this, e.NewStartingIndex, (Point)e.NewItems[0]).Apply();
-                        }
+                        new PathPointsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new PathPointsResetChange(this).Apply();
                     }
@@ -313,7 +290,7 @@ namespace Fonte.Data
         }
     }
 
-    public struct Segment
+    public struct Segment : ISelectable
     {
         private readonly int _count;
         private readonly int _index;

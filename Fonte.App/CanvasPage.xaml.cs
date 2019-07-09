@@ -39,15 +39,14 @@ namespace Fonte.App
             InitializeComponent();
 
             // Maybe have a standard glyphset?
-            Font = new Data.Font(
-                    glyphs: new List<Data.Glyph>()
+            Font = new Data.Font(glyphs: new List<Data.Glyph>()
+                {
+                    new Data.Glyph("a", new List<string>() { "0061" }, layers: new List<Data.Layer>()
                     {
-                        new Data.Glyph("a", new List<string>() { "0061" }, layers: new List<Data.Layer>()
-                        {
-                            new Data.Layer("Regular")
-                        })
-                    }
-                );
+                        new Data.Layer("Regular")
+                    })
+                }
+            );
 
             OnDataRefreshing();
 
@@ -73,6 +72,7 @@ namespace Fonte.App
                 ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
             }
 
+            Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
             Window.Current.CoreWindow.KeyUp -= OnWindowKeyUp;
         }
 

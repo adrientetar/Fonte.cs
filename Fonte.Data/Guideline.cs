@@ -6,11 +6,13 @@ namespace Fonte.Data
 {
     using Fonte.Data.Changes;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
     using Newtonsoft.Json;
 
+    using System;
     using System.Numerics;
 
-    public partial class Guideline : ILayerElement
+    public partial class Guideline : ILayerElement, ILocatable
     {
         internal float _x;
         internal float _y;
@@ -74,6 +76,19 @@ namespace Fonte.Data
         }
 
         /**/
+
+        [JsonIgnore]
+        public Vector2 Direction
+        {
+            get
+            {
+                var rad = Conversion.ToRadians(Angle);
+                return new Vector2(
+                    (float)Math.Cos(rad),
+                    (float)Math.Sin(rad)
+                );
+            }
+        }
 
         [JsonIgnore]
         public bool IsSelected

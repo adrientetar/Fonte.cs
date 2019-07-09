@@ -29,7 +29,7 @@ namespace Fonte.Data
     };
 
     [JsonConverter(typeof(PointConverter))]
-    public partial class Point : ILayerElement
+    public partial class Point : ILayerElement, ILocatable
     {
         internal float _x;
         internal float _y;

@@ -8,7 +8,7 @@ namespace Fonte.Data.Changes
     internal struct LayerPathsResetChange : IChange
     {
         private readonly Layer _parent;
-        private List<Path> _items;
+        private IList<Path> _items;
 
         bool Insert => _items != null;
 
@@ -26,9 +26,8 @@ namespace Fonte.Data.Changes
             var items = _parent._paths;
             if (Insert)
             {
-                var parent = _parent;
                 items.AddRange(_items);
-                _items.ForEach(item => item.Parent = parent);
+                foreach (var item in _items) { item.Parent = _parent; }
                 _items = null;
             }
             else
@@ -36,7 +35,7 @@ namespace Fonte.Data.Changes
                 var removedItems = items.GetRange(0, items.Count);
                 items.Clear();
                 _items = removedItems;
-                _items.ForEach(item => item.Parent = null);
+                foreach (var item in _items) { item.Parent = null; }
             }
 
             _parent.OnChange(this);

@@ -95,14 +95,14 @@ namespace Fonte.App.Delegates
             base.OnPointerPressed(canvas, e);
 
             var ptPoint = e.GetCurrentPoint(canvas);
-            if (ptPoint.Properties.IsLeftButtonPressed)
+            if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
                 var tappedItem = canvas.HitTest(pos);
                 var selPoint = GetSelectedPoint(canvas);
 
                 _screenOrigin = ptPoint.Position;
-                _undoGroup = canvas.Layer.CreateUndoGroup();
+                _undoGroup = layer.CreateUndoGroup();
                 if (tappedItem is Data.Point tappedPoint && tappedPoint.Type != Data.PointType.None)
                 {
                     var tappedPath = tappedPoint.Parent;
@@ -188,12 +188,12 @@ namespace Fonte.App.Delegates
                     {
                         _path = new Data.Path();
                         points = _path.Points;
-                        canvas.Layer.Paths.Add(_path);
+                        layer.Paths.Add(_path);
                         type = Data.PointType.Move;
                     }
 
                     // In any case, unselect all points (*click*) and enable new point
-                    canvas.Layer.ClearSelection();
+                    layer.ClearSelection();
                     var x = Outline.RoundToGrid((float)pos.X);
                     var y = Outline.RoundToGrid((float)pos.Y);
                     points.Add(new Data.Point(x, y, type)

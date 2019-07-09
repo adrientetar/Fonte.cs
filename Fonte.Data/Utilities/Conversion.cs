@@ -6,6 +6,8 @@ namespace Fonte.Data.Utilities
 {
     using Fonte.Data.Geometry;
 
+    using System;
+
     public class Conversion
     {
         public static Rect FromFoundationRect(Windows.Foundation.Rect rect)
@@ -15,6 +17,16 @@ namespace Fonte.Data.Utilities
                 (float)rect.Y,
                 (float)rect.Width,
                 (float)rect.Height);
+        }
+
+        public static double ToDegrees(double angle)
+        {
+            return 180 * angle / Math.PI;
+        }
+
+        public static double ToRadians(double angle)
+        {
+            return Math.PI * angle / 180;
         }
     }
 }

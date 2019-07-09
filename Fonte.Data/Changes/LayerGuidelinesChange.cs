@@ -3,40 +3,40 @@ namespace Fonte.Data.Changes
 {
     using Fonte.Data.Interfaces;
 
+    using System.Collections.Generic;
+
     internal struct LayerGuidelinesChange : IChange
     {
         private readonly Layer _parent;
         private readonly int _index;
-        private Guideline _item;
-
-        bool Insert => _item != null;
+        private bool _insert;
+        private readonly IList<Guideline> _items;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public LayerGuidelinesChange(Layer parent, int index, Guideline item)
+        public LayerGuidelinesChange(Layer parent, int index, IList<Guideline> items, bool insert)
         {
             _parent = parent;
             _index = index;
-            _item = item;
+            _insert = insert;
+            _items = items;
         }
 
         public void Apply()
         {
             var items = _parent._guidelines;
-            if (Insert)
+            if (_insert)
             {
-                items.Insert(_index, _item);
-                _item.Parent = _parent;
-                _item = null;
+                items.InsertRange(_index, _items);
+                foreach (var item in _items) { item.Parent = _parent; }
             }
             else
             {
-                var item = items[_index];
-                items.RemoveAt(_index);
-                _item = item;
-                _item.Parent = null;
+                items.RemoveRange(_index, _items.Count);
+                foreach (var item in _items) { item.Parent = null; }
             }
+            _insert = !_insert;
 
             _parent.OnChange(this);
         }

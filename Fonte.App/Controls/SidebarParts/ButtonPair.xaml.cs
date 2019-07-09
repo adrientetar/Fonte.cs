@@ -9,62 +9,54 @@ namespace Fonte.App.Controls.SidebarParts
 
     public partial class ButtonPair : UserControl
     {
-        public event RoutedEventHandler LeftClick;
-        public event RoutedEventHandler RightClick;
+        public static DependencyProperty LeftButtonProperty = DependencyProperty.Register(
+            "LeftButton", typeof(Button), typeof(ButtonPair), new PropertyMetadata(null, OnButtonChanged));
 
-        public static DependencyProperty LeftContentProperty = DependencyProperty.Register(
-            "LeftContent", typeof(object), typeof(ButtonPair), null);
-
-        public object LeftContent
+        public Button LeftButton
         {
-            get => GetValue(LeftContentProperty);
-            set { SetValue(LeftContentProperty, value); }
+            get => (Button)GetValue(LeftButtonProperty);
+            set { SetValue(LeftButtonProperty, value); }
         }
 
-        public static DependencyProperty RightContentProperty = DependencyProperty.Register(
-            "RightContent", typeof(object), typeof(ButtonPair), null);
+        public static DependencyProperty RightButtonProperty = DependencyProperty.Register(
+            "RightButton", typeof(Button), typeof(ButtonPair), new PropertyMetadata(null, OnButtonChanged));
 
-        public object RightContent
+        public Button RightButton
         {
-            get => GetValue(RightContentProperty);
-            set { SetValue(RightContentProperty, value); }
+            get => (Button)GetValue(RightButtonProperty);
+            set { SetValue(RightButtonProperty, value); }
         }
-
-        public static DependencyProperty LeftToolTipProperty = DependencyProperty.Register(
-            "LeftToolTip", typeof(string), typeof(ButtonPair), null);
-
-        public string LeftToolTip
-        {
-            get => (string)GetValue(LeftToolTipProperty);
-            set { SetValue(LeftToolTipProperty, value); }
-        }
-
-        public static DependencyProperty RightToolTipProperty = DependencyProperty.Register(
-            "RightToolTip", typeof(string), typeof(ButtonPair), null);
-
-        public string RightToolTip
-        {
-            get => (string)GetValue(RightToolTipProperty);
-            set { SetValue(RightToolTipProperty, value); }
-        }
-
-        public CornerRadius LeftCornerRadius => new CornerRadius(CornerRadius.TopLeft, 0, 0, CornerRadius.BottomLeft);
-
-        public CornerRadius RightCornerRadius => new CornerRadius(0, CornerRadius.TopRight, CornerRadius.BottomRight, 0);
 
         public ButtonPair()
         {
             InitializeComponent();
+
+            //RegisterPropertyChangedCallback(BackgroundProperty, OnBackgroundChanged);
+            //RegisterPropertyChangedCallback(BorderBrushProperty, OnBorderBrushChanged);
+            RegisterPropertyChangedCallback(CornerRadiusProperty, OnCornerRadiusChanged);
         }
 
-        void OnLeftButtonClick(object sender, RoutedEventArgs e)
+        void UpdateUI()
         {
-            LeftClick?.Invoke(this, e);
+            if (LeftButton != null)
+            {
+                LeftButton.CornerRadius = new CornerRadius(CornerRadius.TopLeft, 0, 0, CornerRadius.BottomLeft);
+                LeftButton.BorderThickness = new Thickness(1, 1, 0, 1);
+            }
+            if (RightButton != null)
+            {
+                RightButton.CornerRadius = new CornerRadius(0, CornerRadius.TopRight, CornerRadius.BottomRight, 0);
+            }
         }
 
-        void OnRightButtonClick(object sender, RoutedEventArgs e)
+        static void OnButtonChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            RightClick?.Invoke(this, e);
+            ((ButtonPair)sender).UpdateUI();
+        }
+
+        void OnCornerRadiusChanged(DependencyObject sender, DependencyProperty dp)
+        {
+            ((ButtonPair)sender).UpdateUI();
         }
     }
 }

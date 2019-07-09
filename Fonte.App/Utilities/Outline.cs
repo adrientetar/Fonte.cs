@@ -52,11 +52,48 @@ namespace Fonte.App.Utilities
             point.Type = PointType.Move;
         }
 
-        // XXX: impl more
         public static void DeleteSelection(Data.Layer layer, bool breakPaths = false)
         {
             using (var group = layer.CreateUndoGroup())
             {
+                for (int ix = layer.Anchors.Count - 1; ix >= 0; --ix)
+                {
+                    var anchor = layer.Anchors[ix];
+                    if (anchor.IsSelected)
+                    {
+                        layer.Anchors.RemoveAt(ix);
+                    }
+                }
+
+                for (int ix = layer.Components.Count - 1; ix >= 0; --ix)
+                {
+                    var component = layer.Components[ix];
+                    if (component.IsSelected)
+                    {
+                        layer.Components.RemoveAt(ix);
+                    }
+                }
+
+                if (layer.Master is Data.Master master)
+                {
+                    for (int ix = master.Guidelines.Count - 1; ix >= 0; --ix)
+                    {
+                        var guideline = master.Guidelines[ix];
+                        if (guideline.IsSelected)
+                        {
+                            master.Guidelines.RemoveAt(ix);
+                        }
+                    }
+                }
+                for (int ix = layer.Guidelines.Count - 1; ix >= 0; --ix)
+                {
+                    var guideline = layer.Guidelines[ix];
+                    if (guideline.IsSelected)
+                    {
+                        layer.Guidelines.RemoveAt(ix);
+                    }
+                }
+
                 List<Data.Path> paths;
                 if (breakPaths)
                 {
@@ -144,8 +181,7 @@ namespace Fonte.App.Utilities
                         component.Transformation = t;
                     }
                 }
-                // XXX: add master guidelines
-                foreach (var guideline in layer.Guidelines)
+                foreach (var guideline in Misc.GetAllGuidelines(layer))
                 {
                     if (guideline.IsSelected)
                     {

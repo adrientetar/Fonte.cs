@@ -5,17 +5,17 @@ namespace Fonte.Data.Changes
 
     using System.Collections.Generic;
 
-    internal struct LayerAnchorsResetChange : IChange
+    internal struct MasterGuidelinesResetChange : IChange
     {
-        private readonly Layer _parent;
-        private IList<Anchor> _items;
+        private readonly Master _parent;
+        private IList<Guideline> _items;
 
         bool Insert => _items != null;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public LayerAnchorsResetChange(Layer parent)
+        public MasterGuidelinesResetChange(Master parent)
         {
             _parent = parent;
             _items = null;
@@ -23,7 +23,7 @@ namespace Fonte.Data.Changes
 
         public void Apply()
         {
-            var items = _parent._anchors;
+            var items = _parent._guidelines;
             if (Insert)
             {
                 items.AddRange(_items);
@@ -38,7 +38,7 @@ namespace Fonte.Data.Changes
                 foreach (var item in _items) { item.Parent = null; }
             }
 
-            _parent.OnChange(this);
+            //_parent.OnChange(this);
         }
     }
 }

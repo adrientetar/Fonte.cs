@@ -76,10 +76,10 @@ namespace Fonte.App.Delegates
                     point.IsSelected = true;
                 }
             }
-            if (e.Key == VirtualKey.Left ||
-                e.Key == VirtualKey.Up ||
-                e.Key == VirtualKey.Right ||
-                e.Key == VirtualKey.Down)
+            else if (e.Key == VirtualKey.Left ||
+                     e.Key == VirtualKey.Up ||
+                     e.Key == VirtualKey.Right ||
+                     e.Key == VirtualKey.Down)
             {
                 int dx = 0, dy = 0;
                 if (e.Key == VirtualKey.Left)
@@ -120,14 +120,18 @@ namespace Fonte.App.Delegates
             }
             else if (e.Key == VirtualKey.Enter)
             {
-                using (var group = canvas.Layer.CreateUndoGroup())
+                var selection = canvas.Layer.Selection;
+                if (selection.Count == 1 && selection.First() is Data.Anchor anchor)
                 {
-                    foreach (var path in canvas.Layer.Paths)
+                    canvas.EditAnchorName(anchor);
+                }
+                else
+                {
+                    using (var group = canvas.Layer.CreateUndoGroup())
                     {
-                        var index = 0;
-                        foreach (var point in path.Points)
+                        foreach (var point in selection.OfType<Data.Point>())
                         {
-                            Outline.TryTogglePointSmoothness(path, index++);
+                            Outline.TryTogglePointSmoothness(point);
                         }
                     }
                 }
@@ -195,7 +199,34 @@ namespace Fonte.App.Delegates
             var pos = canvas.GetCanvasPosition(clientPos);
             var tappedItem = canvas.HitTest(pos);
 
-            if (tappedItem is Data.Point point)
+            if (tappedItem is Data.Component component)
+            {
+                flyout.Items.Add(new MenuFlyoutItem()
+                {
+                    Command = DecomposeComponentCommand,
+                    CommandParameter = component
+                });
+            }
+            else if (tappedItem is Data.Guideline guideline)
+            {
+                if (guideline.Parent is Data.Layer)
+                {
+                    flyout.Items.Add(new MenuFlyoutItem()
+                    {
+                        Command = MakeGuidelineGlobalCommand,
+                        CommandParameter = guideline
+                    });
+                }
+                else
+                {
+                    flyout.Items.Add(new MenuFlyoutItem()
+                    {
+                        Command = MakeGuidelineLocalCommand,
+                        CommandParameter = (guideline, canvas.Layer)
+                    });
+                }
+            }
+            else if (tappedItem is Data.Point point)
             {
                 flyout.Items.Add(new MenuFlyoutItem()
                 {
@@ -206,14 +237,6 @@ namespace Fonte.App.Delegates
                 {
                     Command = ReversePathCommand,
                     CommandParameter = point.Parent
-                });
-            }
-            else if (tappedItem is Data.Component component)
-            {
-                flyout.Items.Add(new MenuFlyoutItem()
-                {
-                    Command = DecomposeComponentCommand,
-                    CommandParameter = component
                 });
             }
             flyout.Items.Add(new MenuFlyoutItem()
@@ -227,6 +250,11 @@ namespace Fonte.App.Delegates
             flyout.Items.Add(new MenuFlyoutItem()
             {
                 Command = AddAnchorCommand,
+                CommandParameter = (canvas, pos)
+            });
+            flyout.Items.Add(new MenuFlyoutItem()
+            {
+                Command = AddGuidelineCommand,
                 CommandParameter = (canvas, pos)
             });
 
@@ -243,8 +271,8 @@ namespace Fonte.App.Delegates
                 var layer = canvas.Layer;
 
                 var anchor = new Data.Anchor(
-                    (float)pos.X,
-                    (float)pos.Y,
+                    Outline.RoundToGrid((float)pos.X),
+                    Outline.RoundToGrid((float)pos.Y),
                     "new anchor"
                 );
                 layer.Anchors.Add(anchor);
@@ -255,12 +283,54 @@ namespace Fonte.App.Delegates
                 canvas.EditAnchorName(anchor);
             });
 
+        static XamlUICommand AddGuidelineCommand { get; } = MakeUICommand(
+            "Add Guideline",
+            (s, e) => {
+                var (canvas, pos) = (ValueTuple<DesignCanvas, Point>)e.Parameter;
+                var layer = canvas.Layer;
+
+                var guideline = new Data.Guideline(
+                    Outline.RoundToGrid((float)pos.X),
+                    Outline.RoundToGrid((float)pos.Y),
+                    0
+                );
+                layer.Guidelines.Add(guideline);
+                layer.ClearSelection();
+                guideline.IsSelected = true;
+                ((App)Application.Current).InvalidateData();
+            });
+
         static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand(
             "Decompose",
             (s, e) => {
                 var component = (Data.Component)e.Parameter;
 
                 component.Decompose();
+                ((App)Application.Current).InvalidateData();
+            });
+
+        static XamlUICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand(
+            "Make Guideline Global",
+            (s, e) => {
+                var guideline = (Data.Guideline)e.Parameter;
+                var layer = (Data.Layer)guideline.Parent;
+                var master = layer.Master;
+
+                layer.Guidelines.Remove(guideline);
+                master.Guidelines.Add(guideline);
+
+                ((App)Application.Current).InvalidateData();
+            });
+
+        static XamlUICommand MakeGuidelineLocalCommand { get; } = MakeUICommand(
+            "Make Guideline Local",
+            (s, e) => {
+                var (guideline, layer) = (ValueTuple<Data.Guideline, Data.Layer>)e.Parameter;
+                var master = (Data.Master)guideline.Parent;
+
+                master.Guidelines.Remove(guideline);
+                layer.Guidelines.Add(guideline);
+
                 ((App)Application.Current).InvalidateData();
             });
 
@@ -340,13 +410,16 @@ namespace Fonte.App.Delegates
             return mode;
         }
 
-        protected static XamlUICommand MakeUICommand(string label, TypedEventHandler<XamlUICommand, ExecuteRequestedEventArgs> handler, KeyboardAccelerator accelerator = null)
+        protected static XamlUICommand MakeUICommand(string label,
+                                                     TypedEventHandler<XamlUICommand, ExecuteRequestedEventArgs> executeHandler,
+                                                     KeyboardAccelerator accelerator = null)
         {
             var command = new XamlUICommand()
             {
                 Label = label,
             };
-            command.ExecuteRequested += handler;
+            //command.CanExecuteRequested += canExecuteHandler;
+            command.ExecuteRequested += executeHandler;
             if (accelerator != null)
             {
                 command.KeyboardAccelerators.Add(accelerator);

@@ -14,9 +14,6 @@ namespace Fonte.Data
 
     using System;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
-    using System.Diagnostics;
-    using System.Linq;
     using System.Numerics;
 
     public partial class Layer
@@ -35,7 +32,7 @@ namespace Fonte.Data
         private CanvasGeometry _closedCanvasPath;
         private CanvasGeometry _openCanvasPath;
         private List<Path> _selectedPaths;
-        private HashSet<ISelectable> _selection;
+        private HashSet<ILayerElement> _selection;
         private Rect _selectionBounds = Rect.Empty;
 
         [JsonProperty("anchors")]
@@ -44,37 +41,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Anchor>(_anchors);
-                items.CollectionChanged += (sender, e) =>
+                items.ChangeRequested += (sender, e) =>
                 {
-                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    if (e.Action == NotifyChangeRequestedAction.Add)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new LayerAnchorsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Anchor>().ToList(), true).Apply();
-                        }
-                        else
-                        {
-                            new LayerAnchorsChange(this, e.NewStartingIndex, (Anchor)e.NewItems[0]).Apply();
-                        }
+                        new LayerAnchorsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        if (e.OldItems.Count > 1)
-                        {
-                            new LayerAnchorsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Anchor>().ToList(), false).Apply();
-                        }
-                        else
-                        {
-                            new LayerAnchorsChange(this, e.OldStartingIndex, null).Apply();
-                        }
+                        new LayerAnchorsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        Debug.Assert(e.NewItems.Count == 1);
-
-                        new LayerAnchorsReplaceChange(this, e.NewStartingIndex, (Anchor)e.NewItems[0]).Apply();
+                        new LayerAnchorsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerAnchorsResetChange(this).Apply();
                     }
@@ -89,37 +70,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Component>(_components);
-                items.CollectionChanged += (sender, e) =>
+                items.ChangeRequested += (sender, e) =>
                 {
-                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    if (e.Action == NotifyChangeRequestedAction.Add)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new LayerComponentsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Component>().ToList(), true).Apply();
-                        }
-                        else
-                        {
-                            new LayerComponentsChange(this, e.NewStartingIndex, (Component)e.NewItems[0]).Apply();
-                        }
+                        new LayerComponentsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        if (e.OldItems.Count > 1)
-                        {
-                            new LayerComponentsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Component>().ToList(), false).Apply();
-                        }
-                        else
-                        {
-                            new LayerComponentsChange(this, e.OldStartingIndex, null).Apply();
-                        }
+                        new LayerComponentsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        Debug.Assert(e.NewItems.Count == 1);
-
-                        new LayerComponentsReplaceChange(this, e.NewStartingIndex, (Component)e.NewItems[0]).Apply();
+                        new LayerComponentsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerComponentsResetChange(this).Apply();
                     }
@@ -134,37 +99,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Guideline>(_guidelines);
-                items.CollectionChanged += (sender, e) =>
+                items.ChangeRequested += (sender, e) =>
                 {
-                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    if (e.Action == NotifyChangeRequestedAction.Add)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new LayerGuidelinesRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Guideline>().ToList(), true).Apply();
-                        }
-                        else
-                        {
-                            new LayerGuidelinesChange(this, e.NewStartingIndex, (Guideline)e.NewItems[0]).Apply();
-                        }
+                        new LayerGuidelinesChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        if (e.OldItems.Count > 1)
-                        {
-                            new LayerGuidelinesRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Guideline>().ToList(), false).Apply();
-                        }
-                        else
-                        {
-                            new LayerGuidelinesChange(this, e.OldStartingIndex, null).Apply();
-                        }
+                        new LayerGuidelinesChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        Debug.Assert(e.NewItems.Count == 1);
-
-                        new LayerGuidelinesReplaceChange(this, e.NewStartingIndex, (Guideline)e.NewItems[0]).Apply();
+                        new LayerGuidelinesReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerGuidelinesResetChange(this).Apply();
                     }
@@ -218,37 +167,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Path>(_paths);
-                items.CollectionChanged += (sender, e) =>
+                items.ChangeRequested += (sender, e) =>
                 {
-                    if (e.Action == NotifyCollectionChangedAction.Add)
+                    if (e.Action == NotifyChangeRequestedAction.Add)
                     {
-                        if (e.NewItems.Count > 1)
-                        {
-                            new LayerPathsRangeChange(this, e.NewStartingIndex, e.NewItems.Cast<Path>().ToList(), true).Apply();
-                        }
-                        else
-                        {
-                            new LayerPathsChange(this, e.NewStartingIndex, (Path)e.NewItems[0]).Apply();
-                        }
+                        new LayerPathsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Remove)
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        if (e.OldItems.Count > 1)
-                        {
-                            new LayerPathsRangeChange(this, e.OldStartingIndex, e.OldItems.Cast<Path>().ToList(), false).Apply();
-                        }
-                        else
-                        {
-                            new LayerPathsChange(this, e.OldStartingIndex, null).Apply();
-                        }
+                        new LayerPathsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Replace)
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        Debug.Assert(e.NewItems.Count == 1);
-
-                        new LayerPathsReplaceChange(this, e.NewStartingIndex, (Path)e.NewItems[0]).Apply();
+                        new LayerPathsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyCollectionChangedAction.Reset)
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerPathsResetChange(this).Apply();
                     }
@@ -310,12 +243,12 @@ namespace Fonte.Data
                         _bounds.Union(path.Bounds);
                     }
                 }
-                // we can't cache component bounds, we aren't notified when it changes
+                // We can't cache component bounds, we aren't notified when it changes
                 var bounds = _bounds;
-                //foreach (var component in Components)
-                //{
-                //    bounds.Union(component.Bounds);
-                //}
+                foreach (var component in Components)
+                {
+                    bounds.Union(component.Bounds);
+                }
                 return bounds;
             }
         }
@@ -425,7 +358,7 @@ namespace Fonte.Data
             {
                 if (_selection == null)
                 {
-                    _selection = new HashSet<ISelectable>();
+                    _selection = new HashSet<ILayerElement>();
 
                     foreach (var anchor in _anchors)
                     {
@@ -473,10 +406,13 @@ namespace Fonte.Data
                 {
                     foreach (var item in Selection)
                     {
-                        // XXX: impl more
-                        if (item is Point point)
+                        if (item is Component component)
                         {
-                            _selectionBounds.Union(point.ToVector2());
+                            _selectionBounds.Union(component.Bounds);
+                        }
+                        else if (item is ILocatable iloc)
+                        {
+                            _selectionBounds.Union(iloc.ToVector2());
                         }
                     }
                 }
@@ -561,11 +497,39 @@ namespace Fonte.Data
             return $"{nameof(Layer)}({more}{name}, {_paths.Count} paths)";
         }
 
-        // XXX: impl more
         public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
             using (var group = CreateUndoGroup())
             {
+                foreach (var anchor in Anchors)
+                {
+                    if (!selectionOnly || anchor.IsSelected)
+                    {
+                        var pos = Vector2.Transform(anchor.ToVector2(), matrix);
+
+                        anchor.X = pos.X;
+                        anchor.Y = pos.Y;
+                    }
+                }
+                foreach (var component in Components)
+                {
+                    if (!selectionOnly || component.IsSelected)
+                    {
+                        component.Transformation *= matrix;
+                    }
+                }
+                foreach (var guideline in Guidelines)
+                {
+                    if (!selectionOnly || guideline.IsSelected)
+                    {
+                        // XXX: also transform the angle vector
+                        //guideline.Direction = Vector2.Transform(guideline.Direction, matrix);
+                        var pos = Vector2.Transform(guideline.ToVector2(), matrix);
+
+                        guideline.X = pos.X;
+                        guideline.Y = pos.Y;
+                    }
+                }
                 foreach (var path in Paths)
                 {
                     path.Transform(matrix, selectionOnly);

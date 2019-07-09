@@ -3,6 +3,7 @@ namespace Fonte.App.Controls
 {
     using Fonte.App.Utilities;
     using Fonte.Data.Geometry;
+    using Fonte.Data.Utilities;
 
     using System;
     using System.Collections.Generic;
@@ -337,14 +338,13 @@ namespace Fonte.App.Controls
 
         void OnRotationButtonClick(object sender, RoutedEventArgs e)
         {
-            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
             var result = float.Parse(RotationTextBox.Text);
             // TODO: if incorrect restore oldValue
             // -- actually the value should be validated/restored on textbox input, not here
 
             if (result != 0f)
             {
-                var rad = result * (float)Math.PI / 180 * sign;
+                var rad = GetControlSign(sender) * (float)Conversion.ToRadians(result);
                 Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -354,7 +354,7 @@ namespace Fonte.App.Controls
 
         void OnScaleButtonClick(object sender, RoutedEventArgs e)
         {
-            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
+            var sign = GetControlSign(sender);
             var xScale = 1f / (1 - sign * .01f * float.Parse(XScaleTextBox.Text));
             var yScale = YScaleTextBox.IsEnabled ?
                          1f / (1 - sign * .01f * float.Parse(YScaleTextBox.Text)) :
@@ -371,12 +371,11 @@ namespace Fonte.App.Controls
 
         void OnSkewButtonClick(object sender, RoutedEventArgs e)
         {
-            var sign = 1f;  // sender.Tag == "!" ? -1f : 1f;
             var result = float.Parse(SkewTextBox.Text);
 
             if (result != 0)
             {
-                var rad = result * (float)Math.PI / 180 * sign;
+                var rad = GetControlSign(sender) * (float)Conversion.ToRadians(result);
                 Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -459,6 +458,11 @@ namespace Fonte.App.Controls
                     }
                 }
             }
+        }
+
+        float GetControlSign(object control)
+        {
+            return ((string)((FrameworkElement)control).Tag) == "!" ? -1f : 1f;
         }
     }
 }

@@ -50,6 +50,8 @@ namespace Fonte.App.Controls.DesignCanvasParts
             if (e.Key == VirtualKey.Enter)
             {
                 FinishEditing();
+
+                e.Handled = true;
             }
         }
 

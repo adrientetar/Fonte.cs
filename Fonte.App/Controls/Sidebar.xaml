@@ -11,7 +11,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     d:DesignHeight="520"
-    d:DesignWidth="220"
+    Width="210"
     Loaded="OnControlLoaded"
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>
@@ -30,12 +30,15 @@
             <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#f5f4f7"/>
             <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource BorderColor}"/>
 
+            <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
+
             <Style TargetType="parts:ButtonPair">
                 <Setter Property="Background" Value="White"/>
                 <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
                 <Setter Property="CornerRadius" Value="2"/>
                 <Setter Property="Height" Value="26"/>
-                <Setter Property="Width" Value="60"/>
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Width" Value="{StaticResource FixedColumnSize}"/>
             </Style>
             <Style TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
@@ -53,8 +56,8 @@
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Margin" Value="4"/>
                 <Setter Property="MinHeight" Value="26"/>
-                <Setter Property="MinWidth" Value="60"/>
-                <Setter Property="Width" Value="60"/>
+                <Setter Property="MinWidth" Value="56"/>
+                <Setter Property="Width" Value="{StaticResource FixedColumnSize}"/>
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
@@ -84,7 +87,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Background="{StaticResource BackgroundColor}" Visibility="{x:Bind Layer, Converter={StaticResource ObjectToVisibilityConverter}, Mode=OneWay}" Width="220">
+    <Grid Background="{StaticResource BackgroundColor}" Visibility="{x:Bind Layer, Converter={StaticResource ObjectToVisibilityConverter}, Mode=OneWay}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -179,8 +182,8 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <parts:OriginControl x:Name="Origin" Margin="4" Grid.Column="1"/>
@@ -205,9 +208,9 @@
                         ToolTipService.ToolTip="Mirror vertically"
                         Grid.Column="1">
                     <Grid>
-                        <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M4.5,1.5 l3,3.5 l3,-3.5 Z"/>
-                        <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M4.5,13.5 l3,-3.5 l3,3.5 Z"/>
-                        <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M2,7.5 h11"/>
+                        <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M5.5,1.5 l3,3.5 l3,-3.5 Z"/>
+                        <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M5.5,13.5 l3,-3.5 l3,3.5 Z"/>
+                        <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M3,7.5 h11"/>
                     </Grid>
                 </Button>
             </Grid>
@@ -236,49 +239,55 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Text="Scale"/>
             <TextBox x:Name="XScaleTextBox" Text="2" Grid.Column="1"/>
-            <parts:ButtonPair LeftClick="OnScaleButtonClick"
-                              RightClick="OnScaleButtonClick"
-                              Grid.Column="2">
-                <parts:ButtonPair.LeftContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                </parts:ButtonPair.LeftContent>
-                <parts:ButtonPair.RightContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                </parts:ButtonPair.RightContent>
+            <parts:ButtonPair Grid.Column="2">
+                <parts:ButtonPair.LeftButton>
+                    <Button Click="OnScaleButtonClick" Tag="!">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                    </Button>
+                </parts:ButtonPair.LeftButton>
+                <parts:ButtonPair.RightButton>
+                    <Button Click="OnScaleButtonClick">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                    </Button>
+                </parts:ButtonPair.RightButton>
             </parts:ButtonPair>
 
             <TextBox x:Name="YScaleTextBox" Text="2" Grid.Row="1" Grid.Column="1"/>
 
             <TextBlock Text="Rotation" Grid.Row="2"/>
             <TextBox x:Name="RotationTextBox" Text="40" Grid.Row="2" Grid.Column="1"/>
-            <parts:ButtonPair x:Name="RotationButtons"
-                              LeftClick="OnRotationButtonClick" RightClick="OnRotationButtonClick"
-                              Grid.Row="2" Grid.Column="2">
-                <parts:ButtonPair.LeftContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                </parts:ButtonPair.LeftContent>
-                <parts:ButtonPair.RightContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                </parts:ButtonPair.RightContent>
+            <parts:ButtonPair Grid.Row="2" Grid.Column="2">
+                <parts:ButtonPair.LeftButton>
+                    <Button Click="OnRotationButtonClick">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                    </Button>
+                </parts:ButtonPair.LeftButton>
+                <parts:ButtonPair.RightButton>
+                    <Button Click="OnRotationButtonClick" Tag="!">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                    </Button>
+                </parts:ButtonPair.RightButton>
             </parts:ButtonPair>
 
             <TextBlock Text="Skew" Grid.Row="3"/>
             <TextBox x:Name="SkewTextBox" Text="6" Grid.Row="3" Grid.Column="1"/>
-            <parts:ButtonPair LeftClick="OnSkewButtonClick"
-                              RightClick="OnSkewButtonClick"
-                              Grid.Row="3" Grid.Column="2">
-                <parts:ButtonPair.LeftContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                </parts:ButtonPair.LeftContent>
-                <parts:ButtonPair.RightContent>
-                    <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                </parts:ButtonPair.RightContent>
+            <parts:ButtonPair Grid.Row="3" Grid.Column="2">
+                <parts:ButtonPair.LeftButton>
+                    <Button Click="OnSkewButtonClick" Tag="!">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
+                    </Button>
+                </parts:ButtonPair.LeftButton>
+                <parts:ButtonPair.RightButton>
+                    <Button Click="OnSkewButtonClick">
+                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+                    </Button>
+                </parts:ButtonPair.RightButton>
             </parts:ButtonPair>
         </Grid>
         <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="6">

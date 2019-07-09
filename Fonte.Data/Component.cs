@@ -5,6 +5,7 @@
 namespace Fonte.Data
 {
     using Fonte.Data.Changes;
+    using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
@@ -68,6 +69,9 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
+        public Rect Bounds => Layer != null ? Rect.Transform(Layer.Bounds, Transformation) : Rect.Empty;
+
+        [JsonIgnore]
         public CanvasGeometry ClosedCanvasPath
         {
             get
@@ -121,27 +125,7 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
-        float ILocatable.X {
-            get => _transformation.Translation.X;
-            set
-            {
-                var t = Transformation;
-                t.M31 = value;
-                Transformation = t;
-            }
-        }
-
-        [JsonIgnore]
-        float ILocatable.Y
-        {
-            get => _transformation.Translation.Y;
-            set
-            {
-                var t = Transformation;
-                t.M32 = value;
-                Transformation = t;
-            }
-        }
+        public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);
 
         [JsonConstructor]
         public Component(string glyphName, Matrix3x2 transformation = default)

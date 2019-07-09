@@ -4,6 +4,8 @@
 
 namespace Fonte.Data
 {
+    using Fonte.Data.Changes;
+    using Fonte.Data.Collections;
     using Fonte.Data.Converters;
     using Newtonsoft.Json;
 
@@ -21,6 +23,8 @@ namespace Fonte.Data
 
     public partial class Master
     {
+        internal List<Guideline> _guidelines;
+
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -31,7 +35,33 @@ namespace Fonte.Data
         public List<AlignmentZone> AlignmentZones { get; set; }
 
         [JsonProperty("guidelines")]
-        public List<Guideline> Guidelines { get; }
+        public ObserverList<Guideline> Guidelines
+        {
+            get
+            {
+                var items = new ObserverList<Guideline>(_guidelines);
+                items.ChangeRequested += (sender, e) =>
+                {
+                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    {
+                        new MasterGuidelinesChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                    }
+                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    {
+                        new MasterGuidelinesChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                    }
+                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    {
+                        new MasterGuidelinesReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                    }
+                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    {
+                        new MasterGuidelinesResetChange(this).Apply();
+                    }
+                };
+                return items;
+            }
+        }
 
         [JsonProperty("hStems")]
         public List<int> HStems { get; }
@@ -70,7 +100,7 @@ namespace Fonte.Data
             Name = name ?? string.Empty;
             Location = location ?? new Dictionary<string, int>();
             AlignmentZones = alignmentZones ?? new List<AlignmentZone>();
-            Guidelines = guidelines ?? new List<Guideline>();
+            _guidelines = guidelines ?? new List<Guideline>();
             HStems = hStems ?? new List<int>();
             VStems = vStems ?? new List<int>();
 

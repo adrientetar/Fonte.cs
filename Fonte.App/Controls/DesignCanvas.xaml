@@ -28,12 +28,12 @@
         <x:Boolean x:Key="DrawStroke">true</x:Boolean>
 
         <Color x:Key="AlignmentZoneColor">#64FFDAC9</Color>
-        <Color x:Key="AnchorColor">#C8F32100</Color>
+        <Color x:Key="AnchorColor">#C8F43618</Color>
         <Color x:Key="ComponentColor">#875A5A5A</Color>
+        <Color x:Key="CornerPointColor">#BE3448AD</Color>
         <Color x:Key="FillColor">#4DF4F4F4</Color>
         <Color x:Key="LayersColor">#FFD2D2D2</Color>
-        <Color x:Key="MarkerColor">#E1EDC2CD</Color>
-        <Color x:Key="PointColor">#BE3448AD</Color>
+        <Color x:Key="MarkerColor">#E1E7BCD2</Color>
         <Color x:Key="SmoothPointColor">#BEFF5855</Color>
         <Color x:Key="StrokeColor">#FF232323</Color>
     </UserControl.Resources>
@@ -46,7 +46,7 @@
                                 ZoomMode="Enabled"
                                 MinZoomFactor="0.01"
                                 MaxZoomFactor="10"
-                                ViewChanged="OnScrollerViewChanged">
+                                StateChanged="OnScrollerStateChanged">
             <!-- Using a very large size to give an "infinite canvas" feel. If a truly infinite canvas is needed then extra work would be required to detect when a user approaches 
                  the current extent, waits for the Scroller state to hit Idle, and then rebase the content and viewport offset so that the user can continue.  Using 800k as the max 
                  physical size will avoid the strange rendering artifacts that can occur as things approach the precision of floats while also being large enough that rebasing will

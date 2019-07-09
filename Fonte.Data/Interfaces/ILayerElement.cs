@@ -4,13 +4,7 @@
 
 namespace Fonte.Data.Interfaces
 {
-    public interface ILocatable
-    {
-        float X { get; set; }
-        float Y { get; set; }
-    }
-
-    public interface ILayerElement : ILocatable, ISelectable
+    public interface ILayerElement : ISelectable
     {
     }
 }

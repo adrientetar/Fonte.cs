@@ -3,31 +3,35 @@ namespace Fonte.Data.Changes
 {
     using Fonte.Data.Interfaces;
 
+    using System.Collections.Generic;
+
     internal struct LayerComponentsReplaceChange : IChange
     {
         private readonly Layer _parent;
         private readonly int _index;
-        private Component _item;
+        private IList<Component> _items;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public LayerComponentsReplaceChange(Layer parent, int index, Component item)
+        public LayerComponentsReplaceChange(Layer parent, int index, IList<Component> item)
         {
             _parent = parent;
             _index = index;
-            _item = item;
+            _items = item;
         }
 
         public void Apply()
         {
             var items = _parent._components;
 
-            var oldItem = items[_index];
-            items[_index] = _item;
-            _item.Parent = _parent;
-            _item = oldItem;
-            _item.Parent = null;
+            var oldItems = items.GetRange(_index, _items.Count);
+            items.RemoveRange(_index, _items.Count);
+            foreach (var item in oldItems) { item.Parent = null; }
+
+            items.InsertRange(_index, _items);
+            foreach (var item in oldItems) { item.Parent = _parent; }
+            _items = oldItems;
 
             _parent.OnChange(this);
         }

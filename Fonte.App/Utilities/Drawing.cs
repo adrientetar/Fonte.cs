@@ -4,13 +4,15 @@
 
 namespace Fonte.App.Utilities
 {
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Microsoft.Graphics.Canvas.Text;
 
     using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Numerics;
-    using Windows.Foundation;
     using Windows.UI;
 
     class Drawing
@@ -31,7 +33,8 @@ namespace Fonte.App.Utilities
 
                 if (anchor.IsSelected && !string.IsNullOrEmpty(anchor.Name))
                 {
-                    DrawText(ds, anchor.Name, anchor.ToVector2() + margin, Color.FromArgb(255, 35, 35, 35), hAlignment: CanvasHorizontalAlignment.Left, rescale: rescale);
+                    DrawText(ds, anchor.Name, anchor.ToVector2() + margin, Color.FromArgb(255, 35, 35, 35),
+                             hAlignment: CanvasHorizontalAlignment.Left, rescale: rescale);
                 }
             }
         }
@@ -39,6 +42,8 @@ namespace Fonte.App.Utilities
         public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color componentColor,
                                           bool drawSelection = false)
         {
+            var margin = 5 * rescale;
+            var originColor = Color.FromArgb(135, 34, 34, 34);
             var selectedComponentColor = Color.FromArgb(
                 135,
                 (byte)Math.Max(componentColor.R - 90, 0),
@@ -53,9 +58,9 @@ namespace Fonte.App.Utilities
 
                 if (drawSelection && component.IsSelected)
                 {
-                    var origin = Vector2.Transform(Vector2.Zero, component.Transformation);
-                    ds.DrawLine(origin.X, origin.Y + 5 * rescale, origin.X, origin.Y, componentColor, strokeWidth: rescale);
-                    ds.DrawLine(origin.X, origin.Y, origin.X + 4.5f * rescale, origin.Y, componentColor, strokeWidth: rescale);
+                    var origin = component.Origin;
+                    ds.DrawLine(origin.X, origin.Y + margin, origin.X, origin.Y - margin, originColor, strokeWidth: rescale);
+                    ds.DrawLine(origin.X - margin, origin.Y, origin.X + margin, origin.Y, originColor, strokeWidth: rescale);
                 }
             }
         }
@@ -65,24 +70,58 @@ namespace Fonte.App.Utilities
             ds.FillGeometry(layer.ClosedCanvasPath, color);
         }
 
-        public static void DrawGrid(Data.Layer layer, CanvasDrawingSession ds, float rescale, Point bottomLeft, Point topRight)
+        public static void DrawGrid(Data.Layer layer, CanvasDrawingSession ds, float rescale, Data.Geometry.Rect drawingRect)
         {
             var color = Color.FromArgb(255, 220, 220, 220);
             var gridSize = 1;
 
-            for (int i = gridSize * (int)(bottomLeft.X / gridSize); i <= topRight.X; i += gridSize)
+            /*for (int i = gridSize * (int)(bottomLeft.X / gridSize); i <= topRight.X; i += gridSize)
             {
                 ds.DrawLine(i, (float)topRight.Y, i, (float)bottomLeft.Y, color, strokeWidth: rescale);
             }
             for (int i = gridSize * (int)(bottomLeft.Y / gridSize); i <= topRight.Y; i += gridSize)
             {
                 ds.DrawLine((float)bottomLeft.X, i, (float)topRight.X, i, color, strokeWidth: rescale);
-            }
+            }*/
         }
 
-        public static void DrawGuidelines(Data.Layer layer, CanvasDrawingSession ds, float rescale, Point bottomLeft, Point topRight)
+        public static void DrawGuidelines(Data.Layer layer, CanvasDrawingSession ds, float rescale, Data.Geometry.Rect drawingRect)
         {
-            // XXX
+            var halfSize = 4 * rescale;
+            var selectedHalfSize = 5 * rescale;
+
+            (IEnumerable<Data.Guideline>, Color)[] drawingPlan = {
+                (layer.Guidelines, Color.FromArgb(128, 56, 71, 213)),
+                (Misc.GetMasterGuidelines(layer), Color.FromArgb(128, 255, 51, 51)),
+            };
+
+            // TODO: draw name
+            foreach (var (guidelines, color) in drawingPlan)
+            {
+                var selectedColor = Color.FromArgb(190, color.R, color.G, color.B);
+
+                foreach (var guideline in guidelines)
+                {
+                    var pos = guideline.ToVector2();
+                    var rad = Conversion.ToRadians(guideline.Angle);
+                    var direction = new Vector2(
+                        (float)Math.Cos(rad),
+                        (float)Math.Sin(rad)
+                    );
+
+                    ds.DrawLine(pos - direction * halfSize, pos - direction * 9999f, guideline.IsSelected ? selectedColor : color, strokeWidth: rescale);
+                    ds.DrawLine(pos + direction * halfSize, pos + direction * 9999f, guideline.IsSelected ? selectedColor : color, strokeWidth: rescale);
+
+                    if (guideline.IsSelected)
+                    {
+                        ds.FillCircle(guideline.ToVector2(), selectedHalfSize, selectedColor);
+                    }
+                    else
+                    {
+                        ds.DrawCircle(guideline.ToVector2(), halfSize, color, strokeWidth: rescale);
+                    }
+                }
+            }
         }
 
         public static void DrawLayers(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
@@ -212,13 +251,13 @@ namespace Fonte.App.Utilities
                         if (point.IsSelected)
                         {
                             selectedControlPoints.AddGeometry(
-                                CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
+                                CanvasGeometry.CreateCircle(ds, point.X, point.Y, 4 * rescale)
                             );
                         }
                         else
                         {
                             controlPoints.AddGeometry(
-                                CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 3 * rescale, 3 * rescale)
+                                CanvasGeometry.CreateCircle(ds, point.X, point.Y, 3 * rescale)
                             );
                         }
                     }
@@ -244,13 +283,13 @@ namespace Fonte.App.Utilities
                             else if (point.IsSelected)
                             {
                                 selectedSmoothPoints.AddGeometry(
-                                    CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 5.15f * rescale, 5.15f * rescale)
+                                    CanvasGeometry.CreateCircle(ds, point.X, point.Y, 5.15f * rescale)
                                 );
                             }
                             else
                             {
                                 smoothPoints.AddGeometry(
-                                    CanvasGeometry.CreateEllipse(ds, point.X, point.Y, 4 * rescale, 4 * rescale)
+                                    CanvasGeometry.CreateCircle(ds, point.X, point.Y, 4 * rescale)
                                 );
                             }
                         }
@@ -292,9 +331,9 @@ namespace Fonte.App.Utilities
                                     }
                                     else
                                     {
-                                        var size = point.IsSelected ? 7 * rescale : 6 * rescale;
+                                        var size = point.IsSelected ? 8 * rescale : 7 * rescale;
                                         markers.AddGeometry(
-                                            CanvasGeometry.CreateEllipse(ds, point.X, point.Y, size, size)
+                                            CanvasGeometry.CreateCircle(ds, point.X, point.Y, size)
                                         );
                                     }
                                 }
@@ -398,8 +437,8 @@ namespace Fonte.App.Utilities
         [Flags]
         public enum StrokePaths
         {
-            Closed,
-            Open,
+            Closed = 1 << 0,
+            Open   = 1 << 1,
             ClosedOpen = Closed | Open
         };
 

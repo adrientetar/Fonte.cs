@@ -107,6 +107,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Anchor.cs" />
+    <Compile Include="Changes\MasterGuidelinesChange.cs" />
+    <Compile Include="Changes\MasterGuidelinesReplaceChange.cs" />
+    <Compile Include="Changes\MasterGuidelinesResetChange.cs" />
+    <Compile Include="Changes\LayerPathsReplaceChange.cs" />
+    <Compile Include="Changes\LayerGuidelinesReplaceChange.cs" />
+    <Compile Include="Changes\LayerComponentsReplaceChange.cs" />
     <Compile Include="Changes\LayerYOriginChange.cs" />
     <Compile Include="Changes\LayerNameChange.cs" />
     <Compile Include="Changes\LayerMasterNameChange.cs" />
@@ -114,26 +120,17 @@
     <Compile Include="Changes\LayerWidthChange.cs" />
     <Compile Include="Changes\ChangeGroup.cs" />
     <Compile Include="Changes\LayerAnchorsChange.cs" />
-    <Compile Include="Changes\LayerComponentsChange.cs" />
-    <Compile Include="Changes\LayerAnchorsRangeChange.cs" />
-    <Compile Include="Changes\LayerAnchorsReplaceChange.cs" />
     <Compile Include="Changes\LayerAnchorsResetChange.cs" />
-    <Compile Include="Changes\LayerGuidelinesChange.cs" />
-    <Compile Include="Changes\LayerComponentsRangeChange.cs" />
-    <Compile Include="Changes\LayerComponentsReplaceChange.cs" />
+    <Compile Include="Changes\LayerComponentsChange.cs" />
     <Compile Include="Changes\LayerComponentsResetChange.cs" />
+    <Compile Include="Changes\LayerGuidelinesChange.cs" />
     <Compile Include="Changes\LayerPathsChange.cs" />
-    <Compile Include="Changes\LayerGuidelinesRangeChange.cs" />
-    <Compile Include="Changes\LayerGuidelinesReplaceChange.cs" />
-    <Compile Include="Changes\LayerPathsReplaceChange.cs" />
-    <Compile Include="Changes\LayerPathsRangeChange.cs" />
     <Compile Include="Changes\LayerGuidelinesResetChange.cs" />
-    <Compile Include="Changes\PathPointsRangeReplaceChange.cs" />
+    <Compile Include="Changes\LayerAnchorsReplaceChange.cs" />
     <Compile Include="Changes\PathPointsReplaceChange.cs" />
-    <Compile Include="Changes\PathPointsRangeChange.cs" />
+    <Compile Include="Changes\PathPointsChange.cs" />
     <Compile Include="Changes\LayerPathsResetChange.cs" />
     <Compile Include="Changes\PathPointsResetChange.cs" />
-    <Compile Include="Changes\PathPointsChange.cs" />
     <Compile Include="Changes\GuidelineIsSelectedChange.cs" />
     <Compile Include="Changes\GuidelineNameChange.cs" />
     <Compile Include="Changes\GuidelineAngleChange.cs" />
@@ -151,9 +148,11 @@
     <Compile Include="Changes\PointTypeChange.cs" />
     <Compile Include="Changes\PointYChange.cs" />
     <Compile Include="Changes\PointXChange.cs" />
+    <Compile Include="Collections\NotifyChangeRequestedEventArgs.cs" />
     <Compile Include="Component.cs" />
     <Compile Include="Converters\ObjectArrayConverter.cs" />
     <Compile Include="Interfaces\ILayerElement.cs" />
+    <Compile Include="Interfaces\ILocatable.cs" />
     <Compile Include="Master.cs" />
     <Compile Include="Geometry\Margins.cs" />
     <Compile Include="Geometry\Rect.cs" />
@@ -174,6 +173,7 @@
     <Compile Include="Utilities\Selection.cs" />
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="Collections\ObserverList.cs" />
+    <Compile Include="Utilities\Verbose.cs" />
     <EmbeddedResource Include="Properties\Fonte.Data.rd.xml" />
   </ItemGroup>
   <ItemGroup>

@@ -39,10 +39,10 @@ namespace Fonte.App.Controls
         internal static readonly string AlignmentZoneColorKey = "AlignmentZoneColor";
         internal static readonly string AnchorColorKey = "AnchorColor";
         internal static readonly string ComponentColorKey = "ComponentColor";
+        internal static readonly string CornerPointColorKey = "CornerPointColor";
         internal static readonly string FillColorKey = "FillColor";
         internal static readonly string LayersColorKey = "LayersColor";
         internal static readonly string MarkerColorKey = "MarkerColor";
-        internal static readonly string PointColorKey = "PointColor";
         internal static readonly string SmoothPointColorKey = "SmoothPointColor";
         internal static readonly string StrokeColorKey = "StrokeColor";
 
@@ -172,13 +172,12 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnScrollerViewChanged(muxp.Scroller sender, object args)
+        void OnScrollerStateChanged(muxp.Scroller sender, object e)
         {
-            if (sender.ZoomFactor != Canvas.DpiScale)
+            if (Scroller.State == muxc.InteractionState.Idle)
             {
                 Canvas.DpiScale = sender.ZoomFactor;
             }
-            //Invalidate();
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
@@ -217,14 +216,17 @@ namespace Fonte.App.Controls
                         var drawDetails = pointSize >= MinPointSizeForDetails;
                         var drawFill = (bool)FindResource(DrawFillKey);
 
-                        var bottomLeft = GetCanvasPosition(new Point(0, ActualHeight));
-                        var topRight = GetCanvasPosition(new Point(ActualWidth, 0));
+                        // TODO: need to refactor use of transformations...
+                        var drawingRect = Data.Geometry.Rect.Transform(new Data.Geometry.Rect(
+                                new Vector2((float)region.Left, (float)region.Top) - _matrix.Translation,
+                                new Vector2((float)region.Right, (float)region.Bottom) - _matrix.Translation
+                            ), GetInverseMatrix());
 
                         if ((bool)FindResource(DrawMetricsKey))
                         {
                             // TODO: divide MinPointSizeForGrid by gridSize
                             if (pointSize >= MinPointSizeForGrid) Drawing.DrawGrid(
-                                layer, ds, rescale, bottomLeft, topRight);
+                                layer, ds, rescale, drawingRect);
                             Drawing.DrawMetrics(layer, ds, rescale, (bool)FindResource(DrawAlignmentZonesKey) ?
                                                                     (Color?)FindResource(AlignmentZoneColorKey) :
                                                                     null);
@@ -235,7 +237,7 @@ namespace Fonte.App.Controls
 
                         if ((bool)FindResource(DrawLayersKey)) Drawing.DrawLayers(layer, ds, rescale, (Color)FindResource(LayersColorKey));
                         if (pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey)) Drawing.DrawGuidelines(
-                            layer, ds, rescale, bottomLeft, topRight);
+                            layer, ds, rescale, drawingRect);
                         if (layer.Paths.Count > 0 || layer.Components.Count > 0)
                         {
                             var drawSelection = drawDetails && (bool)FindResource(DrawSelectionKey);
@@ -245,7 +247,7 @@ namespace Fonte.App.Controls
                                                    drawSelection: drawSelection);
                             if (drawSelection) Drawing.DrawSelection(layer, ds, rescale);
                             if (drawDetails && (bool)FindResource(DrawPointsKey)) Drawing.DrawPoints(layer, ds, rescale,
-                                                                                                     (Color)FindResource(PointColorKey), (Color)FindResource(SmoothPointColorKey),
+                                                                                                     (Color)FindResource(CornerPointColorKey), (Color)FindResource(SmoothPointColorKey),
                                                                                                      (Color)FindResource(MarkerColorKey));
                             // If we only draw fill, we still want to stroke open paths as we don't fill them whatsoever
                             if (drawFill || drawStroke) Drawing.DrawStroke(layer, ds, rescale,
@@ -347,14 +349,11 @@ namespace Fonte.App.Controls
             var master = Layer.Master;
             var fontHeight = master.Ascender - master.Descender;
 
-            //ZoomTo(
-            //    (float)(ActualHeight / Math.Round(fontHeight * 1.4)),
-            //    animated);
-
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            ScrollTo(
+            ViewTo(
                 _matrix.Translation.X - .5f * (Scroller.ViewportWidth - Layer.Width),
                 _matrix.Translation.Y - .5f * (Scroller.ViewportHeight + fontHeight) - master.Descender,
+                null,//(float)(Scroller.ViewportHeight / Math.Round(fontHeight * 1.4)),
                 animated);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
@@ -382,18 +381,20 @@ namespace Fonte.App.Controls
 
         public object HitTest(Point pos, ILayerElement ignoreElement = null, bool testSegments = true)
         {
+            var layer = Layer;
             var rescale = 1f / Canvas.DpiScale;
             var halfSize = 4 * rescale;
 
             // XXX: given that Scale is computed off thread, we risk a discrepancy between drawing and hit testing
             var drawDetails = PointSize >= MinPointSizeForDetails;
 
-            foreach (var anchor in Layer.Anchors)
+            foreach (var anchor in layer.Anchors)
             {
                 if (!ReferenceEquals(anchor, ignoreElement))
                 {
                     var dx = anchor.X - pos.X;
                     var dy = anchor.Y - pos.Y;
+
                     if (-halfSize <= dx && dx <= halfSize &&
                         -halfSize <= dy && dy <= halfSize)
                     {
@@ -401,7 +402,7 @@ namespace Fonte.App.Controls
                     }
                 }
             }
-            foreach (var path in Layer.Paths)
+            foreach (var path in layer.Paths)
             {
                 foreach (var point in path.Points)
                 {
@@ -409,6 +410,7 @@ namespace Fonte.App.Controls
                     {
                         var dx = point.X - pos.X;
                         var dy = point.Y - pos.Y;
+
                         if (-halfSize <= dx && dx <= halfSize &&
                             -halfSize <= dy && dy <= halfSize)
                         {
@@ -418,20 +420,20 @@ namespace Fonte.App.Controls
                 }
             }
             var p = pos.ToVector2();
-            foreach (var component in Layer.Components)
+            foreach (var component in layer.Components)
             {
                 if (!ReferenceEquals(component, ignoreElement) && component.ClosedCanvasPath.FillContainsPoint(p))
                 {
                     return component;
                 }
             }
-            // TODO: add master guidelines
-            foreach (var guideline in Layer.Guidelines)
+            foreach (var guideline in Misc.GetAllGuidelines(layer))
             {
                 if (!ReferenceEquals(guideline, ignoreElement))
                 {
                     var dx = guideline.X - pos.X;
                     var dy = guideline.Y - pos.Y;
+
                     if (-halfSize <= dx && dx <= halfSize &&
                         -halfSize <= dy && dy <= halfSize)
                     {
@@ -443,18 +445,27 @@ namespace Fonte.App.Controls
             if (testSegments)
             {
                 var tol_2 = 9 + rescale * (6 + rescale);
-                foreach (var path in Layer.Paths)
+                foreach (var path in layer.Paths)
                 {
                     foreach (var segment in path.Segments)
                     {
                         var proj = segment.ProjectPoint(p);
+
                         if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
                         {
                             return segment;
                         }
                     }
                 }
-                // TODO: add guideline segment
+                if (Misc.GetSelectedGuideline(layer) is Data.Guideline guideline)
+                {
+                    var proj = BezierMath.ProjectPointOnLine(p, guideline.ToVector2(), guideline.Direction);
+
+                    if ((proj - p).LengthSquared() <= tol_2)
+                    {
+                        return new Misc.GuidelineRule(guideline);
+                    }
+                }
             }
 
             return null;
@@ -477,7 +488,7 @@ namespace Fonte.App.Controls
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
                 muxc.SnapPointsMode.Ignore);
             Scroller.ScrollTo(x, y, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -487,7 +498,7 @@ namespace Fonte.App.Controls
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
                 muxc.SnapPointsMode.Ignore);
             Scroller.ScrollBy(dx, dy, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
@@ -497,9 +508,51 @@ namespace Fonte.App.Controls
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             var options = new muxc.ZoomOptions(
-                animated ? muxc.AnimationMode.Enabled : muxc.AnimationMode.Disabled,
+                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
                 muxc.SnapPointsMode.Ignore);
             Scroller.ZoomTo(scale, null, options);
+#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+        }
+
+        public void ViewTo(double? horizontalOffset, double? verticalOffset, float? zoomFactor, bool animated)
+        {
+#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            double targetHorizontalOffset = horizontalOffset == null ? Scroller.HorizontalOffset : (double)horizontalOffset;
+            double targetVerticalOffset = verticalOffset == null ? Scroller.VerticalOffset : (double)verticalOffset;
+            float targetZoomFactor = zoomFactor == null ? Scroller.ZoomFactor : (float)Math.Max(Math.Min((double)zoomFactor, Scroller.MaxZoomFactor), Scroller.MinZoomFactor);
+            float deltaZoomFactor = targetZoomFactor - Scroller.ZoomFactor;
+
+            if (!animated)
+            {
+                targetHorizontalOffset = Math.Max(Math.Min(targetHorizontalOffset, Scroller.ExtentWidth * targetZoomFactor - Scroller.ViewportWidth), 0.0);
+                targetVerticalOffset = Math.Max(Math.Min(targetVerticalOffset, Scroller.ExtentHeight * targetZoomFactor - Scroller.ViewportHeight), 0.0);
+            }
+
+            if (deltaZoomFactor == 0.0f)
+            {
+                if (targetHorizontalOffset == Scroller.HorizontalOffset && targetVerticalOffset == Scroller.VerticalOffset)
+                    return;
+
+                Scroller.ScrollTo(
+                    targetHorizontalOffset,
+                    targetVerticalOffset,
+                    new muxc.ScrollOptions(
+                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
+                        muxc.SnapPointsMode.Ignore));
+            }
+            else
+            {
+                Vector2 centerPoint = new Vector2(
+                    (float)(targetHorizontalOffset * Scroller.ZoomFactor - Scroller.HorizontalOffset * targetZoomFactor) / deltaZoomFactor,
+                    (float)(targetVerticalOffset * Scroller.ZoomFactor - Scroller.VerticalOffset * targetZoomFactor) / deltaZoomFactor);
+
+                Scroller.ZoomTo(
+                    targetZoomFactor,
+                    centerPoint,
+                    new muxc.ZoomOptions(
+                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
+                        muxc.SnapPointsMode.Default));
+            }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
     }

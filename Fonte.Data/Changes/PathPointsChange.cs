@@ -3,40 +3,42 @@ namespace Fonte.Data.Changes
 {
     using Fonte.Data.Interfaces;
 
+    using System.Collections.Generic;
+
     internal struct PathPointsChange : IChange
     {
         private readonly Path _parent;
         private readonly int _index;
-        private Point _item;
-
-        bool Insert => _item != null;
+        private bool _insert;
+        private readonly IList<Point> _items;
 
         public bool AffectsSelection => true;
         public bool IsShallow => false;
 
-        public PathPointsChange(Path parent, int index, Point item)
+        public PathPointsChange(Path parent, int index, IList<Point> items, bool insert)
         {
             _parent = parent;
             _index = index;
-            _item = item;
+            _insert = insert;
+            _items = items;
         }
 
         public void Apply()
         {
             var items = _parent._points;
-            if (Insert)
+            if (_insert)
             {
-                items.Insert(_index, _item);
-                _item.Parent = _parent;
-                _item = null;
+                items.InsertRange(_index, _items);
+
+                foreach (var item in _items) { item.Parent = _parent; }
             }
             else
             {
-                var item = items[_index];
-                items.RemoveAt(_index);
-                _item = item;
-                _item.Parent = null;
+                items.RemoveRange(_index, _items.Count);
+
+                foreach (var item in _items) { item.Parent = null; }
             }
+            _insert = !_insert;
 
             _parent.OnChange(this);
         }

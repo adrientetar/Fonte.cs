@@ -164,12 +164,12 @@ namespace Fonte.App.Delegates
             base.OnPointerPressed(canvas, e);
 
             var ptPoint = e.GetCurrentPoint(canvas);
-            if (ptPoint.Properties.IsLeftButtonPressed)
+            if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
-                _undoGroup = canvas.Layer.CreateUndoGroup();
+                _undoGroup = layer.CreateUndoGroup();
                 _origin = _anchor = canvas.GetCanvasPosition(ptPoint.Position);
 
-                canvas.Layer.ClearSelection();
+                layer.ClearSelection();
                 ((App)Application.Current).InvalidateData();
             }
         }
