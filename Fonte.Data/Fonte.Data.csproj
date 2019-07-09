@@ -173,7 +173,6 @@
     <Compile Include="Utilities\Selection.cs" />
     <Compile Include="Collections\ObservableDictionary.cs" />
     <Compile Include="Collections\ObserverList.cs" />
-    <Compile Include="Utilities\Verbose.cs" />
     <EmbeddedResource Include="Properties\Fonte.Data.rd.xml" />
   </ItemGroup>
   <ItemGroup>
