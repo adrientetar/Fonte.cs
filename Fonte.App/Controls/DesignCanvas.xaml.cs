@@ -122,11 +122,11 @@ namespace Fonte.App.Controls
                  .5f * (float)Canvas.ActualHeight
             );
 
-            Invalidate();
             if (IsEnabled)
             {
                 CenterOnMetrics(animated: false);
             }
+            Invalidate();
 
             if (!DesignMode.DesignMode2Enabled)
             {
@@ -159,11 +159,11 @@ namespace Fonte.App.Controls
         {
             IsEnabled = Layer != null;
 
-            Canvas.Invalidate();
             if (IsEnabled)
             {
-                //CenterOnMetrics();
+                CenterOnMetrics();
             }
+            Canvas.Invalidate();
         }
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -350,10 +350,11 @@ namespace Fonte.App.Controls
             var fontHeight = master.Ascender - master.Descender;
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
+            var targetZoomFactor = (float)(Scroller.ViewportHeight / Math.Round(fontHeight * 1.4));
             ViewTo(
-                _matrix.Translation.X - .5f * (Scroller.ViewportWidth - Layer.Width),
-                _matrix.Translation.Y - .5f * (Scroller.ViewportHeight + fontHeight) - master.Descender,
-                null,//(float)(Scroller.ViewportHeight / Math.Round(fontHeight * 1.4)),
+                (_matrix.Translation.X + .5f * Layer.Width) * targetZoomFactor - .5f * Scroller.ViewportWidth,
+                (_matrix.Translation.Y - .5f * fontHeight - master.Descender) * targetZoomFactor - .5f * Scroller.ViewportHeight,
+                targetZoomFactor,
                 animated);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
