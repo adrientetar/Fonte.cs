@@ -44,14 +44,14 @@ namespace Fonte.App.Controls.SidebarParts
             return Vector2.Zero;
         }
 
-        void OnButtonClicked(object sender, RoutedEventArgs e)
+        void OnButtonClicked(object sender, RoutedEventArgs args)
         {
             SelectedIndex = int.Parse((string)((OriginButton)sender).Tag);
         }
 
-        static void OnSelectedIndexChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnSelectedIndexChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            var value = (int)e.NewValue;
+            var value = (int)args.NewValue;
 
             if (value < 0 || value > 8)
                 throw new ArgumentOutOfRangeException($"{value}");

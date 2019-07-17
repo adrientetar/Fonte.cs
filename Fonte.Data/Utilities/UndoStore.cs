@@ -11,21 +11,14 @@ namespace Fonte.Data.Utilities
     using System.Collections.Generic;
     using System.Diagnostics;
 
-    class UndoStore : IUndoProvider
+    class UndoStore : IUndoProvider, IUndoStore
     {
-        enum UndoMode
-        {
-            AddToUndoClearRedo,
-            None
-        };
-
         private readonly List<IChange> _undoStack = new List<IChange>();
         private readonly List<IChange> _redoStack = new List<IChange>();
         private int _undoCounter = 0;
         private int _redoCounter = 0;
         private ChangeGroup _undoGroup;
         private int _undoGroupIndex = 0;
-        private UndoMode _undoMode = UndoMode.AddToUndoClearRedo;
 
         public bool CanRedo => _redoStack.Count > 0 && _redoCounter > 0 && _undoGroupIndex == 0;
         
@@ -35,6 +28,8 @@ namespace Fonte.Data.Utilities
 
         public bool IsDirty => _undoCounter > 0 || _undoGroupIndex > 0 && !_undoGroup.IsShallow;
 
+        public bool IsEnabled { get; set; } = true;
+
         public IChangeGroup CreateUndoGroup()
         {
             if (_undoGroupIndex > 0)
@@ -43,7 +38,7 @@ namespace Fonte.Data.Utilities
             }
 
             _undoGroup = new ChangeGroup(
-                ix => OnUndoGroupDisposed(ix),
+                this,
                 ++_undoGroupIndex
             );
             return _undoGroup;
@@ -53,8 +48,8 @@ namespace Fonte.Data.Utilities
         {
             if (_undoGroupIndex == 0)
                 throw new InvalidOperationException($"Cannot clear stack with an open {nameof(ChangeGroup)}");
-            if (_undoMode == UndoMode.None)
-                throw new InvalidOperationException($"Cannot clear stack amidst special mode operation");
+            if (!IsEnabled)
+                throw new InvalidOperationException($"Cannot clear stack while undo store is disabled");
 
             _undoStack.Clear();
             _undoCounter = 0;
@@ -64,7 +59,7 @@ namespace Fonte.Data.Utilities
 
         public void ProcessChange(IChange change)
         {
-            if (_undoMode != UndoMode.None)
+            if (IsEnabled)
             {
                 if (_undoGroupIndex > 0)
                 {
@@ -92,7 +87,7 @@ namespace Fonte.Data.Utilities
 
             try
             {
-                _undoMode = UndoMode.None;
+                IsEnabled = false;
 
                 while (true)
                 {
@@ -112,7 +107,7 @@ namespace Fonte.Data.Utilities
             }
             finally
             {
-                _undoMode = UndoMode.AddToUndoClearRedo;
+                IsEnabled = true;
             }
         }
 
@@ -125,7 +120,7 @@ namespace Fonte.Data.Utilities
 
             try
             {
-                _undoMode = UndoMode.None;
+                IsEnabled = false;
 
                 while (true)
                 {
@@ -145,11 +140,11 @@ namespace Fonte.Data.Utilities
             }
             finally
             {
-                _undoMode = UndoMode.AddToUndoClearRedo;
+                IsEnabled = true;
             }
         }
 
-        void OnUndoGroupDisposed(int index)
+        public void OnUndoGroupDisposed(int index)
         {
             if (index != _undoGroupIndex)
                 throw new InvalidOperationException(string.Format(

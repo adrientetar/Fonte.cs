@@ -94,11 +94,11 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerPressed(canvas, e);
+            base.OnPointerPressed(canvas, args);
 
-            var ptPoint = e.GetCurrentPoint(canvas);
+            var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var canvasPos = canvas.GetCanvasPosition(ptPoint.Position);
@@ -107,14 +107,15 @@ namespace Fonte.App.Delegates
                 if (_tappedItem != null)
                 {
                     var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-                    if (_tappedItem is Misc.GuidelineRule)
+                    if (_tappedItem is Misc.BBoxHandle ||
+                        _tappedItem is Misc.GuidelineRule)
                     {
                         _screenOrigin = ptPoint.Position;
-                        _undoGroup = canvas.Layer.CreateUndoGroup();
+                        _undoGroup = layer.CreateUndoGroup();
 
                         Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
-                    if (_tappedItem is Data.Segment segment && alt.HasFlag(CoreVirtualKeyStates.Down))
+                    else if (_tappedItem is Data.Segment segment && alt.HasFlag(CoreVirtualKeyStates.Down))
                     {
                         segment.ConvertTo(Data.PointType.Curve);
 
@@ -123,16 +124,11 @@ namespace Fonte.App.Delegates
                     else if (_tappedItem is ISelectable isel)
                     {
                         _screenOrigin = ptPoint.Position;
-                        _oldPaths = (canvas.Layer.ClosedCanvasPath, canvas.Layer.OpenCanvasPath);
-                        _undoGroup = canvas.Layer.CreateUndoGroup();
+                        _oldPaths = (layer.ClosedCanvasPath, layer.OpenCanvasPath);
 
-                        // Origin is the canonical origin point, in case we need to Shift-clamp against it.
-                        // Anchor is the reference point against which each move is computed. As components and segments are
-                        // not points themselves, we need to subtract a reference point that moves to compute move deltas.
                         _origin = GetOriginPoint(isel, canvasPos);
-                        _anchor = (_origin.ToVector2() - GetReferencePoint(isel)).ToPoint();
 
-                        if (e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
+                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
                         {
                             isel.IsSelected = !isel.IsSelected;
                         }
@@ -140,10 +136,11 @@ namespace Fonte.App.Delegates
                         {
                             if (!isel.IsSelected)
                             {
-                                canvas.Layer.ClearSelection();
+                                layer.ClearSelection();
                                 isel.IsSelected = true;
                             }
                         }
+                        _undoGroup = layer.CreateUndoGroup();
 
                         Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
@@ -165,18 +162,68 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerMoved(canvas, e);
+            base.OnPointerMoved(canvas, args);
 
             if (CurrentAction == ActionType.None)
                 return;
 
-            var ptPoint = e.GetCurrentPoint(canvas);
+            var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed)
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
 
+                // Doing this has two purposes:
+                // - avoid piling up unused changes in the undo group
+                // - perform transformations (e.g. scaling projecting etc) from OG coordinates, free of intermediate roundings
+                _undoGroup?.Reset();
+
+                if (_tappedItem is Misc.BBoxHandle handle)
+                {
+                    if (!_canDrag)
+                    {
+                        _canDrag = CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+                    }
+                    if (_canDrag)
+                    {
+                        var layer = canvas.Layer;
+                        var bounds = layer.SelectionBounds;
+
+                        var delta = pos.ToVector2() - handle.Position;
+                        if (bounds.Width > 0)
+                        {
+                            var origin = Vector2.Zero;
+
+                            var hr = 1f;
+                            if (handle.Kind.HasFlag(Misc.HandleKind.Top))
+                            {
+                                hr = 1 + delta.Y / bounds.Height;
+                                origin.Y = bounds.Bottom;
+                            }
+                            else if (handle.Kind.HasFlag(Misc.HandleKind.Bottom))
+                            {
+                                hr = 1 - delta.Y / bounds.Height;
+                                origin.Y = bounds.Top;
+                            }
+                            var wr = 1f;
+                            if (handle.Kind.HasFlag(Misc.HandleKind.Right))
+                            {
+                                wr = 1 + delta.X / bounds.Width;
+                                origin.X = bounds.Left;
+                            }
+                            else if (handle.Kind.HasFlag(Misc.HandleKind.Left))
+                            {
+                                wr = 1 - delta.X / bounds.Width;
+                                origin.X = bounds.Right;
+                            }
+
+                            layer.Transform(Matrix3x2.CreateScale(wr, hr, origin),
+                                            selectionOnly: true);
+                            Outline.RoundSelection(layer);
+                        }
+                    }
+                }
                 if (_tappedItem is Misc.GuidelineRule rule)
                 {
                     var guideline = rule.Guideline;
@@ -202,18 +249,16 @@ namespace Fonte.App.Delegates
                     }
                     if (_canDrag)
                     {
-                        // TODO: clear the undoGroup here (clear = undo and remove changes) to avoid storing unneeded changes
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
                             pos = ClampToNodeOrOrigin(canvas, pos, isel as Data.Point);
                         }
 
-                        var refPoint = _anchor.ToVector2() + GetReferencePoint(isel);
                         Outline.MoveSelection(
                             canvas.Layer,
-                            (float)(pos.X - refPoint.X),
-                            (float)(pos.Y - refPoint.Y),
+                            (float)(pos.X - _origin.X),
+                            (float)(pos.Y - _origin.Y),
                             GetMoveMode()
                         );
                     }
@@ -227,15 +272,15 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, e);
+            base.OnPointerReleased(canvas, args);
 
             if (CurrentAction == ActionType.DraggingItem)
             {
                 if (_tappedItem is Data.Point)
                 {
-                    TryJoinPath(canvas, canvas.GetCanvasPosition(e.GetCurrentPoint(canvas).Position));
+                    TryJoinPath(canvas, canvas.GetCanvasPosition(args.GetCurrentPoint(canvas).Position));
                 }
                 _undoGroup.Dispose();
                 _undoGroup = null;
@@ -269,7 +314,7 @@ namespace Fonte.App.Delegates
             Debug.Assert(CurrentAction == ActionType.None);
         }
 
-        public override void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs e)
+        public override void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs args)
         {
             if (_tappedItem is Data.Anchor anchor)
             {
@@ -334,23 +379,6 @@ namespace Fonte.App.Delegates
             else if (item is ILocatable iloc)
             {
                 return iloc.ToVector2().ToPoint();
-            }
-            throw new ArgumentException($"{item} is not allowed here.");
-        }
-
-        Vector2 GetReferencePoint(ISelectable item)
-        {
-            if (item is Data.Component component)
-            {
-                return component.Origin;
-            }
-            else if (item is Data.Segment segment)
-            {
-                return segment.OnCurve.ToVector2();
-            }
-            else if (item is ILocatable iloc)
-            {
-                return iloc.ToVector2();
             }
             throw new ArgumentException($"{item} is not allowed here.");
         }

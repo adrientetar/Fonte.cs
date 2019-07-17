@@ -1,0 +1,26 @@
+﻿<ContentDialog
+    x:Class="Fonte.App.Dialogs.GlyphDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Fonte.App.Controls.SidebarParts"
+    xmlns:data="using:Fonte.Data"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Pick a Glyph"
+    PrimaryButtonText="Select"  
+    CloseButtonText="Cancel"
+    PrimaryButtonClick="OnPrimaryButtonClick">
+
+    <Grid>
+        <ListView x:Name="List" ItemsSource="{x:Bind Glyphs, Mode=OneWay}">
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="data:Glyph">
+                    <Grid>
+                        <TextBlock FontSize="12" Text="{x:Bind Name}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</ContentDialog>

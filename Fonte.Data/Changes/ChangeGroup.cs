@@ -8,16 +8,16 @@ namespace Fonte.Data.Changes
 
     class ChangeGroupInner
     {
-        private readonly Action<int> _callback;
+        private readonly IUndoStore _undoStore;
         private readonly List<IChange> _changes = new List<IChange>();
         private int _undoCounter = 0;
 
         public int Count => _changes.Count;
         public bool IsShallow => _undoCounter <= 0;
 
-        public ChangeGroupInner(Action<int> callback)
+        public ChangeGroupInner(IUndoStore undoStore)
         {
-            _callback = callback;
+            _undoStore = undoStore;
         }
 
         public void Add(IChange item)
@@ -40,9 +40,29 @@ namespace Fonte.Data.Changes
             _changes.Reverse();
         }
 
+        public void Reset()
+        {
+            try
+            {
+                _undoStore.IsEnabled = false;
+
+                for (int i = _changes.Count - 1; i >= 0; i--)
+                {
+                    _changes[i].Apply();
+                }
+
+                _changes.Clear();
+                _undoCounter = 0;
+            }
+            finally
+            {
+                _undoStore.IsEnabled = true;
+            }
+        }
+
         public void Dispose(int index)
         {
-            _callback(index);
+            _undoStore.OnUndoGroupDisposed(index);
         }
     }
 
@@ -57,7 +77,7 @@ namespace Fonte.Data.Changes
         public bool AffectsSelection => true;
         public bool IsShallow => _inner.IsShallow;
 
-        public ChangeGroup(Action<int> callback, int index) : this(new ChangeGroupInner(callback), index)
+        public ChangeGroup(IUndoStore undoStore, int index) : this(new ChangeGroupInner(undoStore), index)
         {
         }
 
@@ -98,5 +118,7 @@ namespace Fonte.Data.Changes
                 _disposed = true;
             }
         }
+
+        public void Reset() => _inner.Reset();
     }
 }

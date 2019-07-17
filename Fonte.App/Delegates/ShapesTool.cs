@@ -99,71 +99,71 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
-            if (e.Key == VirtualKey.Menu)
+            if (args.Key == VirtualKey.Menu)
             {
                 _drawRectangle = true;
             }
-            else if (e.Key == VirtualKey.Shift)
+            else if (args.Key == VirtualKey.Shift)
             {
                 _linkAxes = true;
             }
-            else if (e.Key == VirtualKey.Control)
+            else if (args.Key == VirtualKey.Control)
             {
                 _originAtCenter = true;
             }
-            else if (e.Key == VirtualKey.Space && _origin.HasValue)
+            else if (args.Key == VirtualKey.Space && _origin.HasValue)
             {
                 _shouldMoveOrigin = true;
             }
-            else if (e.Key == VirtualKey.Escape && _origin.HasValue)
+            else if (args.Key == VirtualKey.Escape && _origin.HasValue)
             {
                 _origin = null;
             }
             else
             {
-                base.OnKeyDown(canvas, e);
+                base.OnKeyDown(canvas, args);
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
 
-        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
-            if (e.Key == VirtualKey.Menu)
+            if (args.Key == VirtualKey.Menu)
             {
                 _drawRectangle = false;
             }
-            else if (e.Key == VirtualKey.Shift)
+            else if (args.Key == VirtualKey.Shift)
             {
                 _linkAxes = false;
             }
-            else if (e.Key == VirtualKey.Control)
+            else if (args.Key == VirtualKey.Control)
             {
                 _originAtCenter = false;
             }
-            else if (e.Key == VirtualKey.Space)
+            else if (args.Key == VirtualKey.Space)
             {
                 _shouldMoveOrigin = false;
             }
             else
             {
-                base.OnKeyUp(canvas, e);
+                base.OnKeyUp(canvas, args);
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
 
-        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerPressed(canvas, e);
+            base.OnPointerPressed(canvas, args);
 
-            var ptPoint = e.GetCurrentPoint(canvas);
+            var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 _undoGroup = layer.CreateUndoGroup();
@@ -174,13 +174,13 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerMoved(canvas, e);
+            base.OnPointerMoved(canvas, args);
 
             if (_origin.HasValue)
             {
-                var pos = canvas.GetCanvasPosition(e.GetCurrentPoint(canvas).Position);
+                var pos = canvas.GetCanvasPosition(args.GetCurrentPoint(canvas).Position);
                 if (_shouldMoveOrigin)
                 {
                     var origin = _origin.Value;
@@ -194,9 +194,9 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, e);
+            base.OnPointerReleased(canvas, args);
 
             if (_origin.HasValue && _anchor != _origin.Value)
             {

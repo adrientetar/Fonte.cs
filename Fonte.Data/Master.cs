@@ -40,21 +40,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Guideline>(_guidelines);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new MasterGuidelinesChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new MasterGuidelinesChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new MasterGuidelinesChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new MasterGuidelinesChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new MasterGuidelinesReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new MasterGuidelinesReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new MasterGuidelinesResetChange(this).Apply();
                     }

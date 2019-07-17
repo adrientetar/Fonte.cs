@@ -86,7 +86,7 @@ namespace Fonte.Data.Utilities
                             {
                                 point = segment.OnCurve.Clone();
                             }
-                            point.Smooth = false;
+                            point.IsSmooth = false;
                             point.Type = PointType.Move;
                             outPath._points.Add(point);
                         }
@@ -97,7 +97,7 @@ namespace Fonte.Data.Utilities
                         {
                             if (invert)
                             {
-                                prev.Value.OnCurve.Smooth = false;
+                                prev.Value.OnCurve.IsSmooth = false;
                             }
                             // We got a path, export it and move on
                             outPaths.Add(outPath);

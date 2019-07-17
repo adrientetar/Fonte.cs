@@ -39,7 +39,7 @@ namespace Fonte.App.Controls
             OnUserTitleChanged(null);
         }
 
-        void OnControlLoaded(object sender, RoutedEventArgs e)
+        void OnControlLoaded(object sender, RoutedEventArgs args)
         {
             if (!DesignMode.DesignModeEnabled)
             {
@@ -58,14 +58,14 @@ namespace Fonte.App.Controls
             Window.Current.Activated += OnCurrentWindowActivated;
         }
 
-        void OnControlUnloaded(object sender, RoutedEventArgs e)
+        void OnControlUnloaded(object sender, RoutedEventArgs args)
         {
             Window.Current.Activated -= OnCurrentWindowActivated;
         }
 
-        void OnCurrentWindowActivated(object sender, WindowActivatedEventArgs e)
+        void OnCurrentWindowActivated(object sender, WindowActivatedEventArgs args)
         {
-            if (e.WindowActivationState != CoreWindowActivationState.Deactivated)
+            if (args.WindowActivationState != CoreWindowActivationState.Deactivated)
             {
                 AppTitleBar.Opacity = 1;
             }
@@ -126,11 +126,11 @@ namespace Fonte.App.Controls
             }
         }
 
-        static void OnUserTitleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnUserTitleChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            if (e.OldValue != e.NewValue)
+            if (args.OldValue != args.NewValue)
             {
-                ((TitleBar)sender).OnUserTitleChanged((string)e.NewValue);
+                ((TitleBar)sender).OnUserTitleChanged((string)args.NewValue);
             }
         }
     }

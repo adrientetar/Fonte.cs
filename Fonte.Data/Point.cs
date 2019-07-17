@@ -34,7 +34,7 @@ namespace Fonte.Data
         internal float _x;
         internal float _y;
         internal PointType _type;
-        internal bool _smooth;
+        internal bool _isSmooth;
 
         internal Dictionary<string, object> _extraData;
 
@@ -76,14 +76,14 @@ namespace Fonte.Data
             }
         }
 
-        public bool Smooth
+        public bool IsSmooth
         {
-            get => _smooth;
+            get => _isSmooth;
             set
             {
-                if (value != _smooth)
+                if (value != _isSmooth)
                 {
-                    new PointSmoothChange(this, value).Apply();
+                    new PointIsSmoothChange(this, value).Apply();
                 }
             }
         }
@@ -123,13 +123,13 @@ namespace Fonte.Data
             _x = x;
             _y = y;
             _type = type;
-            _smooth = smooth;
+            _isSmooth = smooth;
             _extraData = extraData;
         }
 
         public Point Clone()
         {
-            return new Point(X, Y, Type, Smooth);
+            return new Point(X, Y, Type, IsSmooth);
         }
 
         public override string ToString()
@@ -138,9 +138,9 @@ namespace Fonte.Data
             if (Type != PointType.None)
             {
                 more = $", {Type}";
-                if (Smooth)
+                if (IsSmooth)
                 {
-                    more += $", smooth: {Smooth}";
+                    more += $", smooth: {IsSmooth}";
                 }
             }
             else
@@ -200,8 +200,8 @@ namespace Fonte.Data
                 WriteSingle(writer, point.Y);
                 if (point.Type != PointType.None) {
                     serializer.Serialize(writer, point.Type);
-                    if (point.Smooth) {
-                        writer.WriteValue(point.Smooth);
+                    if (point.IsSmooth) {
+                        writer.WriteValue(point.IsSmooth);
                     }
                 }
                 if (point.ExtraData != null && point.ExtraData.Count > 0)

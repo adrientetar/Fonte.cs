@@ -140,6 +140,9 @@
     <Compile Include="Delegates\SelectionTool.cs" />
     <Compile Include="Delegates\PreviewTool.cs" />
     <Compile Include="Delegates\ShapesTool.cs" />
+    <Compile Include="Dialogs\GlyphDialog.xaml.cs">
+      <DependentUpon>GlyphDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Interfaces\ICanvasDelegate.cs" />
     <Compile Include="Interfaces\IToolbarItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -207,6 +210,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ToolbarParts\IconButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Dialogs\GlyphDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

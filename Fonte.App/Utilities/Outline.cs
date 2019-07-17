@@ -31,7 +31,7 @@ namespace Fonte.App.Utilities
             {
                 throw new InvalidOperationException($"Index {index} isn't at segment boundary");
             }
-            point.Smooth = false;
+            point.IsSmooth = false;
 
             var after = points.GetRange(index, points.Count - index);
             if (path.IsOpen)
@@ -263,7 +263,7 @@ namespace Fonte.App.Utilities
                 }
                 else
                 {
-                    if (atNode && point.Type != PointType.Move && point.Smooth)
+                    if (atNode && point.Type != PointType.Move && point.IsSmooth)
                     {
                         ConstrainSmoothPoint(prev, point, next, mode != MoveMode.StaticHandles);
                     }
@@ -278,6 +278,50 @@ namespace Fonte.App.Utilities
             }
         }
 
+        public static void RoundSelection(Data.Layer layer)
+        {
+            using (var group = layer.CreateUndoGroup())
+            {
+                foreach (var anchor in layer.Anchors)
+                {
+                    if (anchor.IsSelected)
+                    {
+                        anchor.X = RoundToGrid(anchor.X);
+                        anchor.Y = RoundToGrid(anchor.Y);
+                    }
+                }
+                foreach (var component in layer.Components)
+                {
+                    if (component.IsSelected)
+                    {
+                        var t = component.Transformation;
+                        t.M31 = RoundToGrid(t.M31);
+                        t.M32 = RoundToGrid(t.M32);
+                        component.Transformation = t;
+                    }
+                }
+                foreach (var guideline in Misc.GetAllGuidelines(layer))
+                {
+                    if (guideline.IsSelected)
+                    {
+                        guideline.X = RoundToGrid(guideline.X);
+                        guideline.Y = RoundToGrid(guideline.Y);
+                    }
+                }
+                foreach (var path in layer.Paths)
+                {
+                    foreach (var point in path.Points)
+                    {
+                        if (point.IsSelected)
+                        {
+                            point.X = RoundToGrid(point.X);
+                            point.Y = RoundToGrid(point.Y);
+                        }
+                    }
+                }
+            }
+        }
+
         public static float RoundToGrid(float value)
         {
             // TODO: get rounding info from the app, cache as static value
@@ -287,9 +331,9 @@ namespace Fonte.App.Utilities
         public static bool TryTogglePointSmoothness(Data.Path path, int index)
         {
             var point = path.Points[index];
-            if (point.IsSelected && point.Type != PointType.None)
+            if (point.Type != PointType.None)
             {
-                var value = !point.Smooth;
+                var value = !point.IsSmooth;
                 if (value)
                 {
                     if (Is.AtOpenBoundary(point))
@@ -313,7 +357,7 @@ namespace Fonte.App.Utilities
                     }
                 }
 
-                point.Smooth = !point.Smooth;
+                point.IsSmooth = !point.IsSmooth;
                 return true;
             }
             return false;
@@ -378,7 +422,7 @@ namespace Fonte.App.Utilities
                         outPath = new Data.Path();
 
                         var point = segment.OnCurve;
-                        point.Smooth = false;
+                        point.IsSmooth = false;
                         point.Type = PointType.Move;
                         outPath.Points.Add(point);
                     }
@@ -475,7 +519,7 @@ namespace Fonte.App.Utilities
                 }
                 else
                 {
-                    if (p2.Smooth)
+                    if (p2.IsSmooth)
                     {
                         VectorProjection(p2, p1.ToVector2(), p3.ToVector2());
                     }
@@ -489,7 +533,7 @@ namespace Fonte.App.Utilities
                 }
                 if (p3.Type == PointType.None)
                 {
-                    if (p2.Smooth && p2.Type != PointType.Move)
+                    if (p2.IsSmooth && p2.Type != PointType.Move)
                     {
                         VectorProjection(p3, p1.ToVector2(), p2.ToVector2());
                     }

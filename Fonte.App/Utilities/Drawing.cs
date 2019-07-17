@@ -42,7 +42,7 @@ namespace Fonte.App.Utilities
         public static void DrawComponents(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color componentColor,
                                           bool drawSelection = false)
         {
-            var margin = 5 * rescale;
+            var margin = 4 * rescale;
             var originColor = Color.FromArgb(135, 34, 34, 34);
             var selectedComponentColor = Color.FromArgb(
                 135,
@@ -217,13 +217,13 @@ namespace Fonte.App.Utilities
                     var angle = Math.Atan2(next.Y - start.Y, next.X - start.X);
                     if (start.IsSelected)
                     {
-                        (start.Smooth ? selectedSmoothPoints : selectedCornerPoints).AddGeometry(
+                        (start.IsSmooth ? selectedSmoothPoints : selectedCornerPoints).AddGeometry(
                             CreateTriangle(ds, start.X, start.Y, angle, 9 * rescale)
                         );
                     }
                     else
                     {
-                        (start.Smooth ? smoothPoints : cornerPoints).AddGeometry(
+                        (start.IsSmooth ? smoothPoints : cornerPoints).AddGeometry(
                             CreateTriangle(ds, start.X, start.Y, angle, 7 * rescale)
                         );
                     }
@@ -263,7 +263,7 @@ namespace Fonte.App.Utilities
                     }
                     else
                     {
-                        if (point.Smooth)
+                        if (point.IsSmooth)
                         {
                             var angle = Math.Atan2(point.Y - prev.Y, point.X - prev.X) - .5 * Math.PI;
                             var cos = (float)Math.Cos(angle);
@@ -394,37 +394,10 @@ namespace Fonte.App.Utilities
 
                 var pathBuilder = new CanvasPathBuilder(ds);
                 var radius = 4 * rescale;
-                var margin = 4 * rescale;
-                var loX = rect.Left - radius - margin;
-                var loY = rect.Bottom - radius - margin;
-                var hiX = rect.Right + radius + margin;
-                var hiY = rect.Top + radius + margin;
-                if (rect.Width > 0 && rect.Height > 0)
+                foreach (var handle in Misc.GetSelectionHandles(layer, rescale))
                 {
                     pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, loY), radius));
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(loX, hiY), radius));
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, hiY), radius));
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX, loY), radius));
-                }
-                if (rect.Width > 0)
-                {
-                    var midY = .5f * (loY + hiY);
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(loX - rescale, midY), radius));
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(hiX + rescale, midY), radius));
-                }
-                if (rect.Height > 0)
-                {
-                    var midX = .5f * (loX + hiX);
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, loY - rescale), radius));
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, new Vector2(midX, hiY + rescale), radius));
+                        CanvasGeometry.CreateCircle(ds, handle.Position, radius));
                 }
                 using (var path = CanvasGeometry.CreatePath(pathBuilder))
                 {

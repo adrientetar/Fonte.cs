@@ -87,7 +87,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnControlLoaded(object sender, RoutedEventArgs e)
+        void OnControlLoaded(object sender, RoutedEventArgs args)
         {
             if (DesignMode.DesignMode2Enabled)
                 return;
@@ -97,7 +97,7 @@ namespace Fonte.App.Controls
             Origin.SelectedIndexChanged += OnDataRefreshing;
         }
 
-        void OnControlUnloaded(object sender, RoutedEventArgs e)
+        void OnControlUnloaded(object sender, RoutedEventArgs args)
         {
             if (DesignMode.DesignMode2Enabled)
                 return;
@@ -133,14 +133,14 @@ namespace Fonte.App.Controls
             Layers = layer?.Parent?.Layers;
         }
 
-        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((Sidebar)sender).OnDataRefreshing();
         }
 
         /**/
 
-        void OnAlignLeftButtonClick(object sender, RoutedEventArgs e)
+        void OnAlignLeftButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => new Vector2(
                     path.Bounds.Left > refBounds.Left ? refBounds.Left - path.Bounds.Left : 0,
@@ -148,7 +148,7 @@ namespace Fonte.App.Controls
                 ));
         }
 
-        void OnCenterHorzButtonClick(object sender, RoutedEventArgs e)
+        void OnCenterHorzButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => {
                     var refXMid = refBounds.Left + Math.Round(.5 * refBounds.Width);
@@ -160,7 +160,7 @@ namespace Fonte.App.Controls
                 });
         }
 
-        void OnAlignRightButtonClick(object sender, RoutedEventArgs e)
+        void OnAlignRightButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => new Vector2(
                     path.Bounds.Right < refBounds.Right ? refBounds.Right - path.Bounds.Right : 0,
@@ -168,7 +168,7 @@ namespace Fonte.App.Controls
                 ));
         }
 
-        void OnAlignTopButtonClick(object sender, RoutedEventArgs e)
+        void OnAlignTopButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => new Vector2(
                     0,
@@ -176,7 +176,7 @@ namespace Fonte.App.Controls
                 ));
         }
 
-        void OnCenterVertButtonClick(object sender, RoutedEventArgs e)
+        void OnCenterVertButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => {
                     var refYMid = refBounds.Bottom + Math.Round(.5 * refBounds.Height);
@@ -188,7 +188,7 @@ namespace Fonte.App.Controls
                 });
         }
 
-        void OnAlignBottomButtonClick(object sender, RoutedEventArgs e)
+        void OnAlignBottomButtonClick(object sender, RoutedEventArgs args)
         {
             AlignSelectedPaths((path, refBounds) => new Vector2(
                     0,
@@ -196,18 +196,18 @@ namespace Fonte.App.Controls
                 ));
         }
 
-        void OnExcludeButtonClick(object sender, RoutedEventArgs e)
+        void OnExcludeButtonClick(object sender, RoutedEventArgs args)
         {
             BinaryBooleanOp((a, b) => BooleanOps.Exclude(a, b));
         }
 
-        void OnIntersectButtonClick(object sender, RoutedEventArgs e)
+        void OnIntersectButtonClick(object sender, RoutedEventArgs args)
         {
             BinaryBooleanOp((a, b) => BooleanOps.Intersect(a, b));
         }
 
         // TODO skip the no-intersections (same geometry after filtering) case
-        void OnUnionButtonClick(object sender, RoutedEventArgs e)
+        void OnUnionButtonClick(object sender, RoutedEventArgs args)
         {
             if (Layer != null)
             {
@@ -249,12 +249,12 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnXorButtonClick(object sender, RoutedEventArgs e)
+        void OnXorButtonClick(object sender, RoutedEventArgs args)
         {
             BinaryBooleanOp((a, b) => BooleanOps.Xor(a, b));
         }
 
-        void OnHorzMirrorButtonClick(object sender, RoutedEventArgs e)
+        void OnHorzMirrorButtonClick(object sender, RoutedEventArgs args)
         {
             var matrix = Matrix3x2.CreateScale(-1, 1, Origin.GetOrigin(Layer));
             Layer.Transform(matrix, Layer.Selection.Count > 0);
@@ -262,7 +262,7 @@ namespace Fonte.App.Controls
             ((App)Application.Current).InvalidateData();
         }
 
-        void OnVertMirrorButtonClick(object sender, RoutedEventArgs e)
+        void OnVertMirrorButtonClick(object sender, RoutedEventArgs args)
         {
             var matrix = Matrix3x2.CreateScale(1, -1, Origin.GetOrigin(Layer));
             Layer.Transform(matrix, Layer.Selection.Count > 0);
@@ -270,7 +270,7 @@ namespace Fonte.App.Controls
             ((App)Application.Current).InvalidateData();
         }
 
-        void OnXPositionChanged(object sender, LosingFocusEventArgs e)
+        void OnXPositionChanged(object sender, LosingFocusEventArgs args)
         {
             var textBox = (TextBox)sender;
             if (float.TryParse(textBox.Text, out float result))
@@ -286,7 +286,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnYPositionChanged(object sender, LosingFocusEventArgs e)
+        void OnYPositionChanged(object sender, LosingFocusEventArgs args)
         {
             var textBox = (TextBox)sender;
             if (float.TryParse(textBox.Text, out float result))
@@ -302,14 +302,19 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnXSizeChanged(object sender, LosingFocusEventArgs e)
+        void OnXSizeChanged(object sender, LosingFocusEventArgs args)
         {
+            var layer = Layer;
             var textBox = (TextBox)sender;
-            if (Layer.SelectionBounds.Width > 0 && float.TryParse(textBox.Text, out float result))
+            if (layer.SelectionBounds.Width > 0 && float.TryParse(textBox.Text, out float result))
             {
-                var wr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Width;
-                Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
-                                selectionOnly: true);
+                var wr = result / layer.SelectionBounds.Width;
+                using (var group = layer.CreateUndoGroup())
+                {
+                    Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
+                                    selectionOnly: true);
+                    Outline.RoundSelection(Layer);
+                }
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -319,14 +324,19 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnYSizeChanged(object sender, LosingFocusEventArgs e)
+        void OnYSizeChanged(object sender, LosingFocusEventArgs args)
         {
+            var layer = Layer;
             var textBox = (TextBox)sender;
-            if (Layer.SelectionBounds.Height > 0 && float.TryParse(textBox.Text, out float result))
+            if (layer.SelectionBounds.Height > 0 && float.TryParse(textBox.Text, out float result))
             {
-                var hr = Outline.RoundToGrid(result) / Layer.SelectionBounds.Height;
-                Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
-                                selectionOnly: true);
+                var hr = Outline.RoundToGrid(result) / layer.SelectionBounds.Height;
+                using (var group = layer.CreateUndoGroup())
+                {
+                    Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
+                                    selectionOnly: true);
+                    Outline.RoundSelection(Layer);
+                }
 
                 ((App)Application.Current).InvalidateData();
             }
@@ -336,7 +346,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnRotationButtonClick(object sender, RoutedEventArgs e)
+        void OnRotationButtonClick(object sender, RoutedEventArgs args)
         {
             var result = float.Parse(RotationTextBox.Text);
             // TODO: if incorrect restore oldValue
@@ -352,7 +362,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnScaleButtonClick(object sender, RoutedEventArgs e)
+        void OnScaleButtonClick(object sender, RoutedEventArgs args)
         {
             var sign = GetControlSign(sender);
             var xScale = 1f / (1 - sign * .01f * float.Parse(XScaleTextBox.Text));
@@ -369,7 +379,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnSkewButtonClick(object sender, RoutedEventArgs e)
+        void OnSkewButtonClick(object sender, RoutedEventArgs args)
         {
             var result = float.Parse(SkewTextBox.Text);
 

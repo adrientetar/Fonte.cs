@@ -65,7 +65,7 @@ namespace Fonte.App.Controls.ToolbarParts
             Background = IsChecked ? ActiveBrush : BackgroundBrush;
         }
 
-        static void OnUIChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnUIChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((IconButton)sender).OnUIChanged();
         }

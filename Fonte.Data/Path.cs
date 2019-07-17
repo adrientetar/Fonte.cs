@@ -34,21 +34,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Point>(_points);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new PathPointsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new PathPointsChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new PathPointsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new PathPointsChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new PathPointsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new PathPointsReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new PathPointsResetChange(this).Apply();
                     }
@@ -204,7 +204,7 @@ namespace Fonte.Data
                 {
                     var point = Points.PopAt(0);
                     Points.Add(point);
-                    point.Smooth = false;
+                    point.IsSmooth = false;
                     point.Type = PointType.Line;
                 }
             }
@@ -370,22 +370,24 @@ namespace Fonte.Data
 
         public void ConvertTo(PointType type)
         {
+            var onCurve = OnCurve;
+
             bool ok = type == OnCurve.Type;
             if (type == PointType.Curve)
             {
                 if (OnCurve.Type == PointType.Line)
                 {
                     var start = PointsInclusive[0];
-                    var index = _index + _count;
-                    _points.Insert(index, new Point(
+
+                    onCurve.Type = PointType.Curve;
+                    _points.Insert(_index, new Point(
                             start.X + .65f * (OnCurve.X - start.X),
                             start.Y + .65f * (OnCurve.Y - start.Y)
                         ));
-                    _points.Insert(index, new Point(
+                    _points.Insert(_index, new Point(
                             start.X + .35f * (OnCurve.X - start.X),
                             start.Y + .35f * (OnCurve.Y - start.Y)
                         ));
-                    OnCurve.Type = PointType.Curve;
 
                     ok = true;
                 }
@@ -394,11 +396,12 @@ namespace Fonte.Data
             {
                 if (OnCurve.Type == PointType.Curve)
                 {
-                    PointsInclusive[0].Smooth = false;
-                    _points.RemoveRange(_index, _count - 1);
-                    var onCurve = _points[_index];
-                    onCurve.Smooth = false;
+                    var start = PointsInclusive[0];
+
+                    onCurve.IsSmooth = false;
                     onCurve.Type = PointType.Line;
+                    start.IsSmooth = false;
+                    _points.RemoveRange(_index, _count - 1);
 
                     ok = true;
                 }
@@ -409,14 +412,12 @@ namespace Fonte.Data
                     OnCurve.Type == PointType.Line)
                 {
                     if (_index != 0)
-                    {
                         throw new InvalidOperationException(
                             string.Format("Segment for conversion to {0} needs to be at index 0 ({1})", type, _index));
-                    }
+
+                    onCurve.IsSmooth = false;
+                    onCurve.Type = PointType.Move;
                     _points.RemoveRange(_index, _count - 1);
-                    var start = _points[_index];
-                    start.Smooth = false;
-                    start.Type = PointType.Move;
 
                     ok = true;
                 }

@@ -55,12 +55,12 @@ namespace Fonte.App.Controls
             };
         }
 
-        void OnControlLoaded(object sender, RoutedEventArgs e)
+        void OnControlLoaded(object sender, RoutedEventArgs args)
         {
             SelectedIndex = 0;
         }
 
-        void OnButtonClicked(object sender, RoutedEventArgs e)
+        void OnButtonClicked(object sender, RoutedEventArgs args)
         {
             SelectedIndex = Repeater.GetElementIndex((UIElement)sender);
         }

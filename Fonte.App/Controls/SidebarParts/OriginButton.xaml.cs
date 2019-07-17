@@ -57,7 +57,7 @@ namespace Fonte.App.Controls.SidebarParts
             Stroke = IsActive ? Accent : Foreground;
         }
 
-        static void OnUIChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnUIChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((OriginButton)sender).OnUIChanged();
         }

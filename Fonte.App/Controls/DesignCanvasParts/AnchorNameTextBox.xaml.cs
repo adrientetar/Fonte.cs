@@ -45,17 +45,17 @@ namespace Fonte.App.Controls.DesignCanvasParts
             _anchor = null;
         }
 
-        void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        void OnKeyDown(object sender, KeyRoutedEventArgs args)
         {
-            if (e.Key == VirtualKey.Enter)
+            if (args.Key == VirtualKey.Enter)
             {
                 FinishEditing();
 
-                e.Handled = true;
+                args.Handled = true;
             }
         }
 
-        void OnLostFocus(object sender, RoutedEventArgs e)
+        void OnLostFocus(object sender, RoutedEventArgs args)
         {
             if (_anchor != null)
             {

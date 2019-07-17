@@ -22,7 +22,6 @@ namespace Fonte.App.Delegates
 
     public class PenTool : BaseTool
     {
-        private Data.Point _lastOn;
         private Data.Path _path;
         private Point _screenOrigin;
         private bool _shouldMoveOnCurve;
@@ -39,20 +38,20 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
-            if (e.Key == VirtualKey.Menu)
+            if (args.Key == VirtualKey.Menu)
             {
                 if (TrySetOnCurveSmoothness(canvas, false))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
             }
-            else if (e.Key == VirtualKey.Space && _path != null)
+            else if (args.Key == VirtualKey.Space && _path != null)
             {
                 _shouldMoveOnCurve = true;
             }
-            else if (e.Key == VirtualKey.Escape)
+            else if (args.Key == VirtualKey.Escape)
             {
                 TryRemoveTrailingOffCurve(canvas);
                 canvas.Layer.ClearSelection();
@@ -61,40 +60,40 @@ namespace Fonte.App.Delegates
             }
             else
             {
-                base.OnKeyDown(canvas, e);
+                base.OnKeyDown(canvas, args);
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
-            if (e.Key == VirtualKey.Menu)
+            if (args.Key == VirtualKey.Menu)
             {
                 if (TrySetOnCurveSmoothness(canvas, true))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
             }
-            else if (e.Key == VirtualKey.Space)
+            else if (args.Key == VirtualKey.Space)
             {
                 _shouldMoveOnCurve = false;
             }
             else
             {
-                base.OnKeyUp(canvas, e);
+                base.OnKeyUp(canvas, args);
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerPressed(canvas, e);
+            base.OnPointerPressed(canvas, args);
 
-            var ptPoint = e.GetCurrentPoint(canvas);
+            var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
@@ -118,9 +117,9 @@ namespace Fonte.App.Delegates
                             {
                                 selPoint.IsSelected = false;
                                 selPoints.Pop();
-                                _lastOn = selPoints.Last();
-                                _stashedOffCurve = (selPoint, _lastOn.Smooth);
-                                _lastOn.Smooth = false;
+                                var lastOn = selPoints.Last();
+                                _stashedOffCurve = (selPoint, lastOn.IsSmooth);
+                                lastOn.IsSmooth = false;
                             }
                             Outline.JoinPaths(selPath, selPoints[0] == selPoint,
                                               tappedPath, tappedPath.Points[0] == tappedPoint);
@@ -170,11 +169,11 @@ namespace Fonte.App.Delegates
                         if (lastPoint.Type == Data.PointType.None)
                         {
                             points.Pop();
-                            _lastOn = points.Last();
-                            _stashedOffCurve = (lastPoint, _lastOn.Smooth);
-                            _lastOn.Smooth = false;
+                            var lastOn = points.Last();
+                            _stashedOffCurve = (lastPoint, lastOn.IsSmooth);
+                            lastOn.IsSmooth = false;
                             // For shift origin, always use an onCurve
-                            lastPoint = _lastOn;
+                            lastPoint = lastOn;
                         }
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
@@ -206,11 +205,11 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerMoved(canvas, e);
+            base.OnPointerMoved(canvas, args);
 
-            var ptPoint = e.GetCurrentPoint(canvas);
+            var ptPoint = args.GetCurrentPoint(canvas);
             if (_path != null && ptPoint.Properties.IsLeftButtonPressed)
             {
                 var pos = canvas.GetCanvasPosition(ptPoint.Position);
@@ -225,13 +224,13 @@ namespace Fonte.App.Delegates
                     }
                     var makeOnSmooth = !Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
                     selPoint.IsSelected = false;
-                    selPoint.Smooth = _path.Points.Count > 1 && makeOnSmooth;
+                    selPoint.IsSmooth = _path.Points.Count > 1 && makeOnSmooth;
 
                     if (selPoint.Type == Data.PointType.Line && makeOnSmooth)
                     {
                         CoerceSegmentToCurve(selPoint, pos);
                     }
-                    else if (selPoint.Smooth && _path.IsOpen)
+                    else if (selPoint.IsSmooth && _path.IsOpen)
                     {
                         // If there's a curve segment behind, we need to update the
                         // offCurve's position to inverse
@@ -312,7 +311,7 @@ namespace Fonte.App.Delegates
                     {
                         selPoint.X = Outline.RoundToGrid((float)pos.X);
                         selPoint.Y = Outline.RoundToGrid((float)pos.Y);
-                        if (_path.IsOpen && _path.Points.Count >= 3 && onCurve.Smooth)
+                        if (_path.IsOpen && _path.Points.Count >= 3 && onCurve.IsSmooth)
                         {
                             if (onCurve.Type == Data.PointType.Line)
                             {
@@ -328,9 +327,9 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, e);
+            base.OnPointerReleased(canvas, args);
 
             if (_undoGroup != null)
             {
@@ -385,7 +384,7 @@ namespace Fonte.App.Delegates
             if (_stashedOffCurve != null)
             {
                 var (offCurve, onSmooth) = _stashedOffCurve.Value;
-                prevOn.Smooth = index - 1 > 0 && onSmooth;
+                prevOn.IsSmooth = index - 1 > 0 && onSmooth;
                 _path.Points.Insert(index, offCurve);
                 _stashedOffCurve = null;
             }
@@ -402,7 +401,7 @@ namespace Fonte.App.Delegates
 
             // Now flag onCurve as curve segment
             onCurve.Type = Data.PointType.Curve;
-            onCurve.Smooth = smooth;
+            onCurve.IsSmooth = smooth;
         }
 
         Data.Point GetMovingPoint()
@@ -439,7 +438,7 @@ namespace Fonte.App.Delegates
                 if (selPoint.Type == Data.PointType.None && selPath.IsOpen && selPoints.Last() == selPoint)
                 {
                     selPoints.Pop();
-                    selPoints.Last().Smooth = false;
+                    selPoints.Last().IsSmooth = false;
                     return true;
                 }
             }
@@ -461,7 +460,7 @@ namespace Fonte.App.Delegates
                             return false;
                         }
                     }
-                    point.Smooth = value;
+                    point.IsSmooth = value;
                     return true;
                 }
             }

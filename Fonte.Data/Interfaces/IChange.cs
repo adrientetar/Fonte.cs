@@ -20,5 +20,7 @@ namespace Fonte.Data.Interfaces
     public interface IChangeGroup : IDisposable
     {
         int Count { get; }
+
+        void Reset();
     }
 }

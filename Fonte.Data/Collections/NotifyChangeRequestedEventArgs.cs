@@ -385,7 +385,7 @@ namespace Fonte.Data.Collections
     /// <summary>
     /// The delegate to use for handlers that receive the NotifyChangeRequested event.
     /// </summary>
-    public delegate void NotifyChangeRequestedEventHandler<T>(object sender, NotifyChangeRequestedEventArgs<T> e);
+    public delegate void NotifyChangeRequestedEventHandler<T>(object sender, NotifyChangeRequestedEventArgs<T> args);
 
     internal sealed class ReadOnlyList<T> : IList<T>
     {

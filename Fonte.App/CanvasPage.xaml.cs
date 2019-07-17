@@ -4,6 +4,7 @@
 
 namespace Fonte.App
 {
+    using Fonte.App.Dialogs;
     using Fonte.App.Interfaces;
     using Fonte.Data.Utilities;
     using Newtonsoft.Json;
@@ -12,11 +13,13 @@ namespace Fonte.App
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+    using System.Threading.Tasks;
     using Windows.ApplicationModel;
     using Windows.Storage;
     using Windows.Storage.Pickers;
     using Windows.System;
     using Windows.UI.Core;
+    using Windows.UI.Core.Preview;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
@@ -49,12 +52,37 @@ namespace Fonte.App
             );
 
             OnDataRefreshing();
-
-            Loaded += OnPageLoaded;
-            Unloaded += OnPageUnloaded;
         }
 
-        void OnPageLoaded(object sender, RoutedEventArgs e)
+        public async Task<bool> SaveAsync()
+        {
+            var file = _file;
+            if (file is null)
+            {
+                var picker = new FileSavePicker
+                {
+                    SuggestedFileName = Font.FamilyName,
+                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+                };
+                picker.FileTypeChoices.Add("Font file", new List<string>() { ".tfont" });
+
+                file = await picker.PickSaveFileAsync();
+            }
+            if (file is StorageFile)
+            {
+                var json = JsonConvert.SerializeObject(Font);
+
+                await FileIO.WriteTextAsync(file, json);
+
+                _file = file;
+                OnDataRefreshing();
+
+                return true;
+            }
+            return false;
+        }
+
+        void OnPageLoaded(object sender, RoutedEventArgs args)
         {
             if (!DesignMode.DesignMode2Enabled)
             {
@@ -63,9 +91,11 @@ namespace Fonte.App
 
             Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
             Window.Current.CoreWindow.KeyUp += OnWindowKeyUp;
+
+            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
         }
 
-        void OnPageUnloaded(object sender, RoutedEventArgs e)
+        void OnPageUnloaded(object sender, RoutedEventArgs args)
         {
             if (!DesignMode.DesignMode2Enabled)
             {
@@ -74,6 +104,42 @@ namespace Fonte.App
 
             Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
             Window.Current.CoreWindow.KeyUp -= OnWindowKeyUp;
+
+            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested -= OnCloseRequested;
+        }
+
+        async void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs args)
+        {
+            if (Font.IsModified)
+            {
+                var deferral = args.GetDeferral();
+
+                ContentDialogResult result;
+                {
+                    var dialog = new ContentDialog()
+                    {
+                        Title = $"Do you want to save your changes to “{Font.FamilyName}” before closing?",
+                        PrimaryButtonText = "Save",
+                        SecondaryButtonText = "Don’t save",
+                        CloseButtonText = "Cancel"
+                    };
+
+                    result = await dialog.ShowAsync();
+                }
+
+                if (result.HasFlag(ContentDialogResult.Primary) && await SaveAsync())
+                {
+                }
+                else if (result.HasFlag(ContentDialogResult.Secondary))
+                {
+                }
+                else
+                {
+                    // Decline window close
+                    args.Handled = true;
+                }
+                deferral.Complete();
+            }
         }
 
         void OnDataRefreshing()
@@ -88,15 +154,15 @@ namespace Fonte.App
             }
         }
 
-        void OnWindowKeyDown(CoreWindow sender, KeyEventArgs e)
+        void OnWindowKeyDown(CoreWindow sender, KeyEventArgs args)
         {
             var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            if (e.VirtualKey == VirtualKey.Space)
+            if (args.VirtualKey == VirtualKey.Space)
             {
                 Canvas.IsInPreview = true;
             }
 #if DEBUG
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && e.VirtualKey == VirtualKey.D)
+            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.VirtualKey == VirtualKey.D)
             {
                 try
                 {
@@ -119,12 +185,12 @@ namespace Fonte.App
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        void OnWindowKeyUp(CoreWindow sender, KeyEventArgs e)
+        void OnWindowKeyUp(CoreWindow sender, KeyEventArgs args)
         {
-            if (e.VirtualKey == VirtualKey.Space)
+            if (args.VirtualKey == VirtualKey.Space)
             {
                 Canvas.IsInPreview = false;
             }
@@ -133,10 +199,12 @@ namespace Fonte.App
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        void OnRedoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        /**/
+
+        void OnRedoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             var undoStore = Canvas.Layer.Parent.UndoStore;
             if (undoStore.CanRedo)
@@ -145,24 +213,17 @@ namespace Fonte.App
                 ((App)Application.Current).InvalidateData();
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        void OnResetZoomInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        void OnResetZoomInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             Canvas.CenterOnMetrics();
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        void OnShowSidebarInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
-        {
-            Sidebar.Visibility = Sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
-
-            e.Handled = true;
-        }
-
-        void OnSelectAllInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        void OnSelectAllInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             var pathsSelected = true;
             foreach (var path in Canvas.Layer.Paths)
@@ -185,11 +246,11 @@ namespace Fonte.App
                 }
             }
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
 
-        void OnUndoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        void OnUndoInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             var undoStore = Canvas.Layer.Parent.UndoStore;
             if (undoStore.CanUndo)
@@ -198,25 +259,52 @@ namespace Fonte.App
                 ((App)Application.Current).InvalidateData();
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        void OnNextGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        void OnNextGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
-            Canvas.Layer = Sequence.NextItem(Font.Glyphs, index).Layers.First();
+            Sidebar.Layer = Sequence.NextItem(Font.Glyphs, index).Layers.First();
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
 
-        void OnPreviousGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs e)
+        void OnPreviousGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             var index = Font.Glyphs.IndexOf(Canvas.Layer.Parent);
-            Canvas.Layer = Sequence.PreviousItem(Font.Glyphs, index).Layers.First();
+            Sidebar.Layer = Sequence.PreviousItem(Font.Glyphs, index).Layers.First();
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
+        }
+
+        async void OnFindGlyphInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            var glyph = Canvas.Layer.Parent;
+            var glyphList = Font.Glyphs
+                                .Where(g => g.Name != glyph.Name)
+                                .ToList();
+            if (glyphList.Count > 0)
+            {
+                args.Handled = true;
+
+                var glyphDialog = new GlyphDialog(glyphList);
+                await glyphDialog.ShowAsync();
+
+                if (glyphDialog.Glyph is Data.Glyph newGlyph)
+                {
+                    Sidebar.Layer = newGlyph.Layers[0];
+                }
+            }
+        }
+
+        void OnShowSidebarInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            Sidebar.Visibility = Sidebar.Visibility == Visibility.Visible ? Visibility.Collapsed : Visibility.Visible;
+
+            args.Handled = true;
         }
 
         /**/
@@ -233,12 +321,12 @@ namespace Fonte.App
             }
         }
 
-        static void OnFontChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnFontChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((CanvasPage)sender).OnFontChanged();
         }
 
-        async void OnOpenItemClicked(object sender, RoutedEventArgs e)
+        async void OnOpenItemClicked(object sender, RoutedEventArgs args)
         {
             var picker = new FileOpenPicker
             {
@@ -258,34 +346,11 @@ namespace Fonte.App
             }
         }
 
-        async void OnSaveItemClicked(object sender, RoutedEventArgs e)
-        {
-            var file = _file;
-            if (file is null)
-            {
-                var picker = new FileSavePicker
-                {
-                    SuggestedStartLocation = PickerLocationId.DocumentsLibrary
-                };
-                picker.FileTypeChoices.Add("Font file", new List<string>() { ".tfont" });
-                picker.SuggestedFileName = Font.FamilyName;
-
-                file = await picker.PickSaveFileAsync();
-            }
-            if (file is StorageFile)
-            {
-                var json = JsonConvert.SerializeObject(Font);
-
-                await FileIO.WriteTextAsync(file, json);
-
-                _file = file;
-                OnDataRefreshing();
-            }
-        }
+        async void OnSaveItemClicked(object sender, RoutedEventArgs args) => await SaveAsync();
 
         /**/
 
-        void OnToolbarItemChanged(object sender, EventArgs e)
+        void OnToolbarItemChanged(object sender, EventArgs args)
         {
             Canvas.Tool = (ICanvasDelegate)Toolbar.SelectedItem;
         }

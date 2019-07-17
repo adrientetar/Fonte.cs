@@ -27,7 +27,7 @@ namespace Fonte.App
             DataRefreshing?.Invoke();
         }
 
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
 #if DEBUG
             if (System.Diagnostics.Debugger.IsAttached)
@@ -44,7 +44,7 @@ namespace Fonte.App
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
-                if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
+                if (args.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
                     // TODO: load application state
                 }
@@ -52,25 +52,25 @@ namespace Fonte.App
                 Window.Current.Content = rootFrame;
             }
 
-            if (e.PrelaunchActivated == false)
+            if (args.PrelaunchActivated == false)
             {
                 if (rootFrame.Content == null)
                 {
-                    rootFrame.Navigate(typeof(CanvasPage), e.Arguments);
+                    rootFrame.Navigate(typeof(CanvasPage), args.Arguments);
                 }
 
                 Window.Current.Activate();
             }
         }
 
-        void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
+        void OnNavigationFailed(object sender, NavigationFailedEventArgs args)
         {
-            throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
+            throw new Exception($"Failed to load Page {args.SourcePageType.FullName}");
         }
 
-        void OnSuspending(object sender, SuspendingEventArgs e)
+        void OnSuspending(object sender, SuspendingEventArgs args)
         {
-            var deferral = e.SuspendingOperation.GetDeferral();
+            var deferral = args.SuspendingOperation.GetDeferral();
             // TODO: save application state
             deferral.Complete();
         }

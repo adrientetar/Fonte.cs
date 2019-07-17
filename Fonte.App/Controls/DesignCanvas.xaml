@@ -27,14 +27,14 @@
         <x:Boolean x:Key="DrawSelectionBounds">false</x:Boolean>
         <x:Boolean x:Key="DrawStroke">true</x:Boolean>
 
-        <Color x:Key="AlignmentZoneColor">#64FFDAC9</Color>
+        <Color x:Key="AlignmentZoneColor">#64FFE6CC</Color>
         <Color x:Key="AnchorColor">#C8F43618</Color>
         <Color x:Key="ComponentColor">#875A5A5A</Color>
         <Color x:Key="CornerPointColor">#BE3448AD</Color>
         <Color x:Key="FillColor">#4DF4F4F4</Color>
         <Color x:Key="LayersColor">#FFD2D2D2</Color>
-        <Color x:Key="MarkerColor">#E1E7BCD2</Color>
-        <Color x:Key="SmoothPointColor">#BEFF5855</Color>
+        <Color x:Key="MarkerColor">#E1F2C7B8</Color>
+        <Color x:Key="SmoothPointColor">#BEEB4D75</Color>
         <Color x:Key="StrokeColor">#FF232323</Color>
     </UserControl.Resources>
 

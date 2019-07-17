@@ -157,7 +157,7 @@ namespace Fonte.App.Utilities
                             (prev.Type == Data.PointType.None || next.Type == Data.PointType.None) &&
                             IsFlatAngle(prev, point, next))
                         {
-                            point.Smooth = true;
+                            point.IsSmooth = true;
                         }
 
                         prev = point;

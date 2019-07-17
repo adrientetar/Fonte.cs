@@ -3,7 +3,7 @@ namespace Fonte.Data.Changes
 {
     using Fonte.Data.Interfaces;
 
-    internal struct PointSmoothChange : IChange
+    internal struct PointIsSmoothChange : IChange
     {
         private readonly Point _target;
         private bool _value;
@@ -11,7 +11,7 @@ namespace Fonte.Data.Changes
         public bool AffectsSelection => false;
         public bool IsShallow => false;
 
-        public PointSmoothChange(Point target, bool value)
+        public PointIsSmoothChange(Point target, bool value)
         {
             _target = target;
             _value = value;
@@ -19,8 +19,8 @@ namespace Fonte.Data.Changes
 
         public void Apply()
         {
-            var oldValue = _target._smooth;
-            _target._smooth = _value;
+            var oldValue = _target._isSmooth;
+            _target._isSmooth = _value;
             _value = oldValue;
 
             _target.Parent?.OnChange(this);

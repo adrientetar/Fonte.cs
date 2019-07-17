@@ -41,21 +41,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Anchor>(_anchors);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new LayerAnchorsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new LayerAnchorsChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new LayerAnchorsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new LayerAnchorsChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new LayerAnchorsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new LayerAnchorsReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerAnchorsResetChange(this).Apply();
                     }
@@ -70,21 +70,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Component>(_components);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new LayerComponentsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new LayerComponentsChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new LayerComponentsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new LayerComponentsChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new LayerComponentsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new LayerComponentsReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerComponentsResetChange(this).Apply();
                     }
@@ -99,21 +99,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Guideline>(_guidelines);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new LayerGuidelinesChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new LayerGuidelinesChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new LayerGuidelinesChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new LayerGuidelinesChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new LayerGuidelinesReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new LayerGuidelinesReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerGuidelinesResetChange(this).Apply();
                     }
@@ -167,21 +167,21 @@ namespace Fonte.Data
             get
             {
                 var items = new ObserverList<Path>(_paths);
-                items.ChangeRequested += (sender, e) =>
+                items.ChangeRequested += (sender, args) =>
                 {
-                    if (e.Action == NotifyChangeRequestedAction.Add)
+                    if (args.Action == NotifyChangeRequestedAction.Add)
                     {
-                        new LayerPathsChange(this, e.NewStartingIndex, e.NewItems, true).Apply();
+                        new LayerPathsChange(this, args.NewStartingIndex, args.NewItems, true).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Remove)
+                    else if (args.Action == NotifyChangeRequestedAction.Remove)
                     {
-                        new LayerPathsChange(this, e.OldStartingIndex, e.OldItems, false).Apply();
+                        new LayerPathsChange(this, args.OldStartingIndex, args.OldItems, false).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Replace)
+                    else if (args.Action == NotifyChangeRequestedAction.Replace)
                     {
-                        new LayerPathsReplaceChange(this, e.NewStartingIndex, e.NewItems).Apply();
+                        new LayerPathsReplaceChange(this, args.NewStartingIndex, args.NewItems).Apply();
                     }
-                    else if (e.Action == NotifyChangeRequestedAction.Reset)
+                    else if (args.Action == NotifyChangeRequestedAction.Reset)
                     {
                         new LayerPathsResetChange(this).Apply();
                     }

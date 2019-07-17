@@ -4,6 +4,7 @@
 
 namespace Fonte.App.Delegates
 {
+    using Fonte.App.Commands;
     using Fonte.App.Controls;
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
@@ -13,7 +14,7 @@ namespace Fonte.App.Delegates
     using System;
     using System.Diagnostics;
     using System.Linq;
-    using System.Numerics;
+    using System.Windows.Input;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
@@ -33,9 +34,9 @@ namespace Fonte.App.Delegates
             return canvas.Resources[resourceKey];
         }
 
-        public virtual bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public virtual bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            return e.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
+            return args.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
         }
 
         public virtual void OnActivated(DesignCanvas canvas)
@@ -54,12 +55,12 @@ namespace Fonte.App.Delegates
         {
         }
 
-        public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
             if (alt.HasFlag(CoreVirtualKeyStates.Down) && (
-                e.Key == VirtualKey.Left ||
-                e.Key == VirtualKey.Right))
+                args.Key == VirtualKey.Left ||
+                args.Key == VirtualKey.Right))
             {
                 var focusPoint = canvas.Layer.Selection.OfType<Data.Point>().LastOrDefault();
 
@@ -68,7 +69,7 @@ namespace Fonte.App.Delegates
                     var path = focusPoint.Parent;
                     var index = path.Points.IndexOf(focusPoint);
 
-                    var point = e.Key == VirtualKey.Right ?
+                    var point = args.Key == VirtualKey.Right ?
                                 Sequence.NextItem(path.Points, index) :
                                 Sequence.PreviousItem(path.Points, index);
 
@@ -76,25 +77,25 @@ namespace Fonte.App.Delegates
                     point.IsSelected = true;
                 }
             }
-            else if (e.Key == VirtualKey.Left ||
-                     e.Key == VirtualKey.Up ||
-                     e.Key == VirtualKey.Right ||
-                     e.Key == VirtualKey.Down)
+            else if (args.Key == VirtualKey.Left ||
+                     args.Key == VirtualKey.Up ||
+                     args.Key == VirtualKey.Right ||
+                     args.Key == VirtualKey.Down)
             {
                 int dx = 0, dy = 0;
-                if (e.Key == VirtualKey.Left)
+                if (args.Key == VirtualKey.Left)
                 {
                     dx = -1;
                 }
-                else if (e.Key == VirtualKey.Up)
+                else if (args.Key == VirtualKey.Up)
                 {
                     dy = 1;
                 }
-                else if (e.Key == VirtualKey.Right)
+                else if (args.Key == VirtualKey.Right)
                 {
                     dx = 1;
                 }
-                else if (e.Key == VirtualKey.Down)
+                else if (args.Key == VirtualKey.Down)
                 {
                     dy = -1;
                 }
@@ -113,12 +114,12 @@ namespace Fonte.App.Delegates
 
                 Outline.MoveSelection(canvas.Layer, dx, dy, GetMoveMode());
             }
-            else if (e.Key == VirtualKey.Back ||
-                     e.Key == VirtualKey.Delete)
+            else if (args.Key == VirtualKey.Back ||
+                     args.Key == VirtualKey.Delete)
             {
                 Outline.DeleteSelection(canvas.Layer, breakPaths: alt.HasFlag(CoreVirtualKeyStates.Down));
             }
-            else if (e.Key == VirtualKey.Enter)
+            else if (args.Key == VirtualKey.Enter)
             {
                 var selection = canvas.Layer.Selection;
                 if (selection.Count == 1 && selection.First() is Data.Anchor anchor)
@@ -141,30 +142,30 @@ namespace Fonte.App.Delegates
                 return;
             }
 
-            e.Handled = true;
+            args.Handled = true;
             ((App)Application.Current).InvalidateData();
         }
 
-        public virtual void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs e)
+        public virtual void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
         }
 
-        public virtual void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public virtual void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            if (e.GetCurrentPoint(canvas).Properties.IsMiddleButtonPressed)
+            if (args.GetCurrentPoint(canvas).Properties.IsMiddleButtonPressed)
             {
-                _previousPoint = e.GetCurrentPoint(canvas).Position;
+                _previousPoint = args.GetCurrentPoint(canvas).Position;
             }
 
             canvas.Focus(FocusState.Pointer);
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        public virtual void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public virtual void OnPointerMoved(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
             if (_previousPoint.HasValue)
             {
-                var point = e.GetCurrentPoint(canvas).Position;
+                var point = args.GetCurrentPoint(canvas).Position;
 
                 canvas.ScrollBy(
                     _previousPoint.Value.X - point.X,
@@ -173,29 +174,29 @@ namespace Fonte.App.Delegates
                 _previousPoint = point;
             }
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        public virtual void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs e)
+        public virtual void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
             _previousPoint = null;
 
-            e.Handled = true;
+            args.Handled = true;
         }
 
-        public virtual void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs e)
+        public virtual void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs args)
         {
         }
 
         // TODO: might want to do a model where we return the flyout so subclasses can take base class flyout and change things
-        public virtual void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs e)
+        public virtual void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs args)
         {
             var flyout = new MenuFlyout()
             {
                 AreOpenCloseAnimationsEnabled = false
             };
 
-            var clientPos = e.GetPosition(canvas);
+            var clientPos = args.GetPosition(canvas);
             var pos = canvas.GetCanvasPosition(clientPos);
             var tappedItem = canvas.HitTest(pos);
 
@@ -249,6 +250,11 @@ namespace Fonte.App.Delegates
 
             flyout.Items.Add(new MenuFlyoutItem()
             {
+                Command = AddComponentCommand,
+                CommandParameter = canvas.Layer
+            });
+            flyout.Items.Add(new MenuFlyoutItem()
+            {
                 Command = AddAnchorCommand,
                 CommandParameter = (canvas, pos)
             });
@@ -259,111 +265,21 @@ namespace Fonte.App.Delegates
             });
 
             flyout.ShowAt(canvas, clientPos);
-            e.Handled = true;
+            args.Handled = true;
         }
 
         /**/
 
-        static XamlUICommand AddAnchorCommand { get; } = MakeUICommand(
-            "Add Anchor",
-            (s, e) => {
-                var (canvas, pos) = (ValueTuple<DesignCanvas, Point>)e.Parameter;
-                var layer = canvas.Layer;
-
-                var anchor = new Data.Anchor(
-                    Outline.RoundToGrid((float)pos.X),
-                    Outline.RoundToGrid((float)pos.Y),
-                    "new anchor"
-                );
-                layer.Anchors.Add(anchor);
-                layer.ClearSelection();
-                anchor.IsSelected = true;
-                ((App)Application.Current).InvalidateData();
-
-                canvas.EditAnchorName(anchor);
-            });
-
-        static XamlUICommand AddGuidelineCommand { get; } = MakeUICommand(
-            "Add Guideline",
-            (s, e) => {
-                var (canvas, pos) = (ValueTuple<DesignCanvas, Point>)e.Parameter;
-                var layer = canvas.Layer;
-
-                var guideline = new Data.Guideline(
-                    Outline.RoundToGrid((float)pos.X),
-                    Outline.RoundToGrid((float)pos.Y),
-                    0
-                );
-                layer.Guidelines.Add(guideline);
-                layer.ClearSelection();
-                guideline.IsSelected = true;
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand(
-            "Decompose",
-            (s, e) => {
-                var component = (Data.Component)e.Parameter;
-
-                component.Decompose();
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand(
-            "Make Guideline Global",
-            (s, e) => {
-                var guideline = (Data.Guideline)e.Parameter;
-                var layer = (Data.Layer)guideline.Parent;
-                var master = layer.Master;
-
-                layer.Guidelines.Remove(guideline);
-                master.Guidelines.Add(guideline);
-
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand MakeGuidelineLocalCommand { get; } = MakeUICommand(
-            "Make Guideline Local",
-            (s, e) => {
-                var (guideline, layer) = (ValueTuple<Data.Guideline, Data.Layer>)e.Parameter;
-                var master = (Data.Master)guideline.Parent;
-
-                master.Guidelines.Remove(guideline);
-                layer.Guidelines.Add(guideline);
-
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand ReverseAllPathsCommand { get; } = MakeUICommand(
-            "Reverse All Paths",
-            (s, e) => {
-                var layer = (Data.Layer)e.Parameter;
-
-                foreach (var path in layer.Paths)
-                {
-                    path.Reverse();
-                }
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand ReversePathCommand { get; } = MakeUICommand(
-            "Reverse Path",
-            (s, e) => {
-                var path = (Data.Path)e.Parameter;
-
-                path.Reverse();
-                ((App)Application.Current).InvalidateData();
-            });
-
-        static XamlUICommand SetStartPointCommand { get; } = MakeUICommand(
-            "Set As Start Point",
-            (s, e) => {
-                var point = (Data.Point)e.Parameter;
-                var path = point.Parent;
-
-                path.StartAt(path.Points.IndexOf(point));
-                ((App)Application.Current).InvalidateData();
-            });
+        // TODO: maybe take this static library to a separate file?
+        static XamlUICommand AddAnchorCommand { get; } = MakeUICommand("Add Anchor", new AddAnchorCommand());
+        static XamlUICommand AddComponentCommand { get; } = MakeUICommand("Add Component", new AddComponentCommand());
+        static XamlUICommand AddGuidelineCommand { get; } = MakeUICommand("Add Guideline", new AddGuidelineCommand());
+        static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand("Decompose", new DecomposeComponentCommand());
+        static XamlUICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand("Make Guideline Global", new MakeGuidelineGlobalCommand());
+        static XamlUICommand MakeGuidelineLocalCommand { get; } = MakeUICommand("Make Guideline Local", new MakeGuidelineLocalCommand());
+        static XamlUICommand ReverseAllPathsCommand { get; } = MakeUICommand("Reverse All Paths", new ReverseAllPathsCommand());
+        static XamlUICommand ReversePathCommand { get; } = MakeUICommand("Reverse Path", new ReversePathCommand());
+        static XamlUICommand SetStartPointCommand { get; } = MakeUICommand("Set As Start Point", new SetStartPointCommand());
 
         /**/
 
@@ -410,22 +326,19 @@ namespace Fonte.App.Delegates
             return mode;
         }
 
-        protected static XamlUICommand MakeUICommand(string label,
-                                                     TypedEventHandler<XamlUICommand, ExecuteRequestedEventArgs> executeHandler,
-                                                     KeyboardAccelerator accelerator = null)
+        protected static XamlUICommand MakeUICommand(string label, ICommand command, KeyboardAccelerator accelerator = null)
         {
-            var command = new XamlUICommand()
+            var uiCommand = new XamlUICommand()
             {
+                Command = command,
                 Label = label,
             };
-            //command.CanExecuteRequested += canExecuteHandler;
-            command.ExecuteRequested += executeHandler;
             if (accelerator != null)
             {
-                command.KeyboardAccelerators.Add(accelerator);
+                uiCommand.KeyboardAccelerators.Add(accelerator);
             }
 
-            return command;
+            return uiCommand;
         }
 
         #region IToolBarEntry implementation

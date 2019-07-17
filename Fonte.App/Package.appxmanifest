@@ -41,5 +41,6 @@
   <Capabilities>
     <Capability Name="internetClient"/>
     <rescap:Capability Name="broadFileSystemAccess"/>
+    <rescap:Capability Name="confirmAppClose"/>
   </Capabilities>
 </Package>

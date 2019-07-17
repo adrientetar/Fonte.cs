@@ -114,7 +114,7 @@ namespace Fonte.App.Controls
             InitializeComponent();
         }
 
-        void OnControlLoaded(object sender, RoutedEventArgs e)
+        void OnControlLoaded(object sender, RoutedEventArgs args)
         {
             // Set the canvas origin
             _matrix.Translation = new Vector2(
@@ -124,7 +124,9 @@ namespace Fonte.App.Controls
 
             if (IsEnabled)
             {
-                CenterOnMetrics(animated: false);
+                // The StateChanged event is not sent on non-animated view changes,
+                // so set DPI manually here.
+                Canvas.DpiScale = CenterOnMetrics(animated: false);
             }
             Invalidate();
 
@@ -134,7 +136,7 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnControlUnloaded(object sender, RoutedEventArgs e)
+        void OnControlUnloaded(object sender, RoutedEventArgs args)
         {
             if (!DesignMode.DesignMode2Enabled)
             {
@@ -163,16 +165,16 @@ namespace Fonte.App.Controls
             {
                 CenterOnMetrics();
             }
-            Canvas.Invalidate();
+            Invalidate();
         }
 
-        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((DesignCanvas)sender).OnLayerChanged();
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnScrollerStateChanged(muxp.Scroller sender, object e)
+        void OnScrollerStateChanged(muxp.Scroller sender, object args)
         {
             if (Scroller.State == muxc.InteractionState.Idle)
             {
@@ -181,14 +183,14 @@ namespace Fonte.App.Controls
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
-        void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+        void OnPointerEntered(object sender, PointerRoutedEventArgs args)
         {
             _previousCursor = Window.Current.CoreWindow.PointerCursor;
 
             Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
         }
 
-        void OnPointerExited(object sender, PointerRoutedEventArgs e)
+        void OnPointerExited(object sender, PointerRoutedEventArgs args)
         {
             if (_previousCursor != null)
             {
@@ -268,52 +270,52 @@ namespace Fonte.App.Controls
             }
         }
 
-        void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        void OnKeyDown(object sender, KeyRoutedEventArgs args)
         {
-            Tool.OnKeyDown(this, e);
+            Tool.OnKeyDown(this, args);
         }
 
-        void OnKeyUp(object sender, KeyRoutedEventArgs e)
+        void OnKeyUp(object sender, KeyRoutedEventArgs args)
         {
-            Tool.OnKeyUp(this, e);
+            Tool.OnKeyUp(this, args);
         }
 
-        void OnPointerPressed(object sender, PointerRoutedEventArgs e)
+        void OnPointerPressed(object sender, PointerRoutedEventArgs args)
         {
-            ((UIElement)sender).CapturePointer(e.Pointer);
+            ((UIElement)sender).CapturePointer(args.Pointer);
 
-            if (Tool.HandlePointerEvent(this, e))
+            if (Tool.HandlePointerEvent(this, args))
             {
-                Tool.OnPointerPressed(this, e);
+                Tool.OnPointerPressed(this, args);
             }
         }
 
-        void OnPointerMoved(object sender, PointerRoutedEventArgs e)
+        void OnPointerMoved(object sender, PointerRoutedEventArgs args)
         {
-            if (Tool.HandlePointerEvent(this, e))
+            if (Tool.HandlePointerEvent(this, args))
             {
-                Tool.OnPointerMoved(this, e);
+                Tool.OnPointerMoved(this, args);
             }
         }
 
-        void OnPointerReleased(object sender, PointerRoutedEventArgs e)
+        void OnPointerReleased(object sender, PointerRoutedEventArgs args)
         {
-            if (Tool.HandlePointerEvent(this, e))
+            if (Tool.HandlePointerEvent(this, args))
             {
-                Tool.OnPointerReleased(this, e);
+                Tool.OnPointerReleased(this, args);
             }
 
-            ((UIElement)sender).ReleasePointerCapture(e.Pointer);
+            ((UIElement)sender).ReleasePointerCapture(args.Pointer);
         }
 
-        void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        void OnDoubleTapped(object sender, DoubleTappedRoutedEventArgs args)
         {
-            Tool.OnDoubleTapped(this, e);
+            Tool.OnDoubleTapped(this, args);
         }
 
-        void OnRightTapped(object sender, RightTappedRoutedEventArgs e)
+        void OnRightTapped(object sender, RightTappedRoutedEventArgs args)
         {
-            Tool.OnRightTapped(this, e);
+            Tool.OnRightTapped(this, args);
         }
 
         object FindResource(string resourceKey)
@@ -344,18 +346,24 @@ namespace Fonte.App.Controls
             throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
         }
 
-        public void CenterOnMetrics(bool animated = true)
+        public float CenterOnMetrics(bool animated = true)
         {
-            var master = Layer.Master;
-            var fontHeight = master.Ascender - master.Descender;
-
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var targetZoomFactor = (float)(Scroller.ViewportHeight / Math.Round(fontHeight * 1.4));
-            ViewTo(
-                (_matrix.Translation.X + .5f * Layer.Width) * targetZoomFactor - .5f * Scroller.ViewportWidth,
-                (_matrix.Translation.Y - .5f * fontHeight - master.Descender) * targetZoomFactor - .5f * Scroller.ViewportHeight,
-                targetZoomFactor,
-                animated);
+            if (Scroller.ViewportHeight > 0)
+            {
+                var master = Layer.Master;
+                var fontHeight = master.Ascender - master.Descender;
+                var targetZoomFactor = (float)(Scroller.ViewportHeight / Math.Round(fontHeight * 1.4));
+
+                ViewTo(
+                    (_matrix.Translation.X + .5f * Layer.Width) * targetZoomFactor - .5f * Scroller.ViewportWidth,
+                    (_matrix.Translation.Y - .5f * fontHeight - master.Descender) * targetZoomFactor - .5f * Scroller.ViewportHeight,
+                    targetZoomFactor,
+                    animated);
+
+                return targetZoomFactor;
+            }
+            return float.NaN;
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
@@ -386,40 +394,53 @@ namespace Fonte.App.Controls
             var rescale = 1f / Canvas.DpiScale;
             var halfSize = 4 * rescale;
 
-            // XXX: given that Scale is computed off thread, we risk a discrepancy between drawing and hit testing
-            var drawDetails = PointSize >= MinPointSizeForDetails;
+            var pointSize = PointSize;
+            var drawDetails = pointSize >= MinPointSizeForDetails;
 
-            foreach (var anchor in layer.Anchors)
-            {
-                if (!ReferenceEquals(anchor, ignoreElement))
+            if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey))
+                foreach (var anchor in layer.Anchors)
                 {
-                    var dx = anchor.X - pos.X;
-                    var dy = anchor.Y - pos.Y;
-
-                    if (-halfSize <= dx && dx <= halfSize &&
-                        -halfSize <= dy && dy <= halfSize)
+                    if (!ReferenceEquals(anchor, ignoreElement))
                     {
-                        return anchor;
-                    }
-                }
-            }
-            foreach (var path in layer.Paths)
-            {
-                foreach (var point in path.Points)
-                {
-                    if (!ReferenceEquals(point, ignoreElement))
-                    {
-                        var dx = point.X - pos.X;
-                        var dy = point.Y - pos.Y;
+                        var dx = anchor.X - pos.X;
+                        var dy = anchor.Y - pos.Y;
 
                         if (-halfSize <= dx && dx <= halfSize &&
                             -halfSize <= dy && dy <= halfSize)
                         {
-                            return point;
+                            return anchor;
                         }
                     }
                 }
-            }
+            if (drawDetails && (bool)FindResource(DrawSelectionBoundsKey))
+                foreach (var handle in Misc.GetSelectionHandles(layer, rescale))
+                {
+                    var delta = handle.Position - pos.ToVector2();
+
+                    if (-halfSize <= delta.X && delta.X <= halfSize &&
+                        -halfSize <= delta.Y && delta.Y <= halfSize)
+                    {
+                        return handle;
+                    }
+                }
+            if (drawDetails && (bool)FindResource(DrawPointsKey))
+                foreach (var path in layer.Paths)
+                {
+                    foreach (var point in path.Points)
+                    {
+                        if (!ReferenceEquals(point, ignoreElement))
+                        {
+                            var dx = point.X - pos.X;
+                            var dy = point.Y - pos.Y;
+
+                            if (-halfSize <= dx && dx <= halfSize &&
+                                -halfSize <= dy && dy <= halfSize)
+                            {
+                                return point;
+                            }
+                        }
+                    }
+                }
             var p = pos.ToVector2();
             foreach (var component in layer.Components)
             {
@@ -428,37 +449,40 @@ namespace Fonte.App.Controls
                     return component;
                 }
             }
-            foreach (var guideline in Misc.GetAllGuidelines(layer))
-            {
-                if (!ReferenceEquals(guideline, ignoreElement))
+            var drawGuidelines = pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey);
+            if (drawGuidelines)
+                foreach (var guideline in Misc.GetAllGuidelines(layer))
                 {
-                    var dx = guideline.X - pos.X;
-                    var dy = guideline.Y - pos.Y;
-
-                    if (-halfSize <= dx && dx <= halfSize &&
-                        -halfSize <= dy && dy <= halfSize)
+                    if (!ReferenceEquals(guideline, ignoreElement))
                     {
-                        return guideline;
+                        var dx = guideline.X - pos.X;
+                        var dy = guideline.Y - pos.Y;
+
+                        if (-halfSize <= dx && dx <= halfSize &&
+                            -halfSize <= dy && dy <= halfSize)
+                        {
+                            return guideline;
+                        }
                     }
                 }
-            }
 
             if (testSegments)
             {
                 var tol_2 = 9 + rescale * (6 + rescale);
-                foreach (var path in layer.Paths)
-                {
-                    foreach (var segment in path.Segments)
+                if ((bool)FindResource(DrawStrokeKey))
+                    foreach (var path in layer.Paths)
                     {
-                        var proj = segment.ProjectPoint(p);
-
-                        if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
+                        foreach (var segment in path.Segments)
                         {
-                            return segment;
+                            var proj = segment.ProjectPoint(p);
+
+                            if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
+                            {
+                                return segment;
+                            }
                         }
                     }
-                }
-                if (Misc.GetSelectedGuideline(layer) is Data.Guideline guideline)
+                if (drawGuidelines && Misc.GetSelectedGuideline(layer) is Data.Guideline guideline)
                 {
                     var proj = BezierMath.ProjectPointOnLine(p, guideline.ToVector2(), guideline.Direction);
 

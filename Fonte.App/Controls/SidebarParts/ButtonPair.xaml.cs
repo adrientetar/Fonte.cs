@@ -49,7 +49,7 @@ namespace Fonte.App.Controls.SidebarParts
             }
         }
 
-        static void OnButtonChanged(object sender, DependencyPropertyChangedEventArgs e)
+        static void OnButtonChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             ((ButtonPair)sender).UpdateUI();
         }

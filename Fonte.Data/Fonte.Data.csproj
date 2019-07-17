@@ -144,7 +144,7 @@
     <Compile Include="Changes\AnchorXChange.cs" />
     <Compile Include="Changes\AnchorIsSelectedChange.cs" />
     <Compile Include="Changes\PointIsSelectedChange.cs" />
-    <Compile Include="Changes\PointSmoothChange.cs" />
+    <Compile Include="Changes\PointIsSmoothChange.cs" />
     <Compile Include="Changes\PointTypeChange.cs" />
     <Compile Include="Changes\PointYChange.cs" />
     <Compile Include="Changes\PointXChange.cs" />

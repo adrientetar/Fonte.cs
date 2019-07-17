@@ -14,4 +14,11 @@ namespace Fonte.Data.Interfaces
         void Redo();
         void Undo();
     }
+
+    internal interface IUndoStore : IUndoProvider
+    {
+        bool IsEnabled { get; set; }
+
+        void OnUndoGroupDisposed(int index);
+    }
 }
