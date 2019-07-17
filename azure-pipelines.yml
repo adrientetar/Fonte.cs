@@ -19,9 +19,11 @@ steps:
   inputs:
     restoreSolution: '$(solution)'
 
-- template: InstallDevCert-Steps.yml
-
-- template: MUX-InstallWindowsSDK-Steps.yml
+- task: DownloadSecureFile@1
+  name: devCert
+  displayName: 'Download Dev Certificate'
+  inputs:
+    secureFile: 'DevCert.pfx'
 
 - task: VSBuild@1
   displayName: 'Build the Solution'
@@ -29,7 +31,7 @@ steps:
     platform: 'x64'
     solution: '$(solution)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload'
+    msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload /p:PackageCertificateKeyFile="$(devCert.secureFilePath)"'
 
 - task: CopyFiles@2
   displayName: 'Copy Files to Actifacts Directory'
