@@ -105,6 +105,15 @@
     <Compile Include="CanvasPage.xaml.cs">
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Commands\SetStartPointCommand.cs" />
+    <Compile Include="Commands\ReversePathCommand.cs" />
+    <Compile Include="Commands\ReverseAllPathsCommand.cs" />
+    <Compile Include="Commands\MakeGuidelineLocalCommand.cs" />
+    <Compile Include="Commands\MakeGuidelineGlobalCommand.cs" />
+    <Compile Include="Commands\DecomposeComponentCommand.cs" />
+    <Compile Include="Commands\AddAnchorCommand.cs" />
+    <Compile Include="Commands\AddGuidelineCommand.cs" />
+    <Compile Include="Commands\AddComponentCommand.cs" />
     <Compile Include="Controls\DesignCanvas.xaml.cs">
       <DependentUpon>DesignCanvas.xaml</DependentUpon>
     </Compile>

@@ -10,11 +10,13 @@ namespace Fonte.App.Commands
 
     public class ReverseAllPathsCommand : ICommand
     {
+#pragma warning disable CS0067
         public event EventHandler CanExecuteChanged;
+#pragma warning restore CS0067
 
         public bool CanExecute(object parameter)
         {
-            return true;  // layer != null?
+            return true;
         }
 
         public void Execute(object parameter)

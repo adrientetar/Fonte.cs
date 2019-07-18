@@ -13,13 +13,17 @@ namespace Fonte.App.Commands
 
     public class AddComponentCommand : ICommand
     {
+#pragma warning disable CS0067
         public event EventHandler CanExecuteChanged;
+#pragma warning restore CS0067
 
         public bool CanExecute(object parameter)
         {
-            var layer = (Data.Layer)parameter;
-
-            return layer.Parent?.Parent.Glyphs.Count > 1;
+            if (parameter is Data.Layer layer)
+            {
+                return layer.Parent?.Parent.Glyphs.Count > 1;
+            }
+            return false;
         }
 
         public async void Execute(object parameter)
