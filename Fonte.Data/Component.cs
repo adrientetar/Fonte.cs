@@ -72,57 +72,25 @@ namespace Fonte.Data
         public Rect Bounds => Layer != null ? Rect.Transform(Layer.Bounds, Transformation) : Rect.Empty;
 
         [JsonIgnore]
-        public CanvasGeometry ClosedCanvasPath
-        {
-            get
-            {
-                var device = CanvasDevice.GetSharedDevice();
-                var builder = new CanvasPathBuilder(device);
-                builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-
-                var layer = Layer;
-                if (layer != null)
-                {
-                    builder.AddGeometry(layer.ClosedCanvasPath);
-                }
-
-                return CanvasGeometry.CreatePath(builder).Transform(Transformation);
-            }
-        }
+        public CanvasGeometry ClosedCanvasPath => CollectPaths(layer => layer.ClosedCanvasPath);
 
         [JsonIgnore]
         public Layer Layer
         {
             get
             {
-                try
+                var font = Parent?.Parent.Parent;
+
+                if (font != null && font.TryGetGlyph(GlyphName, out Glyph glyph))
                 {
-                    var font = Parent?.Parent.Parent;
-                    return font.GetGlyph(GlyphName).Layers[0];
+                    return glyph.Layers[0];  // XXX
                 }
-                catch (Exception) { }
                 return null;
             }
         }
 
         [JsonIgnore]
-        public CanvasGeometry OpenCanvasPath
-        {
-            get
-            {
-                var device = CanvasDevice.GetSharedDevice();
-                var builder = new CanvasPathBuilder(device);
-                builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
-
-                var layer = Layer;
-                if (layer != null)
-                {
-                    builder.AddGeometry(layer.OpenCanvasPath);
-                }
-
-                return CanvasGeometry.CreatePath(builder).Transform(Transformation);
-            }
-        }
+        public CanvasGeometry OpenCanvasPath => CollectPaths(layer => layer.OpenCanvasPath);
 
         [JsonIgnore]
         public Vector2 Origin => Vector2.Transform(Vector2.Zero, Transformation);
@@ -142,6 +110,24 @@ namespace Fonte.Data
         public override string ToString()
         {
             return $"{nameof(Component)}({GlyphName}, {Transformation})";
+        }
+
+        CanvasGeometry CollectPaths(Func<Layer, CanvasGeometry> predicate)
+        {
+            var device = CanvasDevice.GetSharedDevice();
+            var builder = new CanvasPathBuilder(device);
+            builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
+
+            if (Layer is Layer layer)
+            {
+                if (layer == Parent)
+                    throw new InvalidOperationException($"Component of glyph '{Parent.Name}' is recursive");
+
+                builder.AddGeometry(predicate.Invoke(layer));
+            }
+
+            return CanvasGeometry.CreatePath(builder)
+                                 .Transform(Transformation);
         }
     }
 

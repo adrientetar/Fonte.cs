@@ -269,14 +269,17 @@ namespace Fonte.Data
 
         public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
-            foreach (var point in Points)
+            using (var group = Parent?.CreateUndoGroup())
             {
-                if (!selectionOnly || point.IsSelected)
+                foreach (var point in Points)
                 {
-                    var pos = Vector2.Transform(point.ToVector2(), matrix);
+                    if (!selectionOnly || point.IsSelected)
+                    {
+                        var pos = Vector2.Transform(point.ToVector2(), matrix);
 
-                    point.X = pos.X;
-                    point.Y = pos.Y;
+                        point.X = pos.X;
+                        point.Y = pos.Y;
+                    }
                 }
             }
         }

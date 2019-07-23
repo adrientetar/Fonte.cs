@@ -46,7 +46,8 @@
                                 ZoomMode="Enabled"
                                 MinZoomFactor="0.01"
                                 MaxZoomFactor="10"
-                                StateChanged="OnScrollerStateChanged">
+                                StateChanged="OnScrollerStateChanged"
+                                ZoomCompleted="OnScrollerZoomCompleted">
             <!-- Using a very large size to give an "infinite canvas" feel. If a truly infinite canvas is needed then extra work would be required to detect when a user approaches 
                  the current extent, waits for the Scroller state to hit Idle, and then rebase the content and viewport offset so that the user can continue.  Using 800k as the max 
                  physical size will avoid the strange rendering artifacts that can occur as things approach the precision of floats while also being large enough that rebasing will

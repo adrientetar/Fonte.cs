@@ -103,11 +103,7 @@ namespace Fonte.App.Utilities
                 foreach (var guideline in guidelines)
                 {
                     var pos = guideline.ToVector2();
-                    var rad = Conversion.ToRadians(guideline.Angle);
-                    var direction = new Vector2(
-                        (float)Math.Cos(rad),
-                        (float)Math.Sin(rad)
-                    );
+                    var direction = guideline.Direction;
 
                     ds.DrawLine(pos - direction * halfSize, pos - direction * 9999f, guideline.IsSelected ? selectedColor : color, strokeWidth: rescale);
                     ds.DrawLine(pos + direction * halfSize, pos + direction * 9999f, guideline.IsSelected ? selectedColor : color, strokeWidth: rescale);

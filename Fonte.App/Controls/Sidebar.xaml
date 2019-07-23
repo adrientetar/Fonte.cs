@@ -77,8 +77,9 @@
             </Style>
             <Style x:Key="HeaderTextBlockStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Margin" Value="4,1,4,1"/>
+                <Setter Property="Margin" Value="4,0,0,2"/>
                 <Setter Property="Padding" Value="0"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
             <Style x:Key="IconGridStyle" BasedOn="{StaticResource HeaderGridStyle}" TargetType="Grid">
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
@@ -118,22 +119,64 @@
                     <Setter Property="Width" Value="16"/>
                 </Style>
             </Grid.Resources>
-            <Button Click="OnAlignLeftButtonClick" ToolTipService.ToolTip="Align left" Grid.Column="1">
+            <Button Command="{x:Bind AlignLeftCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Align Left"
+                    Grid.Column="1">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Left"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M0.5,0 v16 M3.5,5.5 h10 v5 h-10 Z"/>
             </Button>
-            <Button Click="OnCenterHorzButtonClick" ToolTipService.ToolTip="Center horizontally" Grid.Column="2">
+            <Button Command="{x:Bind CenterHorizontallyCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Center horizontally"
+                    Grid.Column="2">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift" Key="C"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M7.5,0 v5.5 M7.5,10.5 v5.5 M1.5,5.5 h12 v5 h-12 Z"/>
             </Button>
-            <Button Click="OnAlignRightButtonClick" ToolTipService.ToolTip="Align right" Grid.Column="3">
+            <Button Command="{x:Bind AlignRightCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Align right"
+                    Grid.Column="3">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Right"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M13.5,0 v16 M0.5,5.5 h10 v5 h-10 Z"/>
             </Button>
-            <Button Click="OnAlignTopButtonClick" ToolTipService.ToolTip="Align top" Grid.Column="4">
+            <Button Command="{x:Bind AlignTopCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Align top"
+                    Grid.Column="4">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Up"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M0,0.5 h16 M5.5,3.5 v10 h5 v-10 Z"/>
             </Button>
-            <Button Click="OnCenterVertButtonClick" ToolTipService.ToolTip="Center vertically" Grid.Column="5">
+            <Button Command="{x:Bind CenterVerticallyCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Center vertically"
+                    Grid.Column="5">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift" Key="M"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M0,8.5 h5.5 M10.5,8.5 h5.5 M5.5,2.5 v12 h5 v-12 Z"/>
             </Button>
-            <Button Click="OnAlignBottomButtonClick" ToolTipService.ToolTip="Align bottom" Grid.Column="6">
+            <Button Command="{x:Bind AlignBottomCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Align bottom"
+                    Grid.Column="6">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Down"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M0,15.5 h16 M5.5,2.5 v10 h5 v-10 Z"/>
             </Button>
         </Grid>
@@ -155,22 +198,46 @@
                     <Setter Property="Width" Value="16"/>
                 </Style>
             </Grid.Resources>
-            <Button Click="OnUnionButtonClick" ToolTipService.ToolTip="Union" Grid.Column="1">
+            <Button Command="{x:Bind UnitePathsCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Union"
+                    Grid.Column="1">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control,Menu" Key="U"/>
+                </Button.KeyboardAccelerators>
+
                 <Path Data="M1.5,1.5 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
             </Button>
-            <Button Click="OnExcludeButtonClick" ToolTipService.ToolTip="Exclude" Grid.Column="2">
+            <Button Command="{x:Bind SubtractPathsCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Subtract"
+                    Grid.Column="2">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control,Menu" Key="S"/>
+                </Button.KeyboardAccelerators>
+
                 <Grid>
                     <Path Data="M1.5,1.5 h8 v4 h-4 v4 h-4 Z"/>
                     <Path Fill="Transparent" Data="M5.5,5.5 h8 v8 h-8 Z"/>
                 </Grid>
             </Button>
-            <Button Click="OnIntersectButtonClick" ToolTipService.ToolTip="Intersect" Grid.Column="3">
+            <Button Command="{x:Bind IntersectPathsCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Intersect"
+                    Grid.Column="3">
+                <Button.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Control,Menu" Key="I"/>
+                </Button.KeyboardAccelerators>
+
                 <Grid>
                     <Path Data="M5.5,5.5 h4 v4 h-4 Z"/>
                     <Path Fill="Transparent" Data="M1.5,1.5 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
                 </Grid>
             </Button>
-            <Button Click="OnXorButtonClick" ToolTipService.ToolTip="Xor" Grid.Column="4">
+            <Button Command="{x:Bind XorPathsCommand}"
+                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                    ToolTipService.ToolTip="Xor"
+                    Grid.Column="4">
                 <Path Data="M1.5,1.5 h8 v8 h-8 v-8 Z M5.5,5.5 h8 v8 h-8 v-8 Z"/>
             </Button>
         </Grid>
@@ -291,9 +358,33 @@
             </parts:ButtonPair>
         </Grid>
         <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.Resources>
+                <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+            </Grid.Resources>
+
             <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Layers"/>
+            <Button Click="OnAddLayerButtonClick" Margin="0,-2,0,-2" Height="18" Width="18" Padding="0" Grid.Column="1">
+                <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
+            </Button>
         </Grid>
-        <ListView ItemsSource="{x:Bind Layers, Mode=OneWay}" Grid.Row="7">
+        <ListView x:Name="LayersView"
+                  IsItemClickEnabled="True"
+                  ItemClick="OnLayersItemClick"
+                  ItemsSource="{x:Bind Layers, Mode=OneWay}"
+                  Grid.Row="7">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel>
+                        <VirtualizingStackPanel.ChildrenTransitions>
+                            <TransitionCollection/>
+                        </VirtualizingStackPanel.ChildrenTransitions>
+                    </VirtualizingStackPanel>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:Layer">
                     <Grid Margin="-4,0,-4,0">

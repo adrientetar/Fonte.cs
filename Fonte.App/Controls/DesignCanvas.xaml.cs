@@ -124,9 +124,7 @@ namespace Fonte.App.Controls
 
             if (IsEnabled)
             {
-                // The StateChanged event is not sent on non-animated view changes,
-                // so set DPI manually here.
-                Canvas.DpiScale = CenterOnMetrics(animated: false);
+                CenterOnMetrics(animated: false);
             }
             Invalidate();
 
@@ -176,10 +174,21 @@ namespace Fonte.App.Controls
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         void OnScrollerStateChanged(muxp.Scroller sender, object args)
         {
-            if (Scroller.State == muxc.InteractionState.Idle)
+            if (sender.State == muxc.InteractionState.Idle)
             {
-                Canvas.DpiScale = sender.ZoomFactor;
+                OnZoomRealized();
             }
+        }
+
+        // This is fired when doing non-animated programmatic view changes, otherwise it's on StateChanged.
+        void OnScrollerZoomCompleted(muxp.Scroller sender, object args)
+        {
+            OnZoomRealized();
+        }
+
+        void OnZoomRealized()
+        {
+            Canvas.DpiScale = Scroller.ZoomFactor;
         }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
 
@@ -346,7 +355,7 @@ namespace Fonte.App.Controls
             throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
         }
 
-        public float CenterOnMetrics(bool animated = true)
+        public void CenterOnMetrics(bool animated = true)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             if (Scroller.ViewportHeight > 0)
@@ -360,10 +369,7 @@ namespace Fonte.App.Controls
                     (_matrix.Translation.Y - .5f * fontHeight - master.Descender) * targetZoomFactor - .5f * Scroller.ViewportHeight,
                     targetZoomFactor,
                     animated);
-
-                return targetZoomFactor;
             }
-            return float.NaN;
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 

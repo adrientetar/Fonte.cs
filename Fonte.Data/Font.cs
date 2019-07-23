@@ -103,29 +103,35 @@ namespace Fonte.Data
             }
         }
 
-        // TODO: add accelerator
-        public Glyph GetGlyph(string name)
+        public bool TryGetGlyph(string name, out Glyph glyph)
         {
-            foreach (var glyph in Glyphs)
+            // TODO: add accelerator
+            foreach (var g in Glyphs)
             {
-                if (glyph.Name == name)
+                if (g.Name == name)
                 {
-                    return glyph;
+                    glyph = g;
+                    return true;
                 }
             }
-            return null;
+
+            glyph = new Glyph(name);
+            return false;
         }
 
-        public Master GetMaster(string name)
+        public bool TryGetMaster(string name, out Master master)
         {
-            foreach (var master in Masters)
+            foreach (var m in Masters)
             {
-                if (master.Name == name)
+                if (m.Name == name)
                 {
-                    return master;
+                    master = m;
+                    return true;
                 }
             }
-            return null;
+
+            master = new Master(name);
+            return false;
         }
 
         public override string ToString()

@@ -16,7 +16,7 @@ namespace Fonte.Data
     using System.Collections.Generic;
     using System.Numerics;
 
-    public partial class Layer
+    public partial class Layer : IComparable<Layer>
     {
         internal List<Anchor> _anchors;
         internal List<Component> _components;
@@ -274,13 +274,13 @@ namespace Fonte.Data
         {
             get
             {
-                return !string.IsNullOrEmpty(MasterName) && string.IsNullOrEmpty(_name);
+                return !string.IsNullOrEmpty(MasterName) && string.IsNullOrEmpty(Name);
             }
         }
 
         [JsonIgnore]
         public bool IsVisible
-        { get; set; } = true;
+        { get; set; }
 
         [JsonIgnore]
         public Margins Margins
@@ -317,7 +317,13 @@ namespace Fonte.Data
         {
             get
             {
-                return Parent?.Parent.GetMaster(MasterName);
+                var font = Parent?.Parent;
+
+                if (font != null && font.TryGetMaster(MasterName, out Master master))
+                {
+                    return master;
+                }
+                return null;
             }
         }
 
@@ -468,9 +474,16 @@ namespace Fonte.Data
             }
         }
 
-        public void Clone()
+        public Layer Clone()
         {
-            throw new NotImplementedException();
+            var json = JsonConvert.SerializeObject(this);
+
+            var layer = JsonConvert.DeserializeObject<Layer>(json);
+            // TODO: consider doing Culture-specific formatting, e.g. taking IFormatProvider as optional arg
+            layer.Name = DateTime.UtcNow.ToString("MMM dd yyyy @ HH:mm");
+            layer.Parent = Parent;
+
+            return layer;
         }
 
         public IChangeGroup CreateUndoGroup()
@@ -478,16 +491,19 @@ namespace Fonte.Data
             return Parent.UndoStore.CreateUndoGroup();
         }
 
-        public Anchor GetAnchor(string name)
+        public bool TryGetAnchor(string name, out Anchor anchor)
         {
-            foreach (var anchor in _anchors)
+            foreach (var a in _anchors)
             {
-                if (anchor.Name == name)
+                if (a.Name == name)
                 {
-                    return anchor;
+                    anchor = a;
+                    return true;
                 }
             }
-            return null;  // XXX
+
+            anchor = new Anchor(0, 0, name);
+            return false;
         }
 
         public override string ToString()
@@ -566,6 +582,27 @@ namespace Fonte.Data
 
             builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
             return CanvasGeometry.CreatePath(builder);
+        }
+
+        int IComparable<Layer>.CompareTo(Layer other)
+        {
+            var masterName = MasterName;
+            var otherMasterName = other.MasterName;
+
+            if (string.IsNullOrEmpty(otherMasterName)) return -1;
+            if (string.IsNullOrEmpty(masterName)) return 1;
+            if (masterName == otherMasterName)
+            {
+                var name = Name;
+                var otherName = other.Name;
+
+                if (string.IsNullOrEmpty(name)) return -1;
+                if (string.IsNullOrEmpty(otherName)) return 1;
+
+                return name.CompareTo(otherName);
+            }
+
+            return masterName.CompareTo(otherMasterName);
         }
     }
 }

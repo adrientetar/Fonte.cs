@@ -1,8 +1,8 @@
 ﻿
 namespace Fonte.App.Controls
 {
+    using Fonte.App.Commands;
     using Fonte.App.Utilities;
-    using Fonte.Data.Geometry;
     using Fonte.Data.Utilities;
 
     using System;
@@ -10,12 +10,12 @@ namespace Fonte.App.Controls
     using System.Globalization;
     using System.Linq;
     using System.Numerics;
+    using System.Windows.Input;
     using Windows.ApplicationModel;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
-    // TODO add a ViewModel
     public partial class Sidebar : UserControl
     {
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
@@ -72,6 +72,18 @@ namespace Fonte.App.Controls
             set { SetValue(YSizeProperty, value); }
         }
 
+        public ICommand AlignLeftCommand { get; } = new AlignLeftCommand();
+        public ICommand CenterHorizontallyCommand { get; } = new CenterHorizontallyCommand();
+        public ICommand AlignRightCommand { get; } = new AlignRightCommand();
+        public ICommand AlignTopCommand { get; } = new AlignTopCommand();
+        public ICommand CenterVerticallyCommand { get; } = new CenterVerticallyCommand();
+        public ICommand AlignBottomCommand { get; } = new AlignBottomCommand();
+
+        public ICommand UnitePathsCommand { get; } = new UnitePathsCommand();
+        public ICommand SubtractPathsCommand { get; } = new SubtractPathsCommand();
+        public ICommand IntersectPathsCommand { get; } = new IntersectPathsCommand();
+        public ICommand XorPathsCommand { get; } = new XorPathsCommand();
+
         public Sidebar()
         {
             InitializeComponent();
@@ -110,11 +122,9 @@ namespace Fonte.App.Controls
         void OnDataRefreshing()
         {
             var layer = Layer;
-
             if (layer != null && layer.IsEditing)
-            {
                 return;
-            }
+
             if (layer != null && !layer.SelectionBounds.IsEmpty)
             {
                 var culture = CultureInfo.CurrentUICulture;
@@ -130,7 +140,28 @@ namespace Fonte.App.Controls
                 XPosition = YPosition = XSize = YSize = string.Empty;
             }
 
-            Layers = layer?.Parent?.Layers;
+            if (layer?.Parent is Data.Glyph glyph)
+            {
+                // TODO: we could rewind this more selectively...
+                Layers = SortAllLayers(glyph);
+                LayersView.SelectedItem = Layer;
+            }
+            else
+            {
+                Layers = null;
+            }
+
+            ((AlignLeftCommand)AlignLeftCommand).NotifyCanExecuteChanged();
+            ((CenterHorizontallyCommand)CenterHorizontallyCommand).NotifyCanExecuteChanged();
+            ((AlignRightCommand)AlignRightCommand).NotifyCanExecuteChanged();
+            ((AlignTopCommand)AlignTopCommand).NotifyCanExecuteChanged();
+            ((CenterVerticallyCommand)CenterVerticallyCommand).NotifyCanExecuteChanged();
+            ((AlignBottomCommand)AlignBottomCommand).NotifyCanExecuteChanged();
+
+            ((UnitePathsCommand)UnitePathsCommand).NotifyCanExecuteChanged();
+            ((SubtractPathsCommand)SubtractPathsCommand).NotifyCanExecuteChanged();
+            ((IntersectPathsCommand)IntersectPathsCommand).NotifyCanExecuteChanged();
+            ((XorPathsCommand)XorPathsCommand).NotifyCanExecuteChanged();
         }
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
@@ -140,118 +171,13 @@ namespace Fonte.App.Controls
 
         /**/
 
-        void OnAlignLeftButtonClick(object sender, RoutedEventArgs args)
+        void OnAddLayerButtonClick(object sender, RoutedEventArgs args)
         {
-            AlignSelectedPaths((path, refBounds) => new Vector2(
-                    path.Bounds.Left > refBounds.Left ? refBounds.Left - path.Bounds.Left : 0,
-                    0
-                ));
-        }
+            var layer = (Data.Layer)LayersView.SelectedItem;
+            var layers = layer.Parent.Layers;
 
-        void OnCenterHorzButtonClick(object sender, RoutedEventArgs args)
-        {
-            AlignSelectedPaths((path, refBounds) => {
-                    var refXMid = refBounds.Left + Math.Round(.5 * refBounds.Width);
-                    var xMid = path.Bounds.Left + Math.Round(.5 * path.Bounds.Width);
-                    return new Vector2(
-                        (float)(refXMid - xMid),
-                        0
-                    );
-                });
-        }
-
-        void OnAlignRightButtonClick(object sender, RoutedEventArgs args)
-        {
-            AlignSelectedPaths((path, refBounds) => new Vector2(
-                    path.Bounds.Right < refBounds.Right ? refBounds.Right - path.Bounds.Right : 0,
-                    0
-                ));
-        }
-
-        void OnAlignTopButtonClick(object sender, RoutedEventArgs args)
-        {
-            AlignSelectedPaths((path, refBounds) => new Vector2(
-                    0,
-                    path.Bounds.Top < refBounds.Top ? refBounds.Top - path.Bounds.Top : 0
-                ));
-        }
-
-        void OnCenterVertButtonClick(object sender, RoutedEventArgs args)
-        {
-            AlignSelectedPaths((path, refBounds) => {
-                    var refYMid = refBounds.Bottom + Math.Round(.5 * refBounds.Height);
-                    var yMid = path.Bounds.Bottom + Math.Round(.5 * path.Bounds.Height);
-                    return new Vector2(
-                        0,
-                        (float)(refYMid - yMid)
-                    );
-                });
-        }
-
-        void OnAlignBottomButtonClick(object sender, RoutedEventArgs args)
-        {
-            AlignSelectedPaths((path, refBounds) => new Vector2(
-                    0,
-                    path.Bounds.Bottom > refBounds.Bottom ? refBounds.Bottom - path.Bounds.Bottom : 0
-                ));
-        }
-
-        void OnExcludeButtonClick(object sender, RoutedEventArgs args)
-        {
-            BinaryBooleanOp((a, b) => BooleanOps.Exclude(a, b));
-        }
-
-        void OnIntersectButtonClick(object sender, RoutedEventArgs args)
-        {
-            BinaryBooleanOp((a, b) => BooleanOps.Intersect(a, b));
-        }
-
-        // TODO skip the no-intersections (same geometry after filtering) case
-        void OnUnionButtonClick(object sender, RoutedEventArgs args)
-        {
-            if (Layer != null)
-            {
-                var useSelection = Enumerable.Any(Layer.Selection, item => item is Data.Point);
-
-                var usePaths = new List<Data.Path>();
-                var retainPaths = new List<Data.Path>();
-                foreach (var path in Layer.Paths)
-                {
-                    if (path.IsOpen)
-                    {
-                        retainPaths.Add(path);
-                    }
-                    else
-                    {
-                        if (useSelection && !Enumerable.Any(path.Points, point => point.IsSelected))
-                        {
-                            retainPaths.Add(path);
-                        }
-                        else
-                        {
-                            usePaths.Add(path);
-                        }
-                    }
-                }
-
-                var resultPaths = BooleanOps.Union(usePaths);
-                if (resultPaths.Count != usePaths.Count)
-                {
-                    using (var group = Layer.CreateUndoGroup())
-                    {
-                        Layer.Paths.Clear();
-                        Layer.Paths.AddRange(resultPaths);
-                        Layer.Paths.AddRange(retainPaths);
-
-                        ((App)Application.Current).InvalidateData();
-                    }
-                }
-            }
-        }
-
-        void OnXorButtonClick(object sender, RoutedEventArgs args)
-        {
-            BinaryBooleanOp((a, b) => BooleanOps.Xor(a, b));
+            layers.Add(layer.Clone());
+            ((App)Application.Current).InvalidateData();
         }
 
         void OnHorzMirrorButtonClick(object sender, RoutedEventArgs args)
@@ -393,86 +319,39 @@ namespace Fonte.App.Controls
             }
         }
 
+        void OnLayersItemClick(object sender, ItemClickEventArgs e)
+        {
+            var layer = (Data.Layer)e.ClickedItem;
+
+            // When switching to that layer we actually add it to the model
+            if (layer.Parent == null)
+            {
+                Layer.Parent.Layers.Add(layer);
+            }
+            Layer = layer;
+        }
+
         /**/
-
-        void AlignSelectedPaths(Func<Data.Path, Rect, Vector2> transformFunc)
-        {
-            var selectedBounds = new Rect();
-            var selectedPaths = new List<Data.Path>();
-            foreach (var path in Layer.Paths)
-            {
-                if (Enumerable.Any(path.Points, point => point.IsSelected))
-                {
-                    selectedBounds.Union(path.Bounds);
-                    selectedPaths.Add(path);
-                }
-            }
-
-            foreach (var path in selectedPaths)
-            {
-                var delta = transformFunc(path, selectedBounds);
-
-                if (delta.Length() != 0)
-                {
-                    path.Transform(Matrix3x2.CreateTranslation(delta));
-
-                    ((App)Application.Current).InvalidateData();
-                }
-            }
-        }
-
-        void BinaryBooleanOp(Func<IEnumerable<Data.Path>, IEnumerable<Data.Path>, List<Data.Path>> booleanFunc)
-        {
-            if (Layer != null && Layer.Paths.Count >= 2)
-            {
-                var useSelection = Enumerable.Any(Layer.Selection, item => item is Data.Point);
-
-                var usePaths = new List<Data.Path>();
-                var retainPaths = new List<Data.Path>();
-                Data.Path refPath = null;
-                foreach (var path in Layer.Paths)
-                {
-                    if (path.IsOpen)
-                    {
-                        retainPaths.Add(path);
-                    }
-                    //else
-                    //{
-                    if (refPath == null && Enumerable.Any(path.Points, point => point.IsSelected))
-                    {
-                        refPath = path;
-                    }
-                    else
-                    {
-                        usePaths.Add(path);
-                    }
-                    //}
-                }
-                // TODO: consider dropping this behavior, more confusing than useful
-                if (refPath == null)
-                {
-                    refPath = usePaths.Last();
-                    usePaths.RemoveAt(usePaths.Count - 1);
-                }
-
-                var resultPaths = booleanFunc(usePaths, new List<Data.Path>() { refPath });
-                if (resultPaths.Count != usePaths.Count + 1)
-                {
-                    using (var group = Layer.CreateUndoGroup())
-                    {
-                        Layer.Paths.Clear();
-                        Layer.Paths.AddRange(resultPaths);
-                        Layer.Paths.AddRange(retainPaths);
-
-                        ((App)Application.Current).InvalidateData();
-                    }
-                }
-            }
-        }
 
         float GetControlSign(object control)
         {
             return ((string)((FrameworkElement)control).Tag) == "!" ? -1f : 1f;
+        }
+
+        IList<Data.Layer> SortAllLayers(Data.Glyph glyph)
+        {
+            var font = glyph.Parent;
+            var layers = new List<Data.Layer>(glyph.Layers);
+            foreach (var master in font.Masters)
+            {
+                if (!glyph.TryGetLayer(master.Name, out Data.Layer layer))
+                {
+                    layers.Append(layer);
+                }
+            }
+            layers.Sort();
+
+            return layers;
         }
     }
 }

@@ -57,10 +57,12 @@ namespace Fonte.App.Delegates
 
         public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
+            var control = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-            if (alt.HasFlag(CoreVirtualKeyStates.Down) && (
-                args.Key == VirtualKey.Left ||
-                args.Key == VirtualKey.Right))
+            var tab = Window.Current.CoreWindow.GetKeyState(VirtualKey.Tab);
+            if (control.HasFlag(CoreVirtualKeyStates.Down) && tab.HasFlag(CoreVirtualKeyStates.Down) && (
+                    args.Key == VirtualKey.Left ||
+                    args.Key == VirtualKey.Right))
             {
                 var focusPoint = canvas.Layer.Selection.OfType<Data.Point>().LastOrDefault();
 
@@ -104,7 +106,6 @@ namespace Fonte.App.Delegates
                 {
                     dx *= 10;
                     dy *= 10;
-                    var control = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
                     if (control.HasFlag(CoreVirtualKeyStates.Down))
                     {
                         dx *= 10;
@@ -306,11 +307,11 @@ namespace Fonte.App.Delegates
 
         protected MoveMode GetMoveMode()
         {
-            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftMenu);
-            var windows = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows);
+            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
 
             MoveMode mode;
-            if (windows.HasFlag(CoreVirtualKeyStates.Down) &&
+            if (shift.HasFlag(CoreVirtualKeyStates.Down) &&
                 alt.HasFlag(CoreVirtualKeyStates.Down))
             {
                 mode = MoveMode.InterpolateCurve;

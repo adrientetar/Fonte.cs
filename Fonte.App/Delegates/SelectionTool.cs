@@ -224,7 +224,7 @@ namespace Fonte.App.Delegates
                         }
                     }
                 }
-                if (_tappedItem is Misc.GuidelineRule rule)
+                else if (_tappedItem is Misc.GuidelineRule rule)
                 {
                     var guideline = rule.Guideline;
                     var angle = Math.Atan2(pos.Y - guideline.Y, pos.X - guideline.X);

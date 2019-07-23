@@ -295,6 +295,8 @@ namespace Fonte.App.Utilities
                     if (component.IsSelected)
                     {
                         var t = component.Transformation;
+                        // TODO: could round scale to 2 decimal digits, like we do when transforming
+                        // worth having a round to digits (default = 2) method here?
                         t.M31 = RoundToGrid(t.M31);
                         t.M32 = RoundToGrid(t.M32);
                         component.Transformation = t;

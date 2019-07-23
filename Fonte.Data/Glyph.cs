@@ -69,6 +69,21 @@ namespace Fonte.Data
             }
         }
 
+        public bool TryGetLayer(string masterName, out Layer layer)
+        {
+            foreach (var l in Layers)
+            {
+                if (l.IsMasterLayer && l.MasterName == masterName)
+                {
+                    layer = l;
+                    return true;
+                }
+            }
+
+            layer = new Layer(masterName);
+            return false;
+        }
+
         public override string ToString()
         {
             return $"{nameof(Glyph)}({Name}, {Layers.Count} layers)";

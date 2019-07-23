@@ -105,6 +105,9 @@
     <Compile Include="CanvasPage.xaml.cs">
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Commands\AlignSelectedPathsCommand.cs" />
+    <Compile Include="Commands\BinaryBooleanOpCommand.cs" />
+    <Compile Include="Commands\UnitePathsCommand.cs" />
     <Compile Include="Commands\SetStartPointCommand.cs" />
     <Compile Include="Commands\ReversePathCommand.cs" />
     <Compile Include="Commands\ReverseAllPathsCommand.cs" />
