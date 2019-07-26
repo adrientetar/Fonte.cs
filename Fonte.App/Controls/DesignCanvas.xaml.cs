@@ -378,128 +378,38 @@ namespace Fonte.App.Controls
             if (anchor.Parent == null || anchor.Parent != Layer)
                 throw new InvalidOperationException($"{anchor} is not a member of {Layer}");
 
-            var pos = GetClientPosition(anchor.ToVector2().ToPoint());
+            var pos = FromCanvasPosition(anchor.ToVector2().ToPoint());
             pos.X += 10;
             pos.Y -= 11;
             AnchorTextBox.StartEditing(anchor, pos);
         }
 
-        public Point GetClientPosition(Point canvasPos)
+        public Point FromCanvasPosition(Point pos)
         {
-            return Vector2.Transform(canvasPos.ToVector2(), GetMatrix()).ToPoint();
+            return Vector2.Transform(pos.ToVector2(), GetMatrix()).ToPoint();
         }
 
-        public Point GetCanvasPosition(Point clientPos)
+        public Point FromClientPosition(Point pos)
         {
-            return Vector2.Transform(clientPos.ToVector2(), GetInverseMatrix()).ToPoint();
+            return Vector2.Transform(pos.ToVector2(), GetInverseMatrix()).ToPoint();
         }
 
         public object HitTest(Point pos, ILayerElement ignoreElement = null, bool testSegments = true)
         {
-            var layer = Layer;
-            var rescale = 1f / Canvas.DpiScale;
-            var halfSize = 4 * rescale;
-
             var pointSize = PointSize;
             var drawDetails = pointSize >= MinPointSizeForDetails;
 
-            if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey))
-                foreach (var anchor in layer.Anchors)
-                {
-                    if (!ReferenceEquals(anchor, ignoreElement))
-                    {
-                        var dx = anchor.X - pos.X;
-                        var dy = anchor.Y - pos.Y;
+            return UIBroker.HitTest(Layer, pos, 1f / ScaleFactor, ignoreElement: ignoreElement,
+                                    testAnchors: drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey),
+                                    testGuidelines: pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey),
+                                    testSelectionHandles: drawDetails && (bool)FindResource(DrawSelectionBoundsKey),
+                                    testPoints: drawDetails && (bool)FindResource(DrawPointsKey),
+                                    testSegments: testSegments);
+        }
 
-                        if (-halfSize <= dx && dx <= halfSize &&
-                            -halfSize <= dy && dy <= halfSize)
-                        {
-                            return anchor;
-                        }
-                    }
-                }
-            if (drawDetails && (bool)FindResource(DrawSelectionBoundsKey))
-                foreach (var handle in Misc.GetSelectionHandles(layer, rescale))
-                {
-                    var delta = handle.Position - pos.ToVector2();
-
-                    if (-halfSize <= delta.X && delta.X <= halfSize &&
-                        -halfSize <= delta.Y && delta.Y <= halfSize)
-                    {
-                        return handle;
-                    }
-                }
-            if (drawDetails && (bool)FindResource(DrawPointsKey))
-                foreach (var path in layer.Paths)
-                {
-                    foreach (var point in path.Points)
-                    {
-                        if (!ReferenceEquals(point, ignoreElement))
-                        {
-                            var dx = point.X - pos.X;
-                            var dy = point.Y - pos.Y;
-
-                            if (-halfSize <= dx && dx <= halfSize &&
-                                -halfSize <= dy && dy <= halfSize)
-                            {
-                                return point;
-                            }
-                        }
-                    }
-                }
-            var p = pos.ToVector2();
-            foreach (var component in layer.Components)
-            {
-                if (!ReferenceEquals(component, ignoreElement) && component.ClosedCanvasPath.FillContainsPoint(p))
-                {
-                    return component;
-                }
-            }
-            var drawGuidelines = pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey);
-            if (drawGuidelines)
-                foreach (var guideline in Misc.GetAllGuidelines(layer))
-                {
-                    if (!ReferenceEquals(guideline, ignoreElement))
-                    {
-                        var dx = guideline.X - pos.X;
-                        var dy = guideline.Y - pos.Y;
-
-                        if (-halfSize <= dx && dx <= halfSize &&
-                            -halfSize <= dy && dy <= halfSize)
-                        {
-                            return guideline;
-                        }
-                    }
-                }
-
-            if (testSegments)
-            {
-                var tol_2 = 9 + rescale * (6 + rescale);
-                if ((bool)FindResource(DrawStrokeKey))
-                    foreach (var path in layer.Paths)
-                    {
-                        foreach (var segment in path.Segments)
-                        {
-                            var proj = segment.ProjectPoint(p);
-
-                            if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
-                            {
-                                return segment;
-                            }
-                        }
-                    }
-                if (drawGuidelines && Misc.GetSelectedGuideline(layer) is Data.Guideline guideline)
-                {
-                    var proj = BezierMath.ProjectPointOnLine(p, guideline.ToVector2(), guideline.Direction);
-
-                    if ((proj - p).LengthSquared() <= tol_2)
-                    {
-                        return new Misc.GuidelineRule(guideline);
-                    }
-                }
-            }
-
-            return null;
+        public SnapResult SnapPoint(Point pos, ILocatable snapTarget = null, bool clampToTarget = false)
+        {
+            return UIBroker.SnapPoint(Layer, pos, 1f / ScaleFactor, snapTarget, clampToTarget);
         }
 
         public void Invalidate()

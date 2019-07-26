@@ -158,8 +158,9 @@
     <Compile Include="Interfaces\ICanvasDelegate.cs" />
     <Compile Include="Interfaces\IToolbarItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\LayerSelectionConverter.cs" />
     <Compile Include="Utilities\BooleanOps.cs" />
-    <Compile Include="Utilities\Misc.cs" />
+    <Compile Include="Utilities\UIBroker.cs" />
     <Compile Include="Utilities\Outline.cs" />
     <Compile Include="Utilities\Drawing.cs" />
     <Compile Include="Utilities\BezierMath.cs" />

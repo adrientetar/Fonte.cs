@@ -96,7 +96,7 @@ namespace Fonte.App.Delegates
             var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
-                var pos = canvas.GetCanvasPosition(ptPoint.Position);
+                var pos = canvas.FromClientPosition(ptPoint.Position);
                 var tappedItem = canvas.HitTest(pos);
                 var selPoint = GetSelectedPoint(canvas);
 
@@ -212,7 +212,7 @@ namespace Fonte.App.Delegates
             var ptPoint = args.GetCurrentPoint(canvas);
             if (_path != null && ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetCanvasPosition(ptPoint.Position);
+                var pos = canvas.FromClientPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint();
                 Debug.Assert(selPoint.Parent == _path);
 
@@ -348,8 +348,8 @@ namespace Fonte.App.Delegates
 
         bool AreVisiblyDistinct(DesignCanvas canvas, Data.Point point, Data.Point other)
         {
-            var pos = canvas.GetClientPosition(point.ToVector2().ToPoint());
-            var otherPos = canvas.GetClientPosition(other.ToVector2().ToPoint());
+            var pos = canvas.FromCanvasPosition(point.ToVector2().ToPoint());
+            var otherPos = canvas.FromCanvasPosition(other.ToVector2().ToPoint());
 
             return CanStartDragging(pos, otherPos);
         }

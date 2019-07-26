@@ -181,7 +181,7 @@ namespace Fonte.App.Utilities
                         component.Transformation = t;
                     }
                 }
-                foreach (var guideline in Misc.GetAllGuidelines(layer))
+                foreach (var guideline in UIBroker.GetAllGuidelines(layer))
                 {
                     if (guideline.IsSelected)
                     {
@@ -302,7 +302,7 @@ namespace Fonte.App.Utilities
                         component.Transformation = t;
                     }
                 }
-                foreach (var guideline in Misc.GetAllGuidelines(layer))
+                foreach (var guideline in UIBroker.GetAllGuidelines(layer))
                 {
                     if (guideline.IsSelected)
                     {

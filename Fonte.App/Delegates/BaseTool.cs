@@ -198,7 +198,7 @@ namespace Fonte.App.Delegates
             };
 
             var clientPos = args.GetPosition(canvas);
-            var pos = canvas.GetCanvasPosition(clientPos);
+            var pos = canvas.FromClientPosition(clientPos);
             var tappedItem = canvas.HitTest(pos);
 
             if (tappedItem is Data.Component component)

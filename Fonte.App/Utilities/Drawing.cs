@@ -72,10 +72,10 @@ namespace Fonte.App.Utilities
 
         public static void DrawGrid(Data.Layer layer, CanvasDrawingSession ds, float rescale, Data.Geometry.Rect drawingRect)
         {
-            var color = Color.FromArgb(255, 220, 220, 220);
+            /*var color = Color.FromArgb(255, 220, 220, 220);
             var gridSize = 1;
 
-            /*for (int i = gridSize * (int)(bottomLeft.X / gridSize); i <= topRight.X; i += gridSize)
+            for (int i = gridSize * (int)(bottomLeft.X / gridSize); i <= topRight.X; i += gridSize)
             {
                 ds.DrawLine(i, (float)topRight.Y, i, (float)bottomLeft.Y, color, strokeWidth: rescale);
             }
@@ -92,7 +92,7 @@ namespace Fonte.App.Utilities
 
             (IEnumerable<Data.Guideline>, Color)[] drawingPlan = {
                 (layer.Guidelines, Color.FromArgb(128, 56, 71, 213)),
-                (Misc.GetMasterGuidelines(layer), Color.FromArgb(128, 255, 51, 51)),
+                (UIBroker.GetMasterGuidelines(layer), Color.FromArgb(128, 255, 51, 51)),
             };
 
             // TODO: draw name
@@ -390,7 +390,7 @@ namespace Fonte.App.Utilities
 
                 var pathBuilder = new CanvasPathBuilder(ds);
                 var radius = 4 * rescale;
-                foreach (var handle in Misc.GetSelectionHandles(layer, rescale))
+                foreach (var handle in UIBroker.GetSelectionHandles(layer, rescale))
                 {
                     pathBuilder.AddGeometry(
                         CanvasGeometry.CreateCircle(ds, handle.Position, radius));

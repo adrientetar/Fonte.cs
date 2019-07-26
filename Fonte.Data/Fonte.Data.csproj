@@ -150,7 +150,7 @@
     <Compile Include="Changes\PointXChange.cs" />
     <Compile Include="Collections\NotifyChangeRequestedEventArgs.cs" />
     <Compile Include="Component.cs" />
-    <Compile Include="Converters\ObjectArrayConverter.cs" />
+    <Compile Include="Serialization\ObjectArrayConverter.cs" />
     <Compile Include="Interfaces\ILayerElement.cs" />
     <Compile Include="Interfaces\ILocatable.cs" />
     <Compile Include="Master.cs" />

@@ -18,6 +18,9 @@
         <KeyboardAccelerator Modifiers="Control,Shift" Key="Z" Invoked="OnRedoInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="A" Invoked="OnSelectAllInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFindGlyphInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="X" Invoked="OnCutInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="C" Invoked="OnCopyInvoked"/>
+        <KeyboardAccelerator Modifiers="Control" Key="V" Invoked="OnPasteInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="Number0" Invoked="OnResetZoomInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="P" Invoked="OnShowSidebarInvoked"/>
         <KeyboardAccelerator Key="End" Invoked="OnNextGlyphInvoked"/>

@@ -167,7 +167,7 @@ namespace Fonte.App.Delegates
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 _undoGroup = layer.CreateUndoGroup();
-                _origin = _anchor = canvas.GetCanvasPosition(ptPoint.Position);
+                _origin = _anchor = canvas.FromClientPosition(ptPoint.Position);
 
                 layer.ClearSelection();
                 ((App)Application.Current).InvalidateData();
@@ -180,7 +180,7 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue)
             {
-                var pos = canvas.GetCanvasPosition(args.GetCurrentPoint(canvas).Position);
+                var pos = canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position);
                 if (_shouldMoveOrigin)
                 {
                     var origin = _origin.Value;

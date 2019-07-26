@@ -101,14 +101,14 @@ namespace Fonte.App.Delegates
             var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
-                var canvasPos = canvas.GetCanvasPosition(ptPoint.Position);
+                var canvasPos = canvas.FromClientPosition(ptPoint.Position);
                 _tappedItem = canvas.HitTest(canvasPos);
 
                 if (_tappedItem != null)
                 {
                     var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-                    if (_tappedItem is Misc.BBoxHandle ||
-                        _tappedItem is Misc.GuidelineRule)
+                    if (_tappedItem is UIBroker.BBoxHandle ||
+                        _tappedItem is UIBroker.GuidelineRule)
                     {
                         _screenOrigin = ptPoint.Position;
                         _undoGroup = layer.CreateUndoGroup();
@@ -172,14 +172,14 @@ namespace Fonte.App.Delegates
             var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                var pos = canvas.GetCanvasPosition(ptPoint.Position);
+                var pos = canvas.FromClientPosition(ptPoint.Position);
 
                 // Doing this has two purposes:
                 // - avoid piling up unused changes in the undo group
                 // - perform transformations (e.g. scaling projecting etc) from OG coordinates, free of intermediate roundings
                 _undoGroup?.Reset();
 
-                if (_tappedItem is Misc.BBoxHandle handle)
+                if (_tappedItem is UIBroker.BBoxHandle handle)
                 {
                     if (!_canDrag)
                     {
@@ -196,23 +196,23 @@ namespace Fonte.App.Delegates
                             var origin = Vector2.Zero;
 
                             var hr = 1f;
-                            if (handle.Kind.HasFlag(Misc.HandleKind.Top))
+                            if (handle.Kind.HasFlag(UIBroker.HandleKind.Top))
                             {
                                 hr = 1 + delta.Y / bounds.Height;
                                 origin.Y = bounds.Bottom;
                             }
-                            else if (handle.Kind.HasFlag(Misc.HandleKind.Bottom))
+                            else if (handle.Kind.HasFlag(UIBroker.HandleKind.Bottom))
                             {
                                 hr = 1 - delta.Y / bounds.Height;
                                 origin.Y = bounds.Top;
                             }
                             var wr = 1f;
-                            if (handle.Kind.HasFlag(Misc.HandleKind.Right))
+                            if (handle.Kind.HasFlag(UIBroker.HandleKind.Right))
                             {
                                 wr = 1 + delta.X / bounds.Width;
                                 origin.X = bounds.Left;
                             }
-                            else if (handle.Kind.HasFlag(Misc.HandleKind.Left))
+                            else if (handle.Kind.HasFlag(UIBroker.HandleKind.Left))
                             {
                                 wr = 1 - delta.X / bounds.Width;
                                 origin.X = bounds.Right;
@@ -224,7 +224,7 @@ namespace Fonte.App.Delegates
                         }
                     }
                 }
-                else if (_tappedItem is Misc.GuidelineRule rule)
+                else if (_tappedItem is UIBroker.GuidelineRule rule)
                 {
                     var guideline = rule.Guideline;
                     var angle = Math.Atan2(pos.Y - guideline.Y, pos.X - guideline.X);
@@ -252,7 +252,7 @@ namespace Fonte.App.Delegates
                         var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                         if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
-                            pos = ClampToNodeOrOrigin(canvas, pos, isel as Data.Point);
+                            pos = ClampToNodeOrOrigin(canvas.Layer, pos, isel as Data.Point);
                         }
 
                         Outline.MoveSelection(
@@ -280,7 +280,7 @@ namespace Fonte.App.Delegates
             {
                 if (_tappedItem is Data.Point)
                 {
-                    TryJoinPath(canvas, canvas.GetCanvasPosition(args.GetCurrentPoint(canvas).Position));
+                    TryJoinPath(canvas, canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position));
                 }
                 _undoGroup.Dispose();
                 _undoGroup = null;
@@ -344,11 +344,11 @@ namespace Fonte.App.Delegates
 
         /**/
 
-        Point ClampToNodeOrOrigin(DesignCanvas canvas, Point pos, Data.Point point)
+        Point ClampToNodeOrOrigin(Data.Layer layer, Point pos, Data.Point point)
         {
             // We clamp to the mousedown pos, unless we have a single offcurve
             // in which case we clamp it against its parent.
-            if (point != null && point.Type == Data.PointType.None && canvas.Layer.Selection.Count == 1)
+            if (point != null && point.Type == Data.PointType.None && layer.Selection.Count == 1)
             {
                 var path = point.Parent;
                 var index = path.Points.IndexOf(point);

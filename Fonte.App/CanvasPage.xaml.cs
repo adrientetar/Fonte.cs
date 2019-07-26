@@ -6,8 +6,11 @@ namespace Fonte.App
 {
     using Fonte.App.Dialogs;
     using Fonte.App.Interfaces;
+    using Fonte.App.Serialization;
+    using Fonte.App.Utilities;
     using Fonte.Data.Utilities;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     using System;
     using System.Collections.Generic;
@@ -15,6 +18,7 @@ namespace Fonte.App
     using System.Linq;
     using System.Threading.Tasks;
     using Windows.ApplicationModel;
+    using Windows.ApplicationModel.DataTransfer;
     using Windows.Storage;
     using Windows.Storage.Pickers;
     using Windows.System;
@@ -26,6 +30,8 @@ namespace Fonte.App
 
     public sealed partial class CanvasPage : Page
     {
+        static readonly string JsonFormatId = "Fonte.App.Json";
+
         private StorageFile _file;
 
         public static DependencyProperty FontProperty = DependencyProperty.Register(
@@ -80,6 +86,18 @@ namespace Fonte.App
                 return true;
             }
             return false;
+        }
+
+        // TODO: move that stuff to a command
+        void Copy()
+        {
+            var json = JsonConvert.SerializeObject(Canvas.Layer, new LayerSelectionConverter());
+            var pkg = new DataPackage
+            {
+                RequestedOperation = DataPackageOperation.Copy
+            };
+            pkg.SetData(JsonFormatId, json);
+            Clipboard.SetContent(pkg);
         }
 
         void OnPageLoaded(object sender, RoutedEventArgs args)
@@ -296,6 +314,72 @@ namespace Fonte.App
                 if (glyphDialog.Glyph is Data.Glyph newGlyph)
                 {
                     Sidebar.Layer = newGlyph.Layers[0];
+                }
+            }
+        }
+
+        void OnCutInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+
+            Copy();
+            Outline.DeleteSelection(Canvas.Layer, true);
+
+            ((App)Application.Current).InvalidateData();
+        }
+
+        void OnCopyInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+
+            Copy();
+        }
+
+        async void OnPasteInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+
+            var layer = Canvas.Layer;
+            var pkgView = Clipboard.GetContent();
+            if (pkgView.Contains(JsonFormatId))
+            {
+                var json = (string)await pkgView.GetDataAsync(JsonFormatId);
+
+                var obj = JObject.Parse(json);
+                if (obj.Count > 0)
+                {
+                    layer.ClearSelection();
+
+                    if (obj.TryGetValue("anchors", out JToken tok))
+                    {
+                        var anchors = tok.ToObject<List<Data.Anchor>>();
+
+                        layer.Anchors.AddRange(anchors);
+                        foreach (var anchor in anchors) { anchor.IsSelected = true; }
+                    }
+                    if (obj.TryGetValue("components", out JToken tok_))
+                    {
+                        var components = tok_.ToObject<List<Data.Component>>();
+
+                        layer.Components.AddRange(components);
+                        foreach (var component in components) { component.IsSelected = true; }
+                    }
+                    if (obj.TryGetValue("guidelines", out JToken tok__))
+                    {
+                        var guidelines = tok__.ToObject<List<Data.Guideline>>();
+
+                        layer.Guidelines.AddRange(guidelines);
+                        foreach (var guideline in guidelines) { guideline.IsSelected = true; }
+                    }
+                    if (obj.TryGetValue("paths", out JToken tok___))
+                    {
+                        var paths = tok___.ToObject<List<Data.Path>>();
+
+                        layer.Paths.AddRange(paths);
+                        foreach (var path in paths) { path.IsSelected = true; }
+                    }
+
+                    ((App)Application.Current).InvalidateData();
                 }
             }
         }
