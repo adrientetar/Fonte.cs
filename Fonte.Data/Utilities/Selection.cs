@@ -16,10 +16,9 @@ namespace Fonte.Data.Utilities
             foreach (var path in paths)
             {
                 var segments = path.Segments;
-                var firstSegment = segments.First();
 
                 IEnumerable<Segment> iter;
-                if (!path.IsOpen && firstSegment.OnCurve.IsSelected == selValue)
+                if (!path.IsOpen && segments.First().OnCurve.IsSelected == selValue)
                 {
                     var segmentsList = segments.ToList();
 

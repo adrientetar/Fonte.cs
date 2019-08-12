@@ -127,7 +127,11 @@ namespace Fonte.App.Utilities
                 {
                     if (glyphLayer != layer && glyphLayer.IsVisible)
                     {
-                        DrawComponents(layer, ds, rescale, color, drawSelection: false);
+                        foreach (var component in glyphLayer.Components)
+                        {
+                            ds.DrawGeometry(component.ClosedCanvasPath, color, strokeWidth: rescale);
+                            ds.DrawGeometry(component.OpenCanvasPath, color, strokeWidth: rescale);
+                        }
 
                         ds.DrawGeometry(glyphLayer.ClosedCanvasPath, color, strokeWidth: rescale);
                         ds.DrawGeometry(glyphLayer.OpenCanvasPath, color, strokeWidth: rescale);

@@ -352,9 +352,9 @@ namespace Fonte.App.Utilities
                         {
                             // Bias towards oncurve
                             if (point.Type == Data.PointType.None
+                                && next.Type != Data.PointType.None
                                 && !next.IsSelected  /* !IsMoveTarget */
-                                && next.X == point.X
-                                && next.Type != Data.PointType.None)
+                                && next.X == point.X)
                             {
                                 Debug.Assert(next.Type != Data.PointType.None);
 
@@ -406,9 +406,9 @@ namespace Fonte.App.Utilities
                         {
                             // Bias towards oncurve
                             if (point.Type == Data.PointType.None
+                                && next.Type != Data.PointType.None
                                 && !next.IsSelected  /* !IsMoveTarget */
-                                && next.Y == point.Y
-                                && next.Type != Data.PointType.None)
+                                && next.Y == point.Y)
                             {
                                 snapLine = (next.X, float.NaN);
                             }

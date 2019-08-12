@@ -34,6 +34,7 @@ namespace Fonte.App.Delegates
         private IChangeGroup _undoGroup;
 
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
+        static readonly string SnapLineColorKey = "SnapLineColor";
 
         enum ActionType
         {
@@ -99,7 +100,7 @@ namespace Fonte.App.Delegates
         {
             if (_snapResult != null)
             {
-                var color = (Color)FindResource(canvas, "SnapLineColor");
+                var color = (Color)FindResource(canvas, SnapLineColorKey);
                 var halfSize = 2.5f * rescale;
 
                 foreach (var (p1, p2) in _snapResult.GetSnapLines())
