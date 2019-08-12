@@ -105,7 +105,7 @@
     <Compile Include="CanvasPage.xaml.cs">
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Commands\AlignSelectedPathsCommand.cs" />
+    <Compile Include="Commands\AlignPathsCommand.cs" />
     <Compile Include="Commands\BinaryBooleanOpCommand.cs" />
     <Compile Include="Commands\UnitePathsCommand.cs" />
     <Compile Include="Commands\SetStartPointCommand.cs" />
@@ -134,6 +134,9 @@
     </Compile>
     <Compile Include="Controls\SidebarParts\ButtonPair.xaml.cs">
       <DependentUpon>ButtonPair.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\SidebarParts\TwoToneButton.xaml.cs">
+      <DependentUpon>TwoToneButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\TitleBar.xaml.cs">
       <DependentUpon>TitleBar.xaml</DependentUpon>
@@ -202,6 +205,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\SidebarParts\TwoToneButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Controls\SidebarParts\OriginButton.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -240,7 +247,7 @@
       <Version>6.2.8</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.2.190702001-prerelease</Version>
+      <Version>2.2.190731001-prerelease</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.2</Version>

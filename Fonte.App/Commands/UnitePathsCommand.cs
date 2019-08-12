@@ -14,9 +14,7 @@ namespace Fonte.App.Commands
 
     public class UnitePathsCommand : ICommand
     {
-#pragma warning disable CS0067
         public event EventHandler CanExecuteChanged;
-#pragma warning restore CS0067
 
         public bool CanExecute(object parameter)
         {
@@ -53,10 +51,10 @@ namespace Fonte.App.Commands
                 }
             }
 
-            var resultPaths = BooleanOps.Union(usePaths);
-            if (resultPaths.Select(path => path.Points.Count).Sum() !=
-                usePaths.Select(path => path.Points.Count).Sum())
+            if (BooleanOps.HasOverlaps(usePaths))
             {
+                var resultPaths = BooleanOps.Union(usePaths);
+
                 using (var group = layer.CreateUndoGroup())
                 {
                     layer.Paths.Clear();

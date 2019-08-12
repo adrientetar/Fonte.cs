@@ -30,6 +30,7 @@ namespace Fonte.App.Delegates
         private bool _canDrag = false;
         private object _tappedItem;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
+        private SnapResult _snapResult;
         private IChangeGroup _undoGroup;
 
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
@@ -91,6 +92,31 @@ namespace Fonte.App.Delegates
             else if (CurrentAction == ActionType.DraggingRect)
             {
                 ds.FillRectangle(new Rect(_origin, _anchor), Color.FromArgb(51, 0, 120, 215));
+            }
+        }
+
+        public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        {
+            if (_snapResult != null)
+            {
+                var color = (Color)FindResource(canvas, "SnapLineColor");
+                var halfSize = 2.5f * rescale;
+
+                foreach (var (p1, p2) in _snapResult.GetSnapLines())
+                {
+                    ds.DrawLine(p1, p2, color, strokeWidth: rescale);
+
+                    if (p1 != _snapResult.Position.ToVector2())
+                    {
+                        ds.DrawLine(p1.X - halfSize, p1.Y - halfSize, p1.X + halfSize, p1.Y + halfSize, color, strokeWidth: rescale);
+                        ds.DrawLine(p1.X - halfSize, p1.Y + halfSize, p1.X + halfSize, p1.Y - halfSize, color, strokeWidth: rescale);
+                    }
+                    if (p2 != _snapResult.Position.ToVector2())
+                    {
+                        ds.DrawLine(p2.X - halfSize, p2.Y - halfSize, p2.X + halfSize, p2.Y + halfSize, color, strokeWidth: rescale);
+                        ds.DrawLine(p2.X - halfSize, p2.Y + halfSize, p2.X + halfSize, p2.Y - halfSize, color, strokeWidth: rescale);
+                    }
+                }
             }
         }
 
@@ -184,44 +210,64 @@ namespace Fonte.App.Delegates
                     if (!_canDrag)
                     {
                         _canDrag = CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+
+                        if (!_canDrag) return;
                     }
-                    if (_canDrag)
+
+                    var layer = canvas.Layer;
+                    var bounds = layer.SelectionBounds;
+
+                    var delta = pos.ToVector2() - handle.Position;
+                    if (bounds.Width > 0)
                     {
-                        var layer = canvas.Layer;
-                        var bounds = layer.SelectionBounds;
+                        var origin = Vector2.Zero;
+                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
 
-                        var delta = pos.ToVector2() - handle.Position;
-                        if (bounds.Width > 0)
+                        var hr = delta.Y / bounds.Height;
+                        var wr = delta.X / bounds.Width;
+                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
                         {
-                            var origin = Vector2.Zero;
-
-                            var hr = 1f;
-                            if (handle.Kind.HasFlag(UIBroker.HandleKind.Top))
-                            {
-                                hr = 1 + delta.Y / bounds.Height;
-                                origin.Y = bounds.Bottom;
-                            }
-                            else if (handle.Kind.HasFlag(UIBroker.HandleKind.Bottom))
-                            {
-                                hr = 1 - delta.Y / bounds.Height;
-                                origin.Y = bounds.Top;
-                            }
-                            var wr = 1f;
-                            if (handle.Kind.HasFlag(UIBroker.HandleKind.Right))
-                            {
-                                wr = 1 + delta.X / bounds.Width;
-                                origin.X = bounds.Left;
-                            }
-                            else if (handle.Kind.HasFlag(UIBroker.HandleKind.Left))
-                            {
-                                wr = 1 - delta.X / bounds.Width;
-                                origin.X = bounds.Right;
-                            }
-
-                            layer.Transform(Matrix3x2.CreateScale(wr, hr, origin),
-                                            selectionOnly: true);
-                            Outline.RoundSelection(layer);
+                            var lo = Math.Min(
+                                    Math.Abs(hr),
+                                    Math.Abs(wr)
+                                );
+                            hr = Math.Sign(hr) * lo;
+                            wr = Math.Sign(wr) * lo;
                         }
+
+                        if (handle.Kind.HasFlag(UIBroker.HandleKind.Top))
+                        {
+                            hr = 1 + hr;
+                            origin.Y = bounds.Bottom;
+                        }
+                        else if (handle.Kind.HasFlag(UIBroker.HandleKind.Bottom))
+                        {
+                            hr = 1 - hr;
+                            origin.Y = bounds.Top;
+                        }
+                        else
+                        {
+                            hr = 1f;
+                        }
+
+                        if (handle.Kind.HasFlag(UIBroker.HandleKind.Right))
+                        {
+                            wr = 1 + wr;
+                            origin.X = bounds.Left;
+                        }
+                        else if (handle.Kind.HasFlag(UIBroker.HandleKind.Left))
+                        {
+                            wr = 1 - wr;
+                            origin.X = bounds.Right;
+                        }
+                        else
+                        {
+                            wr = 1f;
+                        }
+
+                        layer.Transform(Matrix3x2.CreateScale(wr, hr, origin),
+                                        selectionOnly: true);
+                        Outline.RoundSelection(layer);
                     }
                 }
                 else if (_tappedItem is UIBroker.GuidelineRule rule)
@@ -243,25 +289,37 @@ namespace Fonte.App.Delegates
                 }
                 else if (_tappedItem is ISelectable isel)
                 {
-                    if (!_canDrag)
+                    var layer = canvas.Layer;
+
+                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                    if (_tappedItem is ILocatable iloc)
                     {
-                        _canDrag = isel.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+                        // No need for the _canDrag guard here because we're snapping to _tappedItem.
+                        _snapResult = canvas.SnapPoint(pos, iloc, GetClampTarget(layer, iloc as Data.Point));
+
+                        pos = _snapResult.Position;
                     }
-                    if (_canDrag)
+                    else
                     {
-                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                        if (!_canDrag)
                         {
-                            pos = ClampToNodeOrOrigin(canvas.Layer, pos, isel as Data.Point);
+                            _canDrag = isel.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+
+                            if (!_canDrag) return;
                         }
 
-                        Outline.MoveSelection(
-                            canvas.Layer,
-                            (float)(pos.X - _origin.X),
-                            (float)(pos.Y - _origin.Y),
-                            GetMoveMode()
-                        );
+                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                        {
+                            pos = ClampToOrigin(pos, _origin);
+                        }
                     }
+
+                    Outline.MoveSelection(
+                        layer,
+                        (float)(pos.X - _origin.X),
+                        (float)(pos.Y - _origin.Y),
+                        GetMoveMode()
+                    );
                 }
                 else
                 {
@@ -306,6 +364,7 @@ namespace Fonte.App.Delegates
             }
 
             _screenOrigin = default;
+            _snapResult = null;
             _origin = EmptyPoint;
             _canDrag = false;
             _tappedItem = null;
@@ -344,25 +403,29 @@ namespace Fonte.App.Delegates
 
         /**/
 
-        Point ClampToNodeOrOrigin(Data.Layer layer, Point pos, Data.Point point)
+        Point? GetClampTarget(Data.Layer layer, Data.Point point)
         {
-            // We clamp to the mousedown pos, unless we have a single offcurve
-            // in which case we clamp it against its parent.
-            if (point != null && point.Type == Data.PointType.None && layer.Selection.Count == 1)
+            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+            if (shift.HasFlag(CoreVirtualKeyStates.Down))
             {
-                var path = point.Parent;
-                var index = path.Points.IndexOf(point);
-                var otherPoint = Sequence.PreviousItem(path.Points, index);
-                if (otherPoint.Type == Data.PointType.None)
+                // If the target point is an offcurve, we clamp against its oncurve sibling.
+                if (point != null && point.Type == Data.PointType.None && layer.Selection.Count == 1)
                 {
-                    otherPoint = Sequence.NextItem(path.Points, index);
+                    var path = point.Parent;
+                    var index = path.Points.IndexOf(point);
+                    var otherPoint = Sequence.PreviousItem(path.Points, index);
+                    if (otherPoint.Type == Data.PointType.None)
+                    {
+                        otherPoint = Sequence.NextItem(path.Points, index);
+                    }
+                    if (otherPoint.Type != Data.PointType.None)
+                    {
+                        return otherPoint.ToVector2().ToPoint();
+                    }
                 }
-                if (otherPoint.Type != Data.PointType.None)
-                {
-                    return ClampToOrigin(pos, new Point(otherPoint.X, otherPoint.Y));
-                }
+                return _origin;
             }
-            return ClampToOrigin(pos, _origin);
+            return null;
         }
 
         Point GetOriginPoint(ISelectable item, Point pos)

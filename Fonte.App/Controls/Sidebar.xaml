@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:Fonte.App.Converters"
     xmlns:local="using:Fonte.App.Controls"
-    xmlns:muxcontrols="using:Microsoft.UI.Xaml.Controls"
     xmlns:parts="using:Fonte.App.Controls.SidebarParts"
     xmlns:data="using:Fonte.Data"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -23,6 +22,7 @@
             <converters:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
             <converters:StringToBooleanConverter x:Key="StringToBooleanConverter"/>
 
+            <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent"/>
             <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent"/>
             <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="Transparent"/>
             <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="White"/>
@@ -30,6 +30,9 @@
             <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#f5f4f7"/>
             <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource BorderColor}"/>
 
+            <SolidColorBrush x:Key="FlatIconBrush" Color="{StaticResource FlatIconColor}"/>
+            <SolidColorBrush x:Key="IconFillBrush" Color="{StaticResource IconFillColor}"/>
+            <SolidColorBrush x:Key="IconStrokeBrush" Color="{StaticResource IconStrokeColor}"/>
             <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
 
             <Style TargetType="parts:ButtonPair">
@@ -61,12 +64,16 @@
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
+            <Style TargetType="parts:TwoToneButton">
+                <Setter Property="Fill" Value="{StaticResource IconFillBrush}"/>
+                <Setter Property="Stroke" Value="{StaticResource IconStrokeBrush}"/>
+                <Setter Property="Margin" Value="2,0,2,0"/>
+            </Style>
 
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="HorizontalAlignment" Value="Center"/>
-                <Setter Property="Margin" Value="2,0,2,0"/>
                 <Setter Property="Padding" Value="4"/>
             </Style>
             <Style x:Key="HeaderGridStyle" TargetType="Grid">
@@ -85,6 +92,11 @@
             <Style x:Key="IconGridStyle" BasedOn="{StaticResource HeaderGridStyle}" TargetType="Grid">
                 <Setter Property="BorderThickness" Value="0,0,0,1"/>
                 <Setter Property="Padding" Value="6"/>
+            </Style>
+            <Style x:Key="IconPathStyle" TargetType="Path">
+                <Setter Property="Height" Value="16"/>
+                <Setter Property="Width" Value="16"/>
+                <Setter Property="Margin" Value="4"/>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -112,74 +124,68 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.Resources>
-                <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
-                <Style TargetType="Path">
-                    <Setter Property="Fill" Value="{StaticResource IconFillColor}"/>
-                    <Setter Property="Stroke" Value="{StaticResource IconStrokeColor}"/>
-                    <Setter Property="Height" Value="16"/>
-                    <Setter Property="Width" Value="16"/>
-                </Style>
+                <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
             </Grid.Resources>
-            <Button Command="{x:Bind AlignLeftCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Align Left"
-                    Grid.Column="1">
-                <Button.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Left"/>
-                </Button.KeyboardAccelerators>
+            <parts:TwoToneButton Command="{x:Bind AlignLeftCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Align Left"
+                                 Grid.Column="1">
+                <parts:TwoToneButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift,Menu" Key="Left"/>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M0.5,0 v16 M3.5,5.5 h10 v5 h-10 Z"/>
-            </Button>
-            <Button Command="{x:Bind CenterHorizontallyCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Center horizontally"
-                    Grid.Column="2">
-                <Button.KeyboardAccelerators>
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind CenterHorizontallyCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Center horizontally"
+                                 Grid.Column="2">
+                <parts:TwoToneButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Shift" Key="C"/>
-                </Button.KeyboardAccelerators>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M7.5,0 v5.5 M7.5,10.5 v5.5 M1.5,5.5 h12 v5 h-12 Z"/>
-            </Button>
-            <Button Command="{x:Bind AlignRightCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Align right"
-                    Grid.Column="3">
-                <Button.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Right"/>
-                </Button.KeyboardAccelerators>
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind AlignRightCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Align right"
+                                 Grid.Column="3">
+                <parts:TwoToneButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift,Menu" Key="Right"/>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M13.5,0 v16 M0.5,5.5 h10 v5 h-10 Z"/>
-            </Button>
-            <Button Command="{x:Bind AlignTopCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Align top"
-                    Grid.Column="4">
-                <Button.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Up"/>
-                </Button.KeyboardAccelerators>
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind AlignTopCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Align top"
+                                 Grid.Column="4">
+                <parts:TwoToneButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift,Menu" Key="Up"/>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M0,0.5 h16 M5.5,3.5 v10 h5 v-10 Z"/>
-            </Button>
-            <Button Command="{x:Bind CenterVerticallyCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Center vertically"
-                    Grid.Column="5">
-                <Button.KeyboardAccelerators>
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind CenterVerticallyCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Center vertically"
+                                 Grid.Column="5">
+                <parts:TwoToneButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Shift" Key="M"/>
-                </Button.KeyboardAccelerators>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M0,8.5 h5.5 M10.5,8.5 h5.5 M5.5,2.5 v12 h5 v-12 Z"/>
-            </Button>
-            <Button Command="{x:Bind AlignBottomCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Align bottom"
-                    Grid.Column="6">
-                <Button.KeyboardAccelerators>
-                    <KeyboardAccelerator Modifiers="Windows,Menu" Key="Down"/>
-                </Button.KeyboardAccelerators>
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind AlignBottomCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Align bottom"
+                                 Grid.Column="6">
+                <parts:TwoToneButton.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Shift,Menu" Key="Down"/>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M0,15.5 h16 M5.5,2.5 v10 h5 v-10 Z"/>
-            </Button>
+            </parts:TwoToneButton>
         </Grid>
         <Grid Style="{StaticResource IconGridStyle}" Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -191,56 +197,50 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.Resources>
-                <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
-                <Style TargetType="Path">
-                    <Setter Property="Fill" Value="{StaticResource IconFillColor}"/>
-                    <Setter Property="Stroke" Value="{StaticResource IconStrokeColor}"/>
-                    <Setter Property="Height" Value="16"/>
-                    <Setter Property="Width" Value="16"/>
-                </Style>
+                <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
             </Grid.Resources>
-            <Button Command="{x:Bind UnitePathsCommand}"
-                    CommandParameter="{x:Bind Layer, Mode=OneWay}"
-                    ToolTipService.ToolTip="Union"
-                    Grid.Column="1">
-                <Button.KeyboardAccelerators>
+            <parts:TwoToneButton Command="{x:Bind UnitePathsCommand}"
+                                 CommandParameter="{x:Bind Layer, Mode=OneWay}"
+                                 ToolTipService.ToolTip="Union"
+                                 Grid.Column="1">
+                <parts:TwoToneButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control,Menu" Key="U"/>
-                </Button.KeyboardAccelerators>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Path Data="M1.5,1.5 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
-            </Button>
-            <Button Command="{x:Bind SubtractPathsCommand}"
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind SubtractPathsCommand}"
                     CommandParameter="{x:Bind Layer, Mode=OneWay}"
                     ToolTipService.ToolTip="Subtract"
                     Grid.Column="2">
-                <Button.KeyboardAccelerators>
+                <parts:TwoToneButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control,Menu" Key="S"/>
-                </Button.KeyboardAccelerators>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Grid>
-                    <Path Data="M1.5,1.5 h8 v4 h-4 v4 h-4 Z"/>
+                    <Path Data="M5,9.5 h-3.5 v-8 h8 v3.5"/>
                     <Path Fill="Transparent" Data="M5.5,5.5 h8 v8 h-8 Z"/>
                 </Grid>
-            </Button>
-            <Button Command="{x:Bind IntersectPathsCommand}"
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind IntersectPathsCommand}"
                     CommandParameter="{x:Bind Layer, Mode=OneWay}"
                     ToolTipService.ToolTip="Intersect"
                     Grid.Column="3">
-                <Button.KeyboardAccelerators>
+                <parts:TwoToneButton.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Control,Menu" Key="I"/>
-                </Button.KeyboardAccelerators>
+                </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Grid>
                     <Path Data="M5.5,5.5 h4 v4 h-4 Z"/>
-                    <Path Fill="Transparent" Data="M1.5,1.5 h8 v4 h4 v8 h-8 v-4 h-4 Z"/>
+                    <Path Fill="Transparent" Data="M5,9.5 h-3.5 v-8 h8 v3.5 M10,5.5 h3.5 v8 h-8 v-3.5"/>
                 </Grid>
-            </Button>
-            <Button Command="{x:Bind XorPathsCommand}"
+            </parts:TwoToneButton>
+            <parts:TwoToneButton Command="{x:Bind XorPathsCommand}"
                     CommandParameter="{x:Bind Layer, Mode=OneWay}"
                     ToolTipService.ToolTip="Xor"
                     Grid.Column="4">
                 <Path Data="M1.5,1.5 h8 v8 h-8 v-8 Z M5.5,5.5 h8 v8 h-8 v-8 Z"/>
-            </Button>
+            </parts:TwoToneButton>
         </Grid>
         <Grid Padding="4" Grid.Row="2">
             <Grid.RowDefinitions>
@@ -257,30 +257,36 @@
             <parts:OriginControl x:Name="Origin" Margin="4" Grid.Column="1"/>
             <Grid Grid.Column="2" Margin="4" Padding="1,0,1,0">
                 <Grid.Resources>
-                    <Style TargetType="Button" BasedOn="{StaticResource IconButtonStyle}"/>
+                    <Style TargetType="parts:TwoToneButton">
+                        <Setter Property="Fill" Value="{StaticResource FlatIconBrush}"/>
+                        <Setter Property="Stroke" Value="{StaticResource FlatIconBrush}"/>
+                    </Style>
+                    <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
                 </Grid.Resources>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
-                <Button Click="OnHorzMirrorButtonClick"
-                        ToolTipService.ToolTip="Mirror horizontally">
+                <parts:TwoToneButton x:Name="HorzMirrorButton"
+                                     Click="OnHorzMirrorButtonClick"
+                                     ToolTipService.ToolTip="Mirror horizontally">
                     <Grid>
-                        <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M2,4.5 l3.5,3 l-3.5,3 Z"/>
-                        <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M14,4.5 l-3.5,3 l3.5,3 Z"/>
-                        <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M8,2 v11"/>
+                        <Path Fill="Transparent" Data="M2,4.5 l3.5,3 l-3.5,3 Z"/>
+                        <Path Data="M14,4.5 l-3.5,3 l3.5,3 Z"/>
+                        <Path Fill="Transparent" StrokeDashArray="1" Data="M8,2 v11"/>
                     </Grid>
-                </Button>
-                <Button Click="OnVertMirrorButtonClick"
-                        ToolTipService.ToolTip="Mirror vertically"
-                        Grid.Column="1">
+                </parts:TwoToneButton>
+                <parts:TwoToneButton x:Name="VertMirrorButton"
+                                     Click="OnVertMirrorButtonClick"
+                                     ToolTipService.ToolTip="Mirror vertically"
+                                     Grid.Column="1">
                     <Grid>
-                        <Path Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M5.5,1.5 l3,3.5 l3,-3.5 Z"/>
-                        <Path Fill="{StaticResource FlatIconColor}" Stroke="{StaticResource FlatIconColor}" Width="16" Height="16" Data="M5.5,13.5 l3,-3.5 l3,3.5 Z"/>
-                        <Path Stroke="{StaticResource FlatIconColor}" StrokeDashArray="1" Width="16" Height="16" Data="M3,7.5 h11"/>
+                        <Path Fill="Transparent" Data="M5.5,1.5 l3,3.5 l3,-3.5 Z"/>
+                        <Path Data="M5.5,13.5 l3,-3.5 l3,3.5 Z"/>
+                        <Path Fill="Transparent" StrokeDashArray="1" Data="M3,7.5 h11"/>
                     </Grid>
-                </Button>
+                </parts:TwoToneButton>
             </Grid>
 
             <TextBlock Text="Position" Grid.Row="1"/>

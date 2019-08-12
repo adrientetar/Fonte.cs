@@ -15,16 +15,16 @@ namespace Fonte.App.Dialogs
 
         public GlyphDialog(Data.Font font)
         {
-            InitializeComponent();
-
             Glyphs = font.Glyphs;
+
+            InitializeComponent();
         }
 
         public GlyphDialog(IList<Data.Glyph> glyphs)
         {
-            InitializeComponent();
-
             Glyphs = glyphs;
+
+            InitializeComponent();
         }
 
         void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)

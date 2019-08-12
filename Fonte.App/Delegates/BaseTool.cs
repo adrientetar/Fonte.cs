@@ -59,30 +59,12 @@ namespace Fonte.App.Delegates
         {
             var control = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-            var tab = Window.Current.CoreWindow.GetKeyState(VirtualKey.Tab);
-            if (control.HasFlag(CoreVirtualKeyStates.Down) && tab.HasFlag(CoreVirtualKeyStates.Down) && (
+
+            if (!alt.HasFlag(CoreVirtualKeyStates.Down) && (
                     args.Key == VirtualKey.Left ||
-                    args.Key == VirtualKey.Right))
-            {
-                var focusPoint = canvas.Layer.Selection.OfType<Data.Point>().LastOrDefault();
-
-                if (focusPoint != null)
-                {
-                    var path = focusPoint.Parent;
-                    var index = path.Points.IndexOf(focusPoint);
-
-                    var point = args.Key == VirtualKey.Right ?
-                                Sequence.NextItem(path.Points, index) :
-                                Sequence.PreviousItem(path.Points, index);
-
-                    canvas.Layer.ClearSelection();
-                    point.IsSelected = true;
-                }
-            }
-            else if (args.Key == VirtualKey.Left ||
-                     args.Key == VirtualKey.Up ||
-                     args.Key == VirtualKey.Right ||
-                     args.Key == VirtualKey.Down)
+                    args.Key == VirtualKey.Up ||
+                    args.Key == VirtualKey.Right ||
+                    args.Key == VirtualKey.Down))
             {
                 int dx = 0, dy = 0;
                 if (args.Key == VirtualKey.Left)
@@ -136,6 +118,25 @@ namespace Fonte.App.Delegates
                             Outline.TryTogglePointSmoothness(point);
                         }
                     }
+                }
+            }
+            else if (control.HasFlag(CoreVirtualKeyStates.Down) && (
+                         args.Key == VirtualKey.PageUp ||
+                         args.Key == VirtualKey.PageDown))
+            {
+                var focusPoint = canvas.Layer.Selection.OfType<Data.Point>().LastOrDefault();
+
+                if (focusPoint != null)
+                {
+                    var path = focusPoint.Parent;
+                    var index = path.Points.IndexOf(focusPoint);
+
+                    var point = args.Key == VirtualKey.PageDown ?
+                                Sequence.NextItem(path.Points, index) :
+                                Sequence.PreviousItem(path.Points, index);
+
+                    canvas.Layer.ClearSelection();
+                    point.IsSelected = true;
                 }
             }
             else

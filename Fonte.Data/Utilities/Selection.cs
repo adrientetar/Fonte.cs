@@ -5,6 +5,7 @@
 namespace Fonte.Data.Utilities
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     public class Selection
     {
@@ -15,17 +16,12 @@ namespace Fonte.Data.Utilities
             foreach (var path in paths)
             {
                 var segments = path.Segments;
-                Segment firstSegment;
-                {
-                    var enumerator = segments.GetEnumerator();
-                    enumerator.MoveNext();
-                    firstSegment = enumerator.Current;
-                }
+                var firstSegment = segments.First();
 
                 IEnumerable<Segment> iter;
                 if (!path.IsOpen && firstSegment.OnCurve.IsSelected == selValue)
                 {
-                    var segmentsList = new List<Segment>(segments);
+                    var segmentsList = segments.ToList();
 
                     int index;
                     for (index = segmentsList.Count - 1; index >= 0; --index)

@@ -407,9 +407,9 @@ namespace Fonte.App.Controls
                                     testSegments: testSegments);
         }
 
-        public SnapResult SnapPoint(Point pos, ILocatable snapTarget = null, bool clampToTarget = false)
+        public SnapResult SnapPoint(Point pos, ILocatable snapPoint, Point? clampPoint = null)
         {
-            return UIBroker.SnapPoint(Layer, pos, 1f / ScaleFactor, snapTarget, clampToTarget);
+            return UIBroker.SnapPoint(Layer, pos, 1f / ScaleFactor, snapPoint, clampPoint);
         }
 
         public void Invalidate()

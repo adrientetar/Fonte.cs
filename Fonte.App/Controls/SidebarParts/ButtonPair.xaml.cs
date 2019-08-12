@@ -7,6 +7,8 @@ namespace Fonte.App.Controls.SidebarParts
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
 
+    [TemplatePart(Name = "LeftButton", Type = typeof(Button))]
+    [TemplatePart(Name = "RightButton", Type = typeof(Button))]
     public partial class ButtonPair : UserControl
     {
         public static DependencyProperty LeftButtonProperty = DependencyProperty.Register(
@@ -56,7 +58,7 @@ namespace Fonte.App.Controls.SidebarParts
 
         void OnCornerRadiusChanged(DependencyObject sender, DependencyProperty dp)
         {
-            ((ButtonPair)sender).UpdateUI();
+            UpdateUI();
         }
     }
 }

@@ -4,7 +4,6 @@
 
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
     using Microsoft.Graphics.Canvas.Text;
@@ -128,11 +127,8 @@ namespace Fonte.App.Utilities
                 {
                     if (glyphLayer != layer && glyphLayer.IsVisible)
                     {
-                        foreach (var component in glyphLayer.Components)
-                        {
-                            ds.DrawGeometry(component.ClosedCanvasPath, color, strokeWidth: rescale);
-                            ds.DrawGeometry(component.OpenCanvasPath, color, strokeWidth: rescale);
-                        }
+                        DrawComponents(layer, ds, rescale, color, drawSelection: false);
+
                         ds.DrawGeometry(glyphLayer.ClosedCanvasPath, color, strokeWidth: rescale);
                         ds.DrawGeometry(glyphLayer.OpenCanvasPath, color, strokeWidth: rescale);
                     }

@@ -35,6 +35,7 @@
         <Color x:Key="LayersColor">#FFD2D2D2</Color>
         <Color x:Key="MarkerColor">#E1F2C7B8</Color>
         <Color x:Key="SmoothPointColor">#BEEB4D75</Color>
+        <Color x:Key="SnapLineColor">#FFEB2B77</Color>
         <Color x:Key="StrokeColor">#FF232323</Color>
     </UserControl.Resources>
 

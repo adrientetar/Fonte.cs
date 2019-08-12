@@ -17,9 +17,7 @@ namespace Fonte.App.Commands
         protected abstract Func<IEnumerable<Data.Path>, IEnumerable<Data.Path>, List<Data.Path>> BooleanFunc
         { get; }
 
-#pragma warning disable CS0067
         public event EventHandler CanExecuteChanged;
-#pragma warning restore CS0067
 
         public bool CanExecute(object parameter)
         {

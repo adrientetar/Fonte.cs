@@ -244,9 +244,8 @@ namespace Fonte.Data
         public void StartAt(int index)
         {
             if (IsOpen)
-            {
                 throw new InvalidOperationException("Cannot set start point in open path");
-            }
+
             if (Points.Count - index + 1 != 0)
             {
                 using (var group = Parent?.CreateUndoGroup())
