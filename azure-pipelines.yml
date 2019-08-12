@@ -25,13 +25,20 @@ steps:
   inputs:
     secureFile: 'DevCert.pfx'
 
+- task: PowerShell@2
+  displayName: 'Install Dev Certificate'
+  inputs:
+    targetType: filePath
+    filePath: Install-DevCert.ps1
+    arguments: '-pfxPath $(devCert.secureFilePath) -password ihatecerts'
+
 - task: VSBuild@1
   displayName: 'Build the Solution'
   inputs:
     platform: 'x64'
     solution: '$(solution)'
     configuration: '$(buildConfiguration)'
-    msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload /p:PackageCertificateKeyFile="$(devCert.secureFilePath)" /p:PackageCertificatePassword="ihatecerts"'
+    msbuildArgs: '/p:AppxBundlePlatforms="$(buildPlatform)" /p:AppxPackageDir="$(appxPackageDir)" /p:AppxBundle=Always /p:UapAppxPackageBuildMode=StoreUpload'
 
 - task: CopyFiles@2
   displayName: 'Copy Files to Actifacts Directory'
