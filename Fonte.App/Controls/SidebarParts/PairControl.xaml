@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="Fonte.App.Controls.SidebarParts.ButtonPair"
+    x:Class="Fonte.App.Controls.SidebarParts.PairControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Fonte.App.Controls.SidebarParts"
@@ -11,7 +11,7 @@
     <UserControl.Resources>
         <Style TargetType="Button">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Margin" Value="0"/>
             <Setter Property="Padding" Value="0"/>
@@ -25,8 +25,11 @@
             <Setter Property="VerticalContentAlignment" Value="Stretch"/>
         </Style>
 
+
+        <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="{StaticResource DisabledColor}"/>
         <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="White"/>
-        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#dadada"/>
+        <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource PressedColor}"/>
+        <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="{StaticResource BorderColor}"/>
         <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource BorderColor}"/>
         <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource BorderColor}"/>
     </UserControl.Resources>
@@ -34,9 +37,11 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
+            <ColumnDefinition Width="1"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <ContentControl Content="{x:Bind LeftButton}"/>
-        <ContentControl Content="{x:Bind RightButton}" Grid.Column="1"/>
+        <ContentControl Content="{x:Bind Left}"/>
+        <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Grid.Column="1"/>
+        <ContentControl Content="{x:Bind Right}" Grid.Column="2"/>
     </Grid>
 </UserControl>

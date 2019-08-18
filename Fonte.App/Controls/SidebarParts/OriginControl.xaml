@@ -24,7 +24,7 @@
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Stroke="{StaticResource SpacingColor}" Width="21" Height="21"/>
+        <Rectangle Grid.RowSpan="3" Grid.ColumnSpan="3" Stroke="{StaticResource SpacingBrush}" Width="21" Height="21"/>
 
         <local:OriginButton Tag="0" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=0, Mode=OneWay}" Click="OnButtonClicked"/>
         <local:OriginButton Tag="1" IsActive="{x:Bind SelectedIndex, Converter={StaticResource IndexToActiveConverterKey}, ConverterParameter=1, Mode=OneWay}" Click="OnButtonClicked" Grid.Column="1"/>

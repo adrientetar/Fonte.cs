@@ -5,6 +5,7 @@
 namespace Fonte.App.Utilities
 {
     using Microsoft.Graphics.Canvas;
+    using Microsoft.Graphics.Canvas.Brushes;
     using Microsoft.Graphics.Canvas.Geometry;
     using Microsoft.Graphics.Canvas.Text;
 
@@ -381,24 +382,41 @@ namespace Fonte.App.Utilities
         {
             if (layer.Selection.Count > 1)
             {
-                var rect = layer.SelectionBounds;
-                var strokeStyle = new CanvasStrokeStyle
+                var rect = layer.SelectionBounds.ToFoundationRect();
+                ds.DrawRectangle(rect, Color.FromArgb(45, 150, 150, 150), strokeWidth: rescale);
+                ds.DrawRectangle(rect, Color.FromArgb(128, 34, 34, 34), strokeWidth: rescale, new CanvasStrokeStyle
                 {
                     CustomDashStyle = new float[] { 1, 4 }
-                };
-                ds.DrawRectangle(rect.ToFoundationRect(), Color.FromArgb(128, 34, 34, 34), rescale, strokeStyle);
+                });
 
-                var pathBuilder = new CanvasPathBuilder(ds);
-                var radius = 4 * rescale;
-                foreach (var handle in UIBroker.GetSelectionHandles(layer, rescale))
+                var halfSize = 3.5f * rescale;
+                var size = 2f * halfSize;
+                var halfStrokeWidth = .5f * rescale;
+                var strokeWidth = 2f * halfStrokeWidth;
+                using (var geometry = CreateOuterRoundedRect(ds, 0, 0, size: size, strokeWidth: rescale))
                 {
-                    pathBuilder.AddGeometry(
-                        CanvasGeometry.CreateCircle(ds, handle.Position, radius));
-                }
-                using (var path = CanvasGeometry.CreatePath(pathBuilder))
-                {
-                    ds.FillGeometry(path, Color.FromArgb(120, 255, 255, 255));
-                    ds.DrawGeometry(path, Color.FromArgb(255, 163, 163, 163), rescale);
+                    var borderBrush = new CanvasLinearGradientBrush(
+                        ds,
+                        Color.FromArgb(225, 160, 160, 160),
+                        Color.FromArgb(225, 135, 135, 135)
+                    );
+                    var color = Color.FromArgb(195, 255, 255, 255);
+
+                    foreach (var handle in UIBroker.GetSelectionHandles(layer, rescale))
+                    {
+                        borderBrush.StartPoint = new Vector2(
+                                handle.Position.X, handle.Position.Y + halfSize + halfStrokeWidth);
+                        borderBrush.EndPoint = new Vector2(
+                            handle.Position.X, handle.Position.Y - halfSize - halfStrokeWidth);
+
+                        ds.FillRectangle(handle.Position.X - halfSize + halfStrokeWidth,
+                                         handle.Position.Y - halfSize + halfStrokeWidth,
+                                         size - strokeWidth,
+                                         size - strokeWidth,
+                                         color);
+                        ds.FillGeometry(geometry, handle.Position, borderBrush);
+                    }
+                    borderBrush.Dispose();
                 }
             }
         }
@@ -501,6 +519,29 @@ namespace Fonte.App.Utilities
             ));
             builder.EndFigure(CanvasFigureLoop.Closed);
             return CanvasGeometry.CreatePath(builder);
+        }
+
+        static CanvasGeometry CreateOuterRoundedRect(CanvasDrawingSession ds, float x, float y, float size, float strokeWidth)
+        {
+            var halfSize = .5f * size;
+            var halfStrokeWidth = .5f * strokeWidth;
+            var radius = 1.5f * strokeWidth;
+
+            using (CanvasGeometry roundedRectangle = CanvasGeometry.CreateRoundedRectangle(ds,
+                                                                                           x - halfSize,
+                                                                                           y - halfSize,
+                                                                                           size, size,
+                                                                                           radius, radius),
+                                  innerRectangle = CanvasGeometry.CreateRectangle(ds,
+                                                                                  x - halfSize + halfStrokeWidth,
+                                                                                  y - halfSize + halfStrokeWidth,
+                                                                                  size - strokeWidth,
+                                                                                  size - strokeWidth))
+            {
+                return roundedRectangle.Stroke(strokeWidth).CombineWith(innerRectangle,
+                                                                        Matrix3x2.Identity,
+                                                                        CanvasGeometryCombine.Exclude);
+            }
         }
 
         static CanvasGeometry CreateTriangle(CanvasDrawingSession ds, float x, float y, double angle, float size)

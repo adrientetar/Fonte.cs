@@ -16,6 +16,7 @@ namespace Fonte.App.Delegates
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
+    using Windows.System.Threading;
     using Windows.UI;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
@@ -31,6 +32,7 @@ namespace Fonte.App.Delegates
         private object _tappedItem;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
         private SnapResult _snapResult;
+        private ThreadPoolTimer _timer;
         private IChangeGroup _undoGroup;
 
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
@@ -129,7 +131,7 @@ namespace Fonte.App.Delegates
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var canvasPos = canvas.FromClientPosition(ptPoint.Position);
-                _tappedItem = canvas.HitTest(canvasPos);
+                _tappedItem = canvas.HitTest(canvasPos, testSegments: true);
 
                 if (_tappedItem != null)
                 {
@@ -296,7 +298,22 @@ namespace Fonte.App.Delegates
                     if (_tappedItem is ILocatable iloc)
                     {
                         // No need for the _canDrag guard here because we're snapping to _tappedItem.
-                        _snapResult = canvas.SnapPoint(pos, iloc, GetClampTarget(layer, iloc as Data.Point));
+                        var snapResult = canvas.SnapPoint(pos, iloc, GetClampTarget(layer, iloc as Data.Point));
+                        if (snapResult.Position != _snapResult?.Position)
+                        {
+                            _timer?.Cancel();
+
+                            _snapResult = snapResult;
+                            _timer = ThreadPoolTimer.CreateTimer(async timer =>
+                            {
+                                await canvas.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                                {
+                                    _snapResult.ClearSnapLines();
+
+                                    canvas.Invalidate();
+                                });
+                            }, TimeSpan.FromMilliseconds(600));
+                        }
 
                         pos = _snapResult.Position;
                     }
@@ -341,6 +358,8 @@ namespace Fonte.App.Delegates
                 {
                     TryJoinPath(canvas, canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position));
                 }
+                _timer?.Cancel();
+                _timer = null;
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
@@ -452,7 +471,6 @@ namespace Fonte.App.Delegates
         {
             if (_tappedItem is Data.Point point && Is.AtOpenBoundary(point))
             {
-                // TODO: we could only HitTest points here
                 var otherItem = canvas.HitTest(pos, ignoreElement: point);
                 if (otherItem is Data.Point otherPoint && Is.AtOpenBoundary(otherPoint))
                 {

@@ -61,9 +61,7 @@ namespace Fonte.App.Controls.SidebarParts
 
         public TwoToneButton()
         {
-            DefaultStyleKey = typeof(TwoToneButton);
-
-            InitializeComponent();
+            //DefaultStyleKey = typeof(TwoToneButton);
 
             RegisterPropertyChangedCallback(IsEnabledProperty, OnIsEnabledChanged);
         }

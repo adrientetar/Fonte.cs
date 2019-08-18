@@ -19,6 +19,9 @@
                 <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
+            <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
+            <GridLength x:Key="FixedColumnLength">66</GridLength>
+
             <converters:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
             <converters:StringToBooleanConverter x:Key="StringToBooleanConverter"/>
 
@@ -27,17 +30,13 @@
             <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="Transparent"/>
             <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="White"/>
             <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="{StaticResource BorderColor}"/>
-            <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="#f5f4f7"/>
+            <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="{StaticResource DisabledColor}"/>
             <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource BorderColor}"/>
 
-            <SolidColorBrush x:Key="FlatIconBrush" Color="{StaticResource FlatIconColor}"/>
-            <SolidColorBrush x:Key="IconFillBrush" Color="{StaticResource IconFillColor}"/>
-            <SolidColorBrush x:Key="IconStrokeBrush" Color="{StaticResource IconStrokeColor}"/>
-            <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
 
-            <Style TargetType="parts:ButtonPair">
+            <Style TargetType="parts:PairControl">
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                 <Setter Property="CornerRadius" Value="2"/>
                 <Setter Property="Height" Value="26"/>
                 <Setter Property="Margin" Value="4"/>
@@ -53,7 +52,7 @@
             </Style>
             <Style TargetType="TextBox">
                 <Setter Property="Background" Value="White"/>
-                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="CornerRadius" Value="2"/>
                 <Setter Property="FontSize" Value="12"/>
@@ -64,12 +63,15 @@
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
                 <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
-            <Style TargetType="parts:TwoToneButton">
-                <Setter Property="Fill" Value="{StaticResource IconFillBrush}"/>
-                <Setter Property="Stroke" Value="{StaticResource IconStrokeBrush}"/>
-                <Setter Property="Margin" Value="2,0,2,0"/>
-            </Style>
 
+            <Style x:Key="HeaderButtonStyle" TargetType="parts:TwoToneButton">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Fill" Value="{StaticResource HeaderIconFillBrush}"/>
+                <Setter Property="Stroke" Value="{StaticResource HeaderIconStrokeBrush}"/>
+                <Setter Property="Margin" Value="2,0,2,0"/>
+                <Setter Property="Padding" Value="0"/>
+            </Style>
             <Style x:Key="IconButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -77,8 +79,8 @@
                 <Setter Property="Padding" Value="4"/>
             </Style>
             <Style x:Key="HeaderGridStyle" TargetType="Grid">
-                <Setter Property="Background" Value="{StaticResource AltBackgroundColor}"/>
-                <Setter Property="BorderBrush" Value="{StaticResource SpacingColor}"/>
+                <Setter Property="Background" Value="{StaticResource AltBackgroundBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource SpacingBrush}"/>
                 <Setter Property="BorderThickness" Value="0,1,0,1"/>
                 <Setter Property="MinHeight" Value="30"/>
                 <Setter Property="Padding" Value="4"/>
@@ -96,12 +98,14 @@
             <Style x:Key="IconPathStyle" TargetType="Path">
                 <Setter Property="Height" Value="16"/>
                 <Setter Property="Width" Value="16"/>
+            </Style>
+            <Style x:Key="HeaderIconPathStyle" TargetType="Path" BasedOn="{StaticResource IconPathStyle}">
                 <Setter Property="Margin" Value="4"/>
             </Style>
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Background="{StaticResource BackgroundColor}" Visibility="{x:Bind Layer, Converter={StaticResource ObjectToVisibilityConverter}, Mode=OneWay}">
+    <Grid Background="{StaticResource BackgroundBrush}" Visibility="{x:Bind Layer, Converter={StaticResource ObjectToVisibilityConverter}, Mode=OneWay}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -124,7 +128,8 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.Resources>
-                <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
+                <Style TargetType="parts:TwoToneButton" BasedOn="{StaticResource HeaderButtonStyle}"/>
+                <Style TargetType="Path" BasedOn="{StaticResource HeaderIconPathStyle}"/>
             </Grid.Resources>
             <parts:TwoToneButton Command="{x:Bind AlignLeftCommand}"
                                  CommandParameter="{x:Bind Layer, Mode=OneWay}"
@@ -197,7 +202,8 @@
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
             <Grid.Resources>
-                <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
+                <Style TargetType="parts:TwoToneButton" BasedOn="{StaticResource HeaderButtonStyle}"/>
+                <Style TargetType="Path" BasedOn="{StaticResource HeaderIconPathStyle}"/>
             </Grid.Resources>
             <parts:TwoToneButton Command="{x:Bind UnitePathsCommand}"
                                  CommandParameter="{x:Bind Layer, Mode=OneWay}"
@@ -218,8 +224,8 @@
                 </parts:TwoToneButton.KeyboardAccelerators>
 
                 <Grid>
-                    <Path Data="M5,9.5 h-3.5 v-8 h8 v3.5"/>
-                    <Path Fill="Transparent" Data="M5.5,5.5 h8 v8 h-8 Z"/>
+                    <Path Data="M1.5,1.5 h8 v4 h-4 v4 h-4 Z"/>
+                    <Path Fill="Transparent" Data="M9.5,5.5 h4 v8 h-8 v-4"/>
                 </Grid>
             </parts:TwoToneButton>
             <parts:TwoToneButton Command="{x:Bind IntersectPathsCommand}"
@@ -250,14 +256,14 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="{StaticResource FixedColumnLength}"/>
+                <ColumnDefinition Width="{StaticResource FixedColumnLength}"/>
             </Grid.ColumnDefinitions>
 
             <parts:OriginControl x:Name="Origin" Margin="4" Grid.Column="1"/>
-            <Grid Grid.Column="2" Margin="4" Padding="1,0,1,0">
+            <Grid Grid.Column="2" Height="26" Margin="4" Padding="1,0,1,0">
                 <Grid.Resources>
-                    <Style TargetType="parts:TwoToneButton">
+                    <Style TargetType="parts:TwoToneButton" BasedOn="{StaticResource IconButtonStyle}">
                         <Setter Property="Fill" Value="{StaticResource FlatIconBrush}"/>
                         <Setter Property="Stroke" Value="{StaticResource FlatIconBrush}"/>
                     </Style>
@@ -313,56 +319,73 @@
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="{StaticResource FixedColumnLength}"/>
+                <ColumnDefinition Width="{StaticResource FixedColumnLength}"/>
             </Grid.ColumnDefinitions>
+            <Grid.Resources>
+                <Style TargetType="parts:TwoToneButton">
+                    <Setter Property="Template" Value="{StaticResource SimpleButtonTemplate}"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Stroke" Value="#222"/>
+                </Style>
+                <Style TargetType="Path" BasedOn="{StaticResource IconPathStyle}"/>
+            </Grid.Resources>
 
             <TextBlock Text="Scale"/>
             <TextBox x:Name="XScaleTextBox" Text="2" Grid.Column="1"/>
-            <parts:ButtonPair Grid.Column="2">
-                <parts:ButtonPair.LeftButton>
-                    <Button Click="OnScaleButtonClick" Tag="!">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                    </Button>
-                </parts:ButtonPair.LeftButton>
-                <parts:ButtonPair.RightButton>
-                    <Button Click="OnScaleButtonClick">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                    </Button>
-                </parts:ButtonPair.RightButton>
-            </parts:ButtonPair>
+            <parts:PairControl x:Name="ScaleButtons" Grid.Column="2">
+                <parts:PairControl.Left>
+                    <parts:TwoToneButton Tag="!"
+                                         Click="OnScaleButtonClick"
+                                         ToolTipService.ToolTip="Scale down">
+                        <Path Data="M5,5.5 h6 v5 h-6 Z"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Left>
+                <parts:PairControl.Right>
+                    <parts:TwoToneButton Click="OnScaleButtonClick"
+                                         ToolTipService.ToolTip="Scale up">
+                        <Path Data="M1,2.5 h13 v11 h-13 Z"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Right>
+            </parts:PairControl>
 
             <TextBox x:Name="YScaleTextBox" Text="2" Grid.Row="1" Grid.Column="1"/>
 
             <TextBlock Text="Rotation" Grid.Row="2"/>
             <TextBox x:Name="RotationTextBox" Text="40" Grid.Row="2" Grid.Column="1"/>
-            <parts:ButtonPair Grid.Row="2" Grid.Column="2">
-                <parts:ButtonPair.LeftButton>
-                    <Button Click="OnRotationButtonClick">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                    </Button>
-                </parts:ButtonPair.LeftButton>
-                <parts:ButtonPair.RightButton>
-                    <Button Click="OnRotationButtonClick" Tag="!">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                    </Button>
-                </parts:ButtonPair.RightButton>
-            </parts:ButtonPair>
+            <parts:PairControl x:Name="RotationButtons" Grid.Row="2" Grid.Column="2">
+                <parts:PairControl.Left>
+                    <parts:TwoToneButton Click="OnRotationButtonClick"
+                                         ToolTipService.ToolTip="Rotate counter-clockwise">
+                        <Path Data="M4.17 11.87A5.72 5.72 0 0 0 14 8.12a5.33 5.33 0 0 0-5.44-5.6c-3.08 0-5.06 2.9-5.93 4.57 M2.15 2.4v4.74h4.64"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Left>
+                <parts:PairControl.Right>
+                    <parts:TwoToneButton Tag="!"
+                                         Click="OnRotationButtonClick"
+                                         ToolTipService.ToolTip="Rotate clockwise">
+                        <Path Data="M11.83 11.87a5.62 5.62 0 1 1-4.08-9.33c2.88-.01 4.74 2.89 5.62 4.56 M13.85 2.4v4.74H9.21"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Right>
+            </parts:PairControl>
 
             <TextBlock Text="Skew" Grid.Row="3"/>
             <TextBox x:Name="SkewTextBox" Text="6" Grid.Row="3" Grid.Column="1"/>
-            <parts:ButtonPair Grid.Row="3" Grid.Column="2">
-                <parts:ButtonPair.LeftButton>
-                    <Button Click="OnSkewButtonClick" Tag="!">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10"/>
-                    </Button>
-                </parts:ButtonPair.LeftButton>
-                <parts:ButtonPair.RightButton>
-                    <Button Click="OnSkewButtonClick">
-                        <Path Stroke="#222" Width="16" Height="16" Data="M3,8 h10 M8,3 v10"/>
-                    </Button>
-                </parts:ButtonPair.RightButton>
-            </parts:ButtonPair>
+            <parts:PairControl x:Name="SkewButtons" Grid.Row="3" Grid.Column="2">
+                <parts:PairControl.Left>
+                    <parts:TwoToneButton Tag="!"
+                                         Click="OnSkewButtonClick"
+                                         ToolTipService.ToolTip="Skew leftwards">
+                        <Path Data="M3,8 h11 M7,4 l-4.5,4 l4.5,4"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Left>
+                <parts:PairControl.Right>
+                    <parts:TwoToneButton Click="OnSkewButtonClick"
+                                         ToolTipService.ToolTip="Skew rightwards">
+                        <Path Data="M2,8 h11 M9,4 l4.5,4 l-4.5,4"/>
+                    </parts:TwoToneButton>
+                </parts:PairControl.Right>
+            </parts:PairControl>
         </Grid>
         <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="6">
             <Grid.ColumnDefinitions>

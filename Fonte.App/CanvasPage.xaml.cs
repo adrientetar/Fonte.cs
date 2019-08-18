@@ -60,6 +60,26 @@ namespace Fonte.App
             OnDataRefreshing();
         }
 
+        public async Task OpenAsync()
+        {
+            var picker = new FileOpenPicker
+            {
+                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
+            };
+            picker.FileTypeFilter.Add(".tfont");
+
+            if (await picker.PickSingleFileAsync() is StorageFile file)
+            {
+
+                var json = await FileIO.ReadTextAsync(file);
+
+                Font = JsonConvert.DeserializeObject<Data.Font>(json);
+
+                _file = file;
+                OnDataRefreshing();
+            }
+        }
+
         public async Task<bool> SaveAsync()
         {
             var file = _file;
@@ -83,6 +103,35 @@ namespace Fonte.App
                 _file = file;
                 OnDataRefreshing();
 
+                return true;
+            }
+            return false;
+        }
+
+        async Task<bool> CanDiscardAsync()
+        {
+            if (!Font.IsModified)
+                return true;
+
+            ContentDialogResult result;
+            {
+                var dialog = new ContentDialog()
+                {
+                    Title = $"Do you want to save your changes to “{Font.FamilyName}” before closing?",
+                    PrimaryButtonText = "Save",
+                    SecondaryButtonText = "Don’t save",
+                    CloseButtonText = "Cancel"
+                };
+
+                result = await dialog.ShowAsync();
+            }
+
+            if (result.HasFlag(ContentDialogResult.Primary) && await SaveAsync())
+            {
+                return true;
+            }
+            else if (result.HasFlag(ContentDialogResult.Secondary))
+            {
                 return true;
             }
             return false;
@@ -128,36 +177,14 @@ namespace Fonte.App
 
         async void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs args)
         {
-            if (Font.IsModified)
+            var deferral = args.GetDeferral();
+
+            if (!await CanDiscardAsync())
             {
-                var deferral = args.GetDeferral();
-
-                ContentDialogResult result;
-                {
-                    var dialog = new ContentDialog()
-                    {
-                        Title = $"Do you want to save your changes to “{Font.FamilyName}” before closing?",
-                        PrimaryButtonText = "Save",
-                        SecondaryButtonText = "Don’t save",
-                        CloseButtonText = "Cancel"
-                    };
-
-                    result = await dialog.ShowAsync();
-                }
-
-                if (result.HasFlag(ContentDialogResult.Primary) && await SaveAsync())
-                {
-                }
-                else if (result.HasFlag(ContentDialogResult.Secondary))
-                {
-                }
-                else
-                {
-                    // Decline window close
-                    args.Handled = true;
-                }
-                deferral.Complete();
+                // Decline window close
+                args.Handled = true;
             }
+            deferral.Complete();
         }
 
         void OnDataRefreshing()
@@ -393,6 +420,21 @@ namespace Fonte.App
 
         /**/
 
+        async void OnOpenItemClicked(object sender, RoutedEventArgs args)
+        {
+            if (await CanDiscardAsync())
+            {
+                await OpenAsync();
+            }
+        }
+
+        async void OnSaveItemClicked(object sender, RoutedEventArgs args)
+        {
+            await SaveAsync();
+        }
+
+        /**/
+
         void OnFontChanged()
         {
             try
@@ -410,33 +452,11 @@ namespace Fonte.App
             ((CanvasPage)sender).OnFontChanged();
         }
 
-        async void OnOpenItemClicked(object sender, RoutedEventArgs args)
-        {
-            var picker = new FileOpenPicker
-            {
-                SuggestedStartLocation = PickerLocationId.DocumentsLibrary
-            };
-            picker.FileTypeFilter.Add(".tfont");
-
-            if (await picker.PickSingleFileAsync() is StorageFile file)
-            {
-
-                var json = await FileIO.ReadTextAsync(file);
-
-                Font = JsonConvert.DeserializeObject<Data.Font>(json);
-
-                _file = file;
-                OnDataRefreshing();
-            }
-        }
-
-        async void OnSaveItemClicked(object sender, RoutedEventArgs args) => await SaveAsync();
-
-        /**/
-
         void OnToolbarItemChanged(object sender, EventArgs args)
         {
             Canvas.Tool = (ICanvasDelegate)Toolbar.SelectedItem;
+
+            Canvas.Focus(FocusState.Programmatic);
         }
     }
 }

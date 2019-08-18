@@ -163,7 +163,8 @@ namespace Fonte.App.Controls
             ((IntersectPathsCommand)IntersectPathsCommand).NotifyCanExecuteChanged();
             ((XorPathsCommand)XorPathsCommand).NotifyCanExecuteChanged();
 
-            HorzMirrorButton.IsEnabled = VertMirrorButton.IsEnabled = layer?.Paths.Count > 0;
+            HorzMirrorButton.IsEnabled = VertMirrorButton.IsEnabled =
+                ScaleButtons.IsEnabled = RotationButtons.IsEnabled = SkewButtons.IsEnabled = layer?.Paths.Count > 0;
         }
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)

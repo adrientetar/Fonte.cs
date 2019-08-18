@@ -20,6 +20,8 @@ namespace Fonte.App.Utilities
         public (float, float) XSnapLine { get; }
         public (float, float) YSnapLine { get; }
 
+        private bool _active = true;
+
         public SnapResult(Point pos, (float, float) xSnapLine, (float, float) ySnapLine)
         {
             Position = pos;
@@ -27,23 +29,32 @@ namespace Fonte.App.Utilities
             YSnapLine = ySnapLine;
         }
 
+        public void ClearSnapLines()
+        {
+            // TODO: put this in SelectionTool directly?
+            _active = false;
+        }
+
         public IEnumerable<(Vector2, Vector2)> GetSnapLines()
         {
-            if (!float.IsNaN(XSnapLine.Item1))
+            if (_active)
             {
-                var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : (float)Position.Y;
-                yield return (
-                    new Vector2((float)Position.X, XSnapLine.Item1),
-                    new Vector2((float)Position.X, i2)
-                );
-            }
-            if (!float.IsNaN(YSnapLine.Item1))
-            {
-                var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : (float)Position.X;
-                yield return (
-                    new Vector2(YSnapLine.Item1, (float)Position.Y),
-                    new Vector2(i2, (float)Position.Y)
-                );
+                if (!float.IsNaN(XSnapLine.Item1))
+                {
+                    var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : (float)Position.Y;
+                    yield return (
+                        new Vector2((float)Position.X, XSnapLine.Item1),
+                        new Vector2((float)Position.X, i2)
+                    );
+                }
+                if (!float.IsNaN(YSnapLine.Item1))
+                {
+                    var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : (float)Position.X;
+                    yield return (
+                        new Vector2(YSnapLine.Item1, (float)Position.Y),
+                        new Vector2(i2, (float)Position.Y)
+                    );
+                }
             }
         }
     }
@@ -101,8 +112,8 @@ namespace Fonte.App.Utilities
         public static BBoxHandle GetSelectionHandle(Rect bounds, HandleKind kind, float rescale)
         {
             Vector2 pos;
-            var radius = 4 * rescale;
-            var margin = 4 * rescale;
+            var radius = 4f * rescale;
+            var margin = 4.5f * rescale;
 
             if (kind.HasFlag(HandleKind.Right))
             {
@@ -338,6 +349,7 @@ namespace Fonte.App.Utilities
         {
             var halfSize = 5 * rescale;
 
+            // TODO: choose not the first, but the best snap target?
             foreach (var path in layer.Paths)
             {
                 var prev = path.Points.Count >= 3 ? path.Points[path.Points.Count - 2] : path.Points.First();
@@ -356,8 +368,6 @@ namespace Fonte.App.Utilities
                                 && !next.IsSelected  /* !IsMoveTarget */
                                 && next.X == point.X)
                             {
-                                Debug.Assert(next.Type != Data.PointType.None);
-
                                 snapLine = (next.Y, float.NaN);
                             }
                             else

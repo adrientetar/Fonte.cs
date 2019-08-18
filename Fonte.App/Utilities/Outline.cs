@@ -444,7 +444,8 @@ namespace Fonte.App.Utilities
             var outPaths = new List<Data.Path>();
             foreach (var path in paths)
             {
-                var segments = new List<Data.Segment>(path.Segments);
+                var segments = path.Segments.ToList();
+
                 var forwardMove = false;
                 for (int ix = segments.Count - 1; ix >= 0; --ix)
                 {

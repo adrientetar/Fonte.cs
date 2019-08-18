@@ -394,7 +394,7 @@ namespace Fonte.App.Controls
             return Vector2.Transform(pos.ToVector2(), GetInverseMatrix()).ToPoint();
         }
 
-        public object HitTest(Point pos, ILayerElement ignoreElement = null, bool testSegments = true)
+        public object HitTest(Point pos, ILayerElement ignoreElement = null, bool testSegments = false)
         {
             var pointSize = PointSize;
             var drawDetails = pointSize >= MinPointSizeForDetails;

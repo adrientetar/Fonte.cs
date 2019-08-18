@@ -1,26 +1,21 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Fonte.App"
-    xmlns:sidebarParts="using:Fonte.App.Controls.SidebarParts">
+    xmlns:local="using:Fonte.App">
 
-    <Color x:Key="BackgroundColor">#f4f6f7</Color>
-    <Color x:Key="AltBackgroundColor">#faf9fc</Color>
     <Color x:Key="BorderColor">#d8dce3</Color>
-    <Color x:Key="SpacingColor">#e6e7e8</Color>
-    <Color x:Key="FlatIconColor">#6b6f77</Color>
-    <Color x:Key="IconFillColor">#dee3ff</Color>
-    <Color x:Key="IconStrokeColor">#2e2e7b</Color>
+    <Color x:Key="DisabledColor">#f5f4f7</Color>
+    <Color x:Key="PressedColor">#dadada</Color>
 
-    <Style TargetType="sidebarParts:TwoToneButton">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="Margin" Value="0"/>
-        <!--Setter Property="Padding" Value="4"/--> <!-- This does not work, so I use margin on the content instead -->
-        <Setter Property="Fill" Value="LightGray"/>
-        <Setter Property="Stroke" Value="DarkGray"/>
-    </Style>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#f4f6f7"/>
+    <SolidColorBrush x:Key="AltBackgroundBrush" Color="#faf9fc"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource DisabledColor}"/>
+    <SolidColorBrush x:Key="PressedBrush" Color="{StaticResource PressedColor}"/>
+    <SolidColorBrush x:Key="SpacingBrush" Color="#e6e7e8"/>
+    <SolidColorBrush x:Key="FlatIconBrush" Color="#6b6f77"/>
+    <SolidColorBrush x:Key="HeaderIconFillBrush" Color="#dee3ff"/>
+    <SolidColorBrush x:Key="HeaderIconStrokeBrush" Color="#2e2e7b"/>
 
     <ControlTemplate x:Key="SimpleButtonTemplate" TargetType="Button">
         <ContentPresenter x:Name="ContentPresenter"

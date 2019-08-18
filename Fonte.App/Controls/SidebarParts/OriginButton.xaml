@@ -21,7 +21,7 @@
             <Setter Property="Template" Value="{StaticResource ButtonTemplate}"/>
             <Setter Property="Accent" Value="#0078d7"/>
             <Setter Property="Foreground" Value="#cacfd9"/>
-            <Setter Property="Background" Value="#f4f6f7"/>
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
         </Style>

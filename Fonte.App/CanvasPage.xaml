@@ -27,7 +27,7 @@
         <KeyboardAccelerator Key="Home" Invoked="OnPreviousGlyphInvoked"/>
     </Page.KeyboardAccelerators>
 
-    <Grid Background="{StaticResource SpacingColor}" ColumnSpacing="1">
+    <Grid Background="{StaticResource SpacingBrush}" ColumnSpacing="1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition Width="Auto"/>

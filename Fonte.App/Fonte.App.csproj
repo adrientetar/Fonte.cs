@@ -23,8 +23,10 @@
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <AppInstallerUpdateFrequency>1</AppInstallerUpdateFrequency>
     <AppInstallerCheckForUpdateFrequency>OnApplicationRun</AppInstallerCheckForUpdateFrequency>
-    <PackageCertificateKeyFile></PackageCertificateKeyFile>
+    <PackageCertificateKeyFile>
+    </PackageCertificateKeyFile>
     <PackageCertificateThumbprint>CF1AE72DAA1CA0E7DC469825681543F8A43AC52C</PackageCertificateThumbprint>
+    <Win32Resource>Assets\Resource.res</Win32Resource>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -132,12 +134,10 @@
     <Compile Include="Controls\SidebarParts\OriginControl.xaml.cs">
       <DependentUpon>OriginControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\SidebarParts\ButtonPair.xaml.cs">
-      <DependentUpon>ButtonPair.xaml</DependentUpon>
+    <Compile Include="Controls\SidebarParts\PairControl.xaml.cs">
+      <DependentUpon>PairControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\SidebarParts\TwoToneButton.xaml.cs">
-      <DependentUpon>TwoToneButton.xaml</DependentUpon>
-    </Compile>
+    <Compile Include="Controls\SidebarParts\TwoToneButton.cs" />
     <Compile Include="Controls\TitleBar.xaml.cs">
       <DependentUpon>TitleBar.xaml</DependentUpon>
     </Compile>
@@ -175,6 +175,7 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\Resource.res" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -205,10 +206,6 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\SidebarParts\TwoToneButton.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="Controls\SidebarParts\OriginButton.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -217,7 +214,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\SidebarParts\ButtonPair.xaml">
+    <Page Include="Controls\SidebarParts\PairControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
