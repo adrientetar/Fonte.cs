@@ -16,43 +16,44 @@ namespace Fonte.App.Utilities
 
     public class SnapResult
     {
-        public Point Position { get; }
+        public Vector2 Position { get; }
+        public Data.Point NearPoint { get; }
         public (float, float) XSnapLine { get; }
         public (float, float) YSnapLine { get; }
 
-        private bool _active = true;
+        public bool IsVisible { get; private set; } = true;
 
-        public SnapResult(Point pos, (float, float) xSnapLine, (float, float) ySnapLine)
+        public SnapResult(Vector2 pos, Data.Point nearPoint, (float, float) xSnapLine, (float, float) ySnapLine)
         {
             Position = pos;
+            NearPoint = nearPoint;
             XSnapLine = xSnapLine;
             YSnapLine = ySnapLine;
         }
 
-        public void ClearSnapLines()
+        public void Hide()
         {
-            // TODO: put this in SelectionTool directly?
-            _active = false;
+            IsVisible = false;
         }
 
         public IEnumerable<(Vector2, Vector2)> GetSnapLines()
         {
-            if (_active)
+            if (IsVisible)
             {
                 if (!float.IsNaN(XSnapLine.Item1))
                 {
-                    var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : (float)Position.Y;
+                    var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : Position.Y;
                     yield return (
-                        new Vector2((float)Position.X, XSnapLine.Item1),
-                        new Vector2((float)Position.X, i2)
+                        new Vector2(Position.X, XSnapLine.Item1),
+                        new Vector2(Position.X, i2)
                     );
                 }
                 if (!float.IsNaN(YSnapLine.Item1))
                 {
-                    var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : (float)Position.X;
+                    var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : Position.X;
                     yield return (
-                        new Vector2(YSnapLine.Item1, (float)Position.Y),
-                        new Vector2(i2, (float)Position.Y)
+                        new Vector2(YSnapLine.Item1, Position.Y),
+                        new Vector2(i2, Position.Y)
                     );
                 }
             }
@@ -203,10 +204,10 @@ namespace Fonte.App.Utilities
         public static object HitTest(Data.Layer layer, Point pos, float rescale, ILayerElement ignoreElement = null,
                                      bool testAnchors = true, bool testGuidelines = true, bool testSelectionHandles = true, bool testPoints = true, bool testSegments = true)
         {
-            var halfSize = 4 * rescale;
+            var halfSize = 5 * rescale;
 
             if (testAnchors)
-                foreach (var anchor in layer.Anchors)
+                foreach (var anchor in layer.Anchors.AsEnumerable().Reverse())
                 {
                     if (!ReferenceEquals(anchor, ignoreElement))
                     {
@@ -232,9 +233,9 @@ namespace Fonte.App.Utilities
                     }
                 }
             if (testPoints)
-                foreach (var path in layer.Paths)
+                foreach (var path in layer.Paths.AsEnumerable().Reverse())
                 {
-                    foreach (var point in path.Points)
+                    foreach (var point in path.Points.AsEnumerable().Reverse())
                     {
                         if (!ReferenceEquals(point, ignoreElement))
                         {
@@ -250,7 +251,7 @@ namespace Fonte.App.Utilities
                     }
                 }
             var p = pos.ToVector2();
-            foreach (var component in layer.Components)
+            foreach (var component in layer.Components.AsEnumerable().Reverse())
             {
                 if (!ReferenceEquals(component, ignoreElement) && component.ClosedCanvasPath.FillContainsPoint(p))
                 {
@@ -258,7 +259,7 @@ namespace Fonte.App.Utilities
                 }
             }
             if (testGuidelines)
-                foreach (var guideline in GetAllGuidelines(layer))
+                foreach (var guideline in GetAllGuidelines(layer).Reverse())
                 {
                     if (!ReferenceEquals(guideline, ignoreElement))
                     {
@@ -275,7 +276,7 @@ namespace Fonte.App.Utilities
 
             var tol_2 = 9 + rescale * (6 + rescale);
             if (testSegments)
-                foreach (var path in layer.Paths)
+                foreach (var path in layer.Paths.AsEnumerable().Reverse())
                 {
                     foreach (var segment in path.Segments)
                     {
@@ -310,6 +311,8 @@ namespace Fonte.App.Utilities
 
         public static SnapResult SnapPoint(Data.Layer layer, Point pos, float rescale, ILocatable snapPoint, Point? clampPoint = null)
         {
+            Vector2 actualPos;
+            Data.Point nearPoint = null;
             (float, float) xSnapLine;
             (float, float) ySnapLine;
 
@@ -322,30 +325,70 @@ namespace Fonte.App.Utilities
                 if (Math.Abs(dy) >= Math.Abs(dx))
                 {
                     xSnapLine = ((float)clampPoint.Value.Y, (float)pos.Y);
-                    pos.X = clampPoint.Value.X;
-                    pos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
+                    actualPos.X = (float)clampPoint.Value.X;
+                    actualPos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
                 }
                 else
                 {
                     ySnapLine = ((float)clampPoint.Value.X, (float)pos.X);
-                    pos.Y = clampPoint.Value.Y;
-                    pos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
+                    actualPos.Y = (float)clampPoint.Value.Y;
+                    actualPos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
                 }
             }
             else
             {
-                pos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
-                pos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
+                if (SnapPointXY(layer, pos, rescale) is Data.Point point)
+                {
+                    actualPos = point.ToVector2();
+                    nearPoint = point;
+                    xSnapLine = ySnapLine = (float.NaN, float.NaN);
+                }
+                else
+                {
+                    actualPos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
+                    actualPos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
+                }
             }
 
             return new SnapResult(
-                pos,
+                actualPos,
+                nearPoint,
                 xSnapLine,
                 ySnapLine
             );
         }
 
-        static double SnapPointX(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
+        static Data.Point SnapPointXY(Data.Layer layer, Point pos, float rescale)
+        {
+            var halfSize = 5 * rescale;
+
+            foreach (var path in layer.Paths)
+            {
+                var prev = path.Points.Count >= 3 ? path.Points[path.Points.Count - 2] : path.Points.First();
+                var point = path.Points.Count >= 3 ? path.Points[path.Points.Count - 1] : prev;
+                foreach (var next in path.Points)
+                {
+                    if (point.Type != Data.PointType.None && !IsMoveTarget(point, prev, next))
+                    {
+                        var dx = point.X - pos.X;
+                        var dy = point.Y - pos.Y;
+
+                        if (-halfSize <= dx && dx <= halfSize &&
+                            -halfSize <= dy && dy <= halfSize)
+                        {
+                            return point;
+                        }
+                    }
+
+                    prev = point;
+                    point = next;
+                }
+            }
+
+            return null;
+        }
+
+        static float SnapPointX(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
         {
             var halfSize = 5 * rescale;
 
@@ -385,10 +428,10 @@ namespace Fonte.App.Utilities
             }
 
             snapLine = (float.NaN, float.NaN);
-            return pos.X;
+            return (float)pos.X;
         }
 
-        static double SnapPointY(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
+        static float SnapPointY(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
         {
             var halfSize = 5 * rescale;
 
@@ -437,7 +480,7 @@ namespace Fonte.App.Utilities
             }
 
             snapLine = (float.NaN, float.NaN);
-            return pos.Y;
+            return (float)pos.Y;
         }
     }
 }

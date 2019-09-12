@@ -4,6 +4,7 @@ namespace Fonte.Data.Changes
     using Fonte.Data.Interfaces;
 
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     internal struct LayerGuidelinesResetChange : IChange
     {
@@ -27,7 +28,8 @@ namespace Fonte.Data.Changes
             if (Insert)
             {
                 items.AddRange(_items);
-                foreach (var item in _items) { item.Parent = _parent; }
+                foreach (var item in _items) { Debug.Assert(item.Parent == null);
+                                               item.Parent = _parent; }
                 _items = null;
             }
             else

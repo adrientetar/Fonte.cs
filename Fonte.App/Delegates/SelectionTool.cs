@@ -38,6 +38,8 @@ namespace Fonte.App.Delegates
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
         static readonly string SnapLineColorKey = "SnapLineColor";
 
+        public override CoreCursor Cursor { get; protected set; } = Cursors.Arrow;
+
         enum ActionType
         {
             None = 0,
@@ -105,16 +107,22 @@ namespace Fonte.App.Delegates
                 var color = (Color)FindResource(canvas, SnapLineColorKey);
                 var halfSize = 2.5f * rescale;
 
+                if (_snapResult.NearPoint is Data.Point point)
+                {
+                    ds.DrawCircle(point.ToVector2(), 5.5f * rescale, color, strokeWidth: rescale);
+                }
+
+                var refPos = _snapResult.Position;
                 foreach (var (p1, p2) in _snapResult.GetSnapLines())
                 {
                     ds.DrawLine(p1, p2, color, strokeWidth: rescale);
 
-                    if (p1 != _snapResult.Position.ToVector2())
+                    if (p1 != refPos)
                     {
                         ds.DrawLine(p1.X - halfSize, p1.Y - halfSize, p1.X + halfSize, p1.Y + halfSize, color, strokeWidth: rescale);
                         ds.DrawLine(p1.X - halfSize, p1.Y + halfSize, p1.X + halfSize, p1.Y - halfSize, color, strokeWidth: rescale);
                     }
-                    if (p2 != _snapResult.Position.ToVector2())
+                    if (p2 != refPos)
                     {
                         ds.DrawLine(p2.X - halfSize, p2.Y - halfSize, p2.X + halfSize, p2.Y + halfSize, color, strokeWidth: rescale);
                         ds.DrawLine(p2.X - halfSize, p2.Y + halfSize, p2.X + halfSize, p2.Y - halfSize, color, strokeWidth: rescale);
@@ -195,11 +203,9 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerMoved(canvas, args);
 
-            if (CurrentAction == ActionType.None)
-                return;
-
             var ptPoint = args.GetCurrentPoint(canvas);
-            if (ptPoint.Properties.IsLeftButtonPressed)
+            var isLeftButtonPressed = ptPoint.Properties.IsLeftButtonPressed;
+            if (isLeftButtonPressed && CurrentAction != ActionType.None)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
 
@@ -308,14 +314,14 @@ namespace Fonte.App.Delegates
                             {
                                 await canvas.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                                 {
-                                    _snapResult.ClearSnapLines();
+                                    _snapResult.Hide();
 
                                     canvas.Invalidate();
                                 });
                             }, TimeSpan.FromMilliseconds(600));
                         }
 
-                        pos = _snapResult.Position;
+                        pos = _snapResult.Position.ToPoint();
                     }
                     else
                     {
@@ -346,6 +352,14 @@ namespace Fonte.App.Delegates
 
                 ((App)Application.Current).InvalidateData();
             }
+
+            if (!isLeftButtonPressed && !ptPoint.Properties.IsRightButtonPressed)
+            {
+                var pos = canvas.FromClientPosition(ptPoint.Position);
+
+                Cursor = GetItemCursor(canvas.HitTest(pos));
+                canvas.InvalidateCursor();
+            }
         }
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
@@ -354,9 +368,9 @@ namespace Fonte.App.Delegates
 
             if (CurrentAction == ActionType.DraggingItem)
             {
-                if (_tappedItem is Data.Point)
+                if (_tappedItem is Data.Point point && _snapResult.NearPoint is Data.Point otherPoint)
                 {
-                    TryJoinPath(canvas, canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position));
+                    Outline.TryJoinPath(canvas.Layer, point, otherPoint);
                 }
                 _timer?.Cancel();
                 _timer = null;
@@ -464,24 +478,6 @@ namespace Fonte.App.Delegates
                 return iloc.ToVector2().ToPoint();
             }
             throw new ArgumentException($"{item} is not allowed here.");
-        }
-
-        // TODO: also need to join when moving with keyboard
-        void TryJoinPath(DesignCanvas canvas, Point pos)
-        {
-            if (_tappedItem is Data.Point point && Is.AtOpenBoundary(point))
-            {
-                var otherItem = canvas.HitTest(pos, ignoreElement: point);
-                if (otherItem is Data.Point otherPoint && Is.AtOpenBoundary(otherPoint))
-                {
-                    Outline.JoinPaths(point.Parent,
-                                      point.Parent.Points.IndexOf(point) != 0,
-                                      otherPoint.Parent,
-                                      point.Parent.Points.IndexOf(otherPoint) != 0,
-                                      true);
-                    ((App)Application.Current).InvalidateData();
-                }
-            }
         }
 
         #region IToolBarEntry implementation

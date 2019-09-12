@@ -12,7 +12,6 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas;
 
     using System;
-    using System.Diagnostics;
     using System.Linq;
     using System.Windows.Input;
     using Windows.Devices.Input;
@@ -27,7 +26,7 @@ namespace Fonte.App.Delegates
     {
         private Point? _previousPoint;
 
-        public virtual CoreCursor Cursor { get; } = new CoreCursor(CoreCursorType.Arrow, 0);
+        public virtual CoreCursor Cursor { get; protected set; } = Cursors.SystemArrow;
 
         public virtual object FindResource(DesignCanvas canvas, object resourceKey)
         {
@@ -96,6 +95,13 @@ namespace Fonte.App.Delegates
                 }
 
                 Outline.MoveSelection(canvas.Layer, dx, dy, GetMoveMode());
+
+                var selection = canvas.Layer.Selection;
+                if (selection.Count == 1 && selection.First() is Data.Point point)
+                {
+                    // TODO: add some kind of visual feedback with a timer?
+                    Outline.TryJoinPath(canvas.Layer, point);
+                }
             }
             else if (args.Key == VirtualKey.Back ||
                      args.Key == VirtualKey.Delete)
@@ -304,6 +310,38 @@ namespace Fonte.App.Delegates
                 return new Point(origin.X, pos.Y);
             }
             return new Point(pos.X, origin.Y);
+        }
+
+        protected CoreCursor GetItemCursor(object item)
+        {
+            // Arguably this part should be in Selection tool
+            if (item is Data.Point)
+            {
+                return Cursors.ArrowWithPoint;
+            }
+            else if (item is UIBroker.BBoxHandle handle)
+            {
+                if (handle.Kind.HasFlag(UIBroker.HandleKind.TopLeft) ||
+                    handle.Kind.HasFlag(UIBroker.HandleKind.BottomRight))
+                {
+                    return Cursors.SizeNWSE;
+                }
+                else if (handle.Kind.HasFlag(UIBroker.HandleKind.TopRight) ||
+                         handle.Kind.HasFlag(UIBroker.HandleKind.BottomLeft))
+                {
+                    return Cursors.SizeNESW;
+                }
+                else if (handle.Kind.HasFlag(UIBroker.HandleKind.Top) ||
+                         handle.Kind.HasFlag(UIBroker.HandleKind.Bottom))
+                {
+                    return Cursors.SizeNS;
+                }
+                else
+                {
+                    return Cursors.SizeWE;
+                }
+            }
+            return Cursors.Arrow;
         }
 
         protected MoveMode GetMoveMode()

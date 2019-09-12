@@ -40,8 +40,8 @@
             <ColumnDefinition Width="1"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <ContentControl Content="{x:Bind Left}"/>
+        <ContentControl Content="{x:Bind Left}" IsTabStop="False"/>
         <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Grid.Column="1"/>
-        <ContentControl Content="{x:Bind Right}" Grid.Column="2"/>
+        <ContentControl Content="{x:Bind Right}" IsTabStop="False" Grid.Column="2"/>
     </Grid>
 </UserControl>

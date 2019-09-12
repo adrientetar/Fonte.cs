@@ -28,7 +28,7 @@ namespace Fonte.App.Delegates
         private ValueTuple<Data.Point, bool>? _stashedOffCurve;
         private IChangeGroup _undoGroup;
 
-        public override CoreCursor Cursor { get; } = new CoreCursor(CoreCursorType.Custom, 101);
+        public override CoreCursor Cursor { get; protected set; } = Cursors.Pen;
 
         public override void OnDisabled(DesignCanvas canvas)
         {

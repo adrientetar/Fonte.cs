@@ -31,7 +31,7 @@ namespace Fonte.App.Delegates
 
         private IChangeGroup _undoGroup;
 
-        public override CoreCursor Cursor { get; } = new CoreCursor(CoreCursorType.Cross, 0);
+        public override CoreCursor Cursor { get; protected set; } = Cursors.Cross;
 
         Rect Rectangle
         {

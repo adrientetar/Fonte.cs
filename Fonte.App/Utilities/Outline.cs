@@ -113,11 +113,9 @@ namespace Fonte.App.Utilities
         {
             if (path == otherPath)
             {
-                if (atStart == atOtherStart) return;
-                if (atStart)
-                {
-                    path.Reverse();
-                }
+                if (atStart == atOtherStart)
+                    throw new InvalidOperationException("Invalid same-point join");
+
                 path.Close();
                 if (mergeJoin)
                 {
@@ -138,6 +136,7 @@ namespace Fonte.App.Utilities
                 {
                     otherPath.Reverse();
                 }
+
                 var points = path.Points;
                 PointType type;
                 if (mergeJoin)
@@ -150,9 +149,10 @@ namespace Fonte.App.Utilities
                 }
                 var layer = path.Parent;
                 layer.ClearSelection();
-                var otherPoints = otherPath.Points;
-                points.AddRange(otherPoints);
+                var otherPoints = otherPath.Points.ToList();
+                otherPath.Points.Clear();
                 layer.Paths.Remove(otherPath);
+                points.AddRange(otherPoints);
                 var otherFirstPoint = otherPoints[0];
                 otherFirstPoint.Type = type;
                 otherFirstPoint.IsSelected = true;
@@ -328,6 +328,31 @@ namespace Fonte.App.Utilities
         {
             // TODO: get rounding info from the app, cache as static value
             return (float)Math.Round(value);
+        }
+
+        public static bool TryJoinPath(Data.Layer layer, Data.Point point)
+        {
+            if (Is.AtOpenBoundary(point) && layer.Paths
+                                                 .SelectMany(path => path.Points)
+                                                 .Where(p => p != point && p.X == point.X && p.Y == point.Y)
+                                                 .LastOrDefault() is Data.Point otherPoint)
+            {
+                return TryJoinPath(layer, point, otherPoint);
+            }
+            return false;
+        }
+        public static bool TryJoinPath(Data.Layer layer, Data.Point point, Data.Point otherPoint)
+        {
+            if (Is.AtOpenBoundary(point) && Is.AtOpenBoundary(otherPoint))
+            {
+                JoinPaths(point.Parent,
+                          point.Parent.Points.IndexOf(point) == 0,
+                          otherPoint.Parent,
+                          otherPoint.Parent.Points.IndexOf(otherPoint) == 0,
+                          true);
+                return true;
+            }
+            return false;
         }
 
         public static bool TryTogglePointSmoothness(Data.Path path, int index)
