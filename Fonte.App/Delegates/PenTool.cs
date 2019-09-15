@@ -28,7 +28,7 @@ namespace Fonte.App.Delegates
         private ValueTuple<Data.Point, bool>? _stashedOffCurve;
         private IChangeGroup _undoGroup;
 
-        public override CoreCursor Cursor { get; protected set; } = Cursors.Pen;
+        protected override CoreCursor DefaultCursor { get; } = Cursors.Pen;
 
         public override void OnDisabled(DesignCanvas canvas)
         {
@@ -212,7 +212,8 @@ namespace Fonte.App.Delegates
             base.OnPointerMoved(canvas, args);
 
             var ptPoint = args.GetCurrentPoint(canvas);
-            if (_path != null && ptPoint.Properties.IsLeftButtonPressed)
+            var isLeftButtonPressed = ptPoint.Properties.IsLeftButtonPressed;
+            if (_path != null && isLeftButtonPressed)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint();
@@ -327,6 +328,16 @@ namespace Fonte.App.Delegates
                 }
                 ((App)Application.Current).InvalidateData();
             }
+
+            if (!isLeftButtonPressed &&
+                !ptPoint.Properties.IsMiddleButtonPressed &&
+                !ptPoint.Properties.IsRightButtonPressed)
+            {
+                var pos = canvas.FromClientPosition(ptPoint.Position);
+
+                Cursor = GetItemCursor(canvas.HitTest(pos, testSegments: true));
+                canvas.InvalidateCursor();
+            }
         }
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
@@ -347,6 +358,20 @@ namespace Fonte.App.Delegates
         }
 
         /**/
+
+        protected new CoreCursor GetItemCursor(object item)
+        {
+            if (item is Data.Point point && point.Type != Data.PointType.None)
+            {
+                return Cursors.PenWithPoint;
+            }
+            else if (item is Data.Segment)
+            {
+                return Cursors.PenWithPlus;
+            }
+
+            return Cursors.Pen;
+        }
 
         bool AreVisiblyDistinct(DesignCanvas canvas, Data.Point point, Data.Point other)
         {

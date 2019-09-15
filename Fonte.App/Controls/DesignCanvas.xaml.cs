@@ -76,6 +76,7 @@ namespace Fonte.App.Controls
                     _isInPreview = value;
 
                     Invalidate();
+                    InvalidateCursor();
                 }
             }
         }
@@ -421,7 +422,7 @@ namespace Fonte.App.Controls
         {
             if (_previousCursor != null)
             {
-                Window.Current.CoreWindow.PointerCursor = _tool.Cursor;
+                Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
             }
         }
 

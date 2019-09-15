@@ -26,7 +26,14 @@ namespace Fonte.App.Delegates
     {
         private Point? _previousPoint;
 
-        public virtual CoreCursor Cursor { get; protected set; } = Cursors.SystemArrow;
+        public CoreCursor Cursor { get; protected set; }
+
+        protected virtual CoreCursor DefaultCursor { get; } = Cursors.SystemArrow;
+
+        public BaseTool()
+        {
+            Cursor = DefaultCursor;
+        }
 
         public virtual object FindResource(DesignCanvas canvas, object resourceKey)
         {
@@ -163,6 +170,9 @@ namespace Fonte.App.Delegates
             if (args.GetCurrentPoint(canvas).Properties.IsMiddleButtonPressed)
             {
                 _previousPoint = args.GetCurrentPoint(canvas).Position;
+
+                Cursor = Cursors.HandGrab;
+                canvas.InvalidateCursor();
             }
 
             canvas.Focus(FocusState.Pointer);
@@ -187,7 +197,13 @@ namespace Fonte.App.Delegates
 
         public virtual void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            _previousPoint = null;
+            if (_previousPoint.HasValue)
+            {
+                _previousPoint = null;
+
+                Cursor = DefaultCursor;
+                canvas.InvalidateCursor();
+            }
 
             args.Handled = true;
         }
@@ -314,12 +330,7 @@ namespace Fonte.App.Delegates
 
         protected CoreCursor GetItemCursor(object item)
         {
-            // Arguably this part should be in Selection tool
-            if (item is Data.Point)
-            {
-                return Cursors.ArrowWithPoint;
-            }
-            else if (item is UIBroker.BBoxHandle handle)
+            if (item is UIBroker.BBoxHandle handle)
             {
                 if (handle.Kind.HasFlag(UIBroker.HandleKind.TopLeft) ||
                     handle.Kind.HasFlag(UIBroker.HandleKind.BottomRight))
@@ -341,7 +352,7 @@ namespace Fonte.App.Delegates
                     return Cursors.SizeWE;
                 }
             }
-            return Cursors.Arrow;
+            return DefaultCursor;
         }
 
         protected MoveMode GetMoveMode()

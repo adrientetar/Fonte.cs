@@ -31,7 +31,7 @@ namespace Fonte.App.Delegates
 
         private IChangeGroup _undoGroup;
 
-        public override CoreCursor Cursor { get; protected set; } = Cursors.Cross;
+        protected override CoreCursor DefaultCursor { get; } = Cursors.CrossWithEllipse;
 
         Rect Rectangle
         {
@@ -74,12 +74,19 @@ namespace Fonte.App.Delegates
             }
         }
 
+        public override void OnDisabled(DesignCanvas canvas)
+        {
+            base.OnDisabled(canvas);
+
+            _origin = null;
+            canvas.Invalidate();
+        }
+
         public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
-            if (_origin.HasValue)
+            if (_origin.HasValue && _anchor != _origin.Value)
             {
-                // XXX: need to fetch the strokeColor here
-                var color = Color.FromArgb(255, 34, 34, 34);
+                var color = (Color)FindResource(canvas, DesignCanvas.StrokeColorKey);
                 var rect = Rectangle;
                 if (_drawRectangle)
                 {
@@ -104,6 +111,9 @@ namespace Fonte.App.Delegates
             if (args.Key == VirtualKey.Menu)
             {
                 _drawRectangle = true;
+
+                Cursor = Cursors.CrossWithRectangle;
+                canvas.InvalidateCursor();
             }
             else if (args.Key == VirtualKey.Shift)
             {
@@ -136,6 +146,9 @@ namespace Fonte.App.Delegates
             if (args.Key == VirtualKey.Menu)
             {
                 _drawRectangle = false;
+
+                Cursor = DefaultCursor;
+                canvas.InvalidateCursor();
             }
             else if (args.Key == VirtualKey.Shift)
             {

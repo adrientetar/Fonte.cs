@@ -38,7 +38,7 @@ namespace Fonte.App.Delegates
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
         static readonly string SnapLineColorKey = "SnapLineColor";
 
-        public override CoreCursor Cursor { get; protected set; } = Cursors.Arrow;
+        protected override CoreCursor DefaultCursor { get; } = Cursors.Arrow;
 
         enum ActionType
         {
@@ -353,7 +353,9 @@ namespace Fonte.App.Delegates
                 ((App)Application.Current).InvalidateData();
             }
 
-            if (!isLeftButtonPressed && !ptPoint.Properties.IsRightButtonPressed)
+            if (!isLeftButtonPressed &&
+                !ptPoint.Properties.IsMiddleButtonPressed &&
+                !ptPoint.Properties.IsRightButtonPressed)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
 
@@ -368,7 +370,7 @@ namespace Fonte.App.Delegates
 
             if (CurrentAction == ActionType.DraggingItem)
             {
-                if (_tappedItem is Data.Point point && _snapResult.NearPoint is Data.Point otherPoint)
+                if (_tappedItem is Data.Point point && _snapResult?.NearPoint is Data.Point otherPoint)
                 {
                     Outline.TryJoinPath(canvas.Layer, point, otherPoint);
                 }
@@ -436,6 +438,16 @@ namespace Fonte.App.Delegates
         }
 
         /**/
+
+        protected new CoreCursor GetItemCursor(object item)
+        {
+            if (item is Data.Point)
+            {
+                return Cursors.ArrowWithPoint;
+            }
+
+            return base.GetItemCursor(item);
+        }
 
         Point? GetClampTarget(Data.Layer layer, Data.Point point)
         {
