@@ -93,18 +93,14 @@ namespace Fonte.App.Utilities
                         layer.Guidelines.RemoveAt(ix);
                     }
                 }
-
-                List<Data.Path> paths;
                 if (breakPaths)
                 {
-                    paths = DeleteSelection(layer.Paths);
+                    BreakPathsSelection(layer);
                 }
                 else
                 {
-                    paths = MergeSelection(layer.Paths);
+                    DeletePathsSelection(layer);
                 }
-                layer.Paths.Clear();
-                layer.Paths.AddRange(paths);
             }
         }
 
@@ -306,6 +302,7 @@ namespace Fonte.App.Utilities
                 {
                     if (guideline.IsSelected)
                     {
+                        // TODO: introduce some angle rounding?
                         guideline.X = RoundToGrid(guideline.X);
                         guideline.Y = RoundToGrid(guideline.Y);
                     }
@@ -402,10 +399,10 @@ namespace Fonte.App.Utilities
             return Enumerable.Any(segment.OffCurves, offCurve => offCurve.IsSelected);
         }
 
-        static List<Data.Path> DeleteSelection(IEnumerable<Data.Path> paths)
+        static void BreakPathsSelection(Data.Layer layer)
         {
             var outPaths = new List<Data.Path>();
-            foreach (var path in Selection.FilterSelection(paths, invert: true))
+            foreach (var path in Selection.FilterSelection(layer.Paths, invert: true))
             {
                 var segmentsList = new List<Data.Segment>(path.Segments);
                 IEnumerable<Data.Segment> iter;
@@ -448,57 +445,118 @@ namespace Fonte.App.Utilities
                         }
                         outPath = new Data.Path();
 
-                        var point = segment.OnCurve;
+                        var point = segment.OnCurve.Clone();
                         point.IsSmooth = false;
                         point.Type = PointType.Move;
                         outPath.Points.Add(point);
                     }
                     else
                     {
-                        outPath.Points.AddRange(segment.Points);
+                        outPath.Points.AddRange(segment.Points
+                                                       .Select(p => p.Clone())
+                                                       .ToList());
                     }
                 }
                 outPaths.Add(outPath);
             }
 
-            return outPaths;
+            layer.Paths.Clear();
+            layer.Paths.AddRange(outPaths);
         }
 
-        static List<Data.Path> MergeSelection(IEnumerable<Data.Path> paths)
+        static void DeletePathsSelection(Data.Layer layer)
         {
-            var outPaths = new List<Data.Path>();
-            foreach (var path in paths)
+            if (!TryReconstructCurve(layer))
             {
-                var segments = path.Segments.ToList();
-
-                var forwardMove = false;
-                for (int ix = segments.Count - 1; ix >= 0; --ix)
+                var outPaths = new List<Data.Path>();
+                foreach (var path in layer.Paths)
                 {
-                    var segment = segments[ix];
-                    if (segment.OnCurve.IsSelected)
-                    {
-                        forwardMove = ix == 0 && segment.OnCurve.Type == PointType.Move;
+                    var segments = path.Segments.ToList();
 
-                        segment.Remove();
-                    }
-                    else if (AnyOffCurveSelected(segment))
+                    var forwardMove = false;
+                    for (int ix = segments.Count - 1; ix >= 0; --ix)
                     {
-                        segment.ConvertTo(PointType.Line);
+                        var segment = segments[ix];
+                        var onCurve = segment.OnCurve;
+                        if (onCurve.IsSelected)
+                        {
+                            forwardMove = ix == 0 && onCurve.Type == PointType.Move;
+
+                            segment.Remove();
+                        }
+                        else if (AnyOffCurveSelected(segment))
+                        {
+                            segment.ConvertTo(PointType.Line);
+                        }
+                    }
+
+                    if (path.Points.Count > 0)
+                    {
+                        if (forwardMove)
+                        {
+                            segments[0].ConvertTo(PointType.Move);
+                        }
+                        outPaths.Add(path);
                     }
                 }
 
-                if (path.Points.Count > 0)
-                {
-                    if (forwardMove)
-                    {
-                        segments[0].ConvertTo(PointType.Move);
-                    }
-                    outPaths.Add(path);
-                }
+                layer.Paths.Clear();
+                layer.Paths.AddRange(outPaths);
+            }
+        }
+
+        static Vector2 SamplePoints(List<Vector2> samples, IList<Vector2> points, bool atStart)
+        {
+            var n = 20;  // TODO: adaptive sample count
+            var start = atStart ? 0 : 1;
+            for (int i = start; i < n; ++i)
+            {
+                samples.Add(BezierMath.Q(points, (float)i / (n - 1)));
             }
 
-            return outPaths;
+            return Vector2.Normalize(atStart ? points[1] - points[0] : points[2] - points[3]);
         }
+
+        static bool TryReconstructCurve(Data.Layer layer)
+        {
+            var selection = layer.Selection;
+            if (selection.Count == 1 &&
+                layer.Selection.First() is Data.Point point &&
+                point.Type == PointType.Curve)
+            {
+                var path = point.Parent;
+                var ix = path.Points.IndexOf(point);
+                if (!(path.IsOpen && ix + 3 >= path.Points.Count) &&
+                    Sequence.NextItem(path.Points, ix, 3) is Data.Point nextOn && nextOn.Type == PointType.Curve)
+                {
+                    var samples = new List<Vector2>();
+                    var nextHandle = Sequence.NextItem(path.Points, ix, 1);
+                    var nextOnHandle = Sequence.NextItem(path.Points, ix, 2);
+
+                    var leftTangent = SamplePoints(samples, new Vector2[] { Sequence.PreviousItem(path.Points, ix, 3).ToVector2(),
+                                                                            path.Points[ix - 2].ToVector2(),
+                                                                            path.Points[ix - 1].ToVector2(),
+                                                                            point.ToVector2() }
+                                                   , true);
+                    var rightTangent = SamplePoints(samples, new Vector2[] { point.ToVector2(),
+                                                                             nextHandle.ToVector2(),
+                                                                             nextOnHandle.ToVector2(),
+                                                                             nextOn.ToVector2() }
+                                                    , false);
+                    var fitPoints = BezierMath.FitCubic(samples, leftTangent, rightTangent, .01f);
+
+                    path.Points.RemoveRange(ix - 2, 3);
+                    nextHandle.X = RoundToGrid(fitPoints[1].X);
+                    nextHandle.Y = RoundToGrid(fitPoints[1].Y);
+                    nextOnHandle.X = RoundToGrid(fitPoints[2].X);
+                    nextOnHandle.Y = RoundToGrid(fitPoints[2].Y);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**/
 
         static void ConstrainSmoothPoint(Data.Point p1, Data.Point p2, Data.Point p3, bool handleMovement)
         {

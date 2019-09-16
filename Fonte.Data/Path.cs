@@ -434,7 +434,18 @@ namespace Fonte.Data
 
         public void Remove()
         {
-            _points.RemoveRange(_index, _count);
+            var onCurve = OnCurve;
+            // Remove points around node, if a second curve segment follows
+            if (onCurve.Type == PointType.Curve &&
+                !(_points[0].Type == PointType.Move && _points.Last() == onCurve) &&
+                _points[_index + _count].Type == PointType.None)
+            {
+                _points.RemoveRange(_index + 1, _count);
+            }
+            else
+            {
+                _points.RemoveRange(_index, _count);
+            }
         }
 
         public List<Vector2> IntersectLine(Vector2 p1, Vector2 p2)
