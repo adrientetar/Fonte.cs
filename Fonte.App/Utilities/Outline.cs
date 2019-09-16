@@ -11,6 +11,7 @@ namespace Fonte.App.Utilities
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
+    using System.Diagnostics;
 
     public enum MoveMode
     {
@@ -482,7 +483,7 @@ namespace Fonte.App.Utilities
                         {
                             forwardMove = ix == 0 && onCurve.Type == PointType.Move;
 
-                            segment.Remove();
+                            segment.Remove(nodeBias: true);
                         }
                         else if (AnyOffCurveSelected(segment))
                         {
@@ -509,47 +510,81 @@ namespace Fonte.App.Utilities
         {
             var n = 20;  // TODO: adaptive sample count
             var start = atStart ? 0 : 1;
-            for (int i = start; i < n; ++i)
+
+            if (points.Count == 4)
             {
-                samples.Add(BezierMath.Q(points, (float)i / (n - 1)));
+                for (int i = start; i < n; ++i)
+                {
+                    samples.Add(BezierMath.Q(points, (float)i / (n - 1)));
+                }
+            }
+            else
+            {
+                Debug.Assert(points.Count == 2);
+
+                if (atStart) samples.Add(points[0]);
+                samples.Add(points[1]);
             }
 
-            return Vector2.Normalize(atStart ? points[1] - points[0] : points[2] - points[3]);
+            return Vector2.Normalize(atStart ? points[1] - points[0] : points[points.Count - 2] - points[points.Count - 1]);
         }
 
         static bool TryReconstructCurve(Data.Layer layer)
         {
             var selection = layer.Selection;
             if (selection.Count == 1 &&
-                layer.Selection.First() is Data.Point point &&
-                point.Type == PointType.Curve)
+                layer.Selection.First() is Data.Point point)
             {
                 var path = point.Parent;
-                var ix = path.Points.IndexOf(point);
-                if (!(path.IsOpen && ix + 3 >= path.Points.Count) &&
-                    Sequence.NextItem(path.Points, ix, 3) is Data.Point nextOn && nextOn.Type == PointType.Curve)
+                var segments = path.Segments.ToList();
+                Data.Segment firstSegment = default;
+                Data.Segment secondSegment = default;
+
+                var segment = segments.Last();
+                foreach (var next in segments)
+                {
+                    var onCurve = segment.OnCurve;
+                    if (onCurve.IsSelected)
+                    {
+                        if (!(path.IsOpen && path.Points.Last() == onCurve) &&
+                            onCurve.Type == PointType.Curve || next.OnCurve.Type == PointType.Curve)
+                        {
+                            firstSegment = segment;
+                            secondSegment = next;
+                        }
+                    }
+
+                    segment = next;
+                }
+
+                if (!Equals(firstSegment, default(Data.Segment)))
                 {
                     var samples = new List<Vector2>();
-                    var nextHandle = Sequence.NextItem(path.Points, ix, 1);
-                    var nextOnHandle = Sequence.NextItem(path.Points, ix, 2);
 
-                    var leftTangent = SamplePoints(samples, new Vector2[] { Sequence.PreviousItem(path.Points, ix, 3).ToVector2(),
-                                                                            path.Points[ix - 2].ToVector2(),
-                                                                            path.Points[ix - 1].ToVector2(),
-                                                                            point.ToVector2() }
-                                                   , true);
-                    var rightTangent = SamplePoints(samples, new Vector2[] { point.ToVector2(),
-                                                                             nextHandle.ToVector2(),
-                                                                             nextOnHandle.ToVector2(),
-                                                                             nextOn.ToVector2() }
-                                                    , false);
+                    var leftTangent = SamplePoints(samples, firstSegment.PointsInclusive
+                                                                        .Select(p => p.ToVector2())
+                                                                        .ToArray(), true);
+                    var rightTangent = SamplePoints(samples, secondSegment.PointsInclusive
+                                                                          .Select(p => p.ToVector2())
+                                                                          .ToArray(), false);
                     var fitPoints = BezierMath.FitCubic(samples, leftTangent, rightTangent, .01f);
 
-                    path.Points.RemoveRange(ix - 2, 3);
-                    nextHandle.X = RoundToGrid(fitPoints[1].X);
-                    nextHandle.Y = RoundToGrid(fitPoints[1].Y);
-                    nextOnHandle.X = RoundToGrid(fitPoints[2].X);
-                    nextOnHandle.Y = RoundToGrid(fitPoints[2].Y);
+                    layer.ClearSelection();
+                    var curveSegment = firstSegment;
+                    var otherSegment = secondSegment;
+                    if (curveSegment.OnCurve.Type != PointType.Curve)
+                    {
+                        (curveSegment, otherSegment) = (otherSegment, curveSegment);
+                    }
+                    var offCurves = curveSegment.OffCurves;
+                    offCurves[0].X = RoundToGrid(fitPoints[1].X);
+                    offCurves[0].Y = RoundToGrid(fitPoints[1].Y);
+                    offCurves[1].X = RoundToGrid(fitPoints[2].X);
+                    offCurves[1].Y = RoundToGrid(fitPoints[2].Y);
+                    var onCurve = firstSegment.OnCurve;
+                    onCurve.X = secondSegment.OnCurve.X;
+                    onCurve.Y = secondSegment.OnCurve.Y;
+                    otherSegment.Remove();
                     return true;
                 }
             }

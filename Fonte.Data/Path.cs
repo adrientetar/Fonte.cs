@@ -432,11 +432,11 @@ namespace Fonte.Data
             }
         }
 
-        public void Remove()
+        public void Remove(bool nodeBias = false)
         {
             var onCurve = OnCurve;
             // Remove points around node, if a second curve segment follows
-            if (onCurve.Type == PointType.Curve &&
+            if (nodeBias && onCurve.Type == PointType.Curve &&
                 !(_points[0].Type == PointType.Move && _points.Last() == onCurve) &&
                 _points[_index + _count].Type == PointType.None)
             {
