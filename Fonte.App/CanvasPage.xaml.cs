@@ -157,7 +157,6 @@ namespace Fonte.App
             }
 
             Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
-            Window.Current.CoreWindow.KeyUp += OnWindowKeyUp;
 
             SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
         }
@@ -170,7 +169,6 @@ namespace Fonte.App
             }
 
             Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
-            Window.Current.CoreWindow.KeyUp -= OnWindowKeyUp;
 
             SystemNavigationManagerPreview.GetForCurrentView().CloseRequested -= OnCloseRequested;
         }
@@ -202,12 +200,8 @@ namespace Fonte.App
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs args)
         {
             var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            if (args.VirtualKey == VirtualKey.Space)
-            {
-                Canvas.IsInPreview = true;
-            }
 #if DEBUG
-            else if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.VirtualKey == VirtualKey.D)
+            if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.VirtualKey == VirtualKey.D)
             {
                 try
                 {
@@ -225,20 +219,6 @@ namespace Fonte.App
                 }
             }
 #endif
-            else
-            {
-                return;
-            }
-
-            args.Handled = true;
-        }
-
-        void OnWindowKeyUp(CoreWindow sender, KeyEventArgs args)
-        {
-            if (args.VirtualKey == VirtualKey.Space)
-            {
-                Canvas.IsInPreview = false;
-            }
             else
             {
                 return;

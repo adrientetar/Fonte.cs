@@ -99,7 +99,8 @@ namespace Fonte.App.Delegates
             if (ptPoint.Properties.IsLeftButtonPressed && canvas.Layer is Data.Layer layer)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
-                var tappedItem = canvas.HitTest(pos);
+                // TODO: should we ignore Anchor/Component etc. here?
+                var tappedItem = canvas.HitTest(pos, testSegments: true);
                 var selPoint = GetSelectedPoint(canvas);
 
                 _screenOrigin = ptPoint.Position;
@@ -156,6 +157,23 @@ namespace Fonte.App.Delegates
                         selPoint.IsSelected = false;
                     }
                     tappedPoint.IsSelected = true;
+                }
+                else if (tappedItem is Data.Segment segment)
+                {
+                    var result = segment.ProjectPoint(pos.ToVector2());
+
+                    if (result.HasValue)
+                    {
+                        var t = result.Value.Item2;
+
+                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                        if (!shift.HasFlag(CoreVirtualKeyStates.Down))
+                        {
+                            layer.ClearSelection();
+                        }
+                        segment.SplitAt(t);
+                        segment.OnCurve.IsSelected = true;
+                    }
                 }
                 else
                 {

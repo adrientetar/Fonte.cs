@@ -17,6 +17,7 @@ namespace Fonte.Data
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using System.Numerics;
 
     [JsonConverter(typeof(PathConverter))]
@@ -212,31 +213,41 @@ namespace Fonte.Data
 
         public void Reverse()
         {
-            if (Points.Count > 0)
+            var points = Points;
+
+            if (points.Count > 0)
             {
                 using (var group = Parent?.CreateUndoGroup())
                 {
-                    var start = Points[0];
+                    var start = points[0];
                     var type = start.Type;
+
+                    List<Point> result;
                     if (type != PointType.Move)
                     {
-                        var pivot = Points.Pop();
-                        Points.Reverse();
-                        Points.Add(pivot);
+                        var pivot = points.Last();
+
+                        result = points.GetRange(0, points.Count - 1);
+                        result.Reverse();
+                        result.Add(pivot);
                         type = pivot.Type;
                     }
                     else
                     {
-                        Points.Reverse();
+                        result = points.GetRange(0, points.Count);
+                        result.Reverse();
                     }
 
-                    foreach (var point in Points)
+                    foreach (var point in result)
                     {
                         if (point.Type != PointType.None)
                         {
                             (point.Type, type) = (type, point.Type);
                         }
                     }
+                    // TODO: add a replace action? Could be introduced as a setter on the owner property
+                    points.Clear();
+                    points.AddRange(result);
                 }
             }
         }
@@ -374,10 +385,10 @@ namespace Fonte.Data
         {
             var onCurve = OnCurve;
 
-            bool ok = type == OnCurve.Type;
+            bool ok = type == onCurve.Type;
             if (type == PointType.Curve)
             {
-                if (OnCurve.Type == PointType.Line)
+                if (onCurve.Type == PointType.Line)
                 {
                     var start = PointsInclusive[0];
 
@@ -396,7 +407,7 @@ namespace Fonte.Data
             }
             else if (type == PointType.Line)
             {
-                if (OnCurve.Type == PointType.Curve)
+                if (onCurve.Type == PointType.Curve)
                 {
                     var start = PointsInclusive[0];
 
@@ -410,8 +421,8 @@ namespace Fonte.Data
             }
             else if (type == PointType.Move)
             {
-                if (OnCurve.Type == PointType.Curve ||
-                    OnCurve.Type == PointType.Line)
+                if (onCurve.Type == PointType.Curve ||
+                    onCurve.Type == PointType.Line)
                 {
                     if (_index != 0)
                         throw new InvalidOperationException(
@@ -428,24 +439,28 @@ namespace Fonte.Data
             if (!ok)
             {
                 throw new InvalidOperationException(
-                    string.Format("Cannot convert from {0} to {1}", OnCurve.Type, type));
+                    string.Format("Cannot convert from {0} to {1}", onCurve.Type, type));
             }
         }
 
         public void Remove(bool nodeBias = false)
         {
             var onCurve = OnCurve;
+
             // Remove points around node, if a second curve segment follows
-            if (nodeBias && onCurve.Type == PointType.Curve &&
-                !(_points[0].Type == PointType.Move && _points.Last() == onCurve) &&
-                _points[_index + _count].Type == PointType.None)
+            if (nodeBias && onCurve.Type == PointType.Curve)
             {
-                _points.RemoveRange(_index + 1, _count);
+                var firstOff = _points[_index];
+                var nextOff = Sequence.NextItem(_points, _index + _count - 1);
+
+                if (!(_points[0].Type == PointType.Move && _points.Last() == onCurve) &&
+                    nextOff.Type == PointType.None)
+                {
+                    nextOff.X = firstOff.X;
+                    nextOff.Y = firstOff.Y;
+                }
             }
-            else
-            {
-                _points.RemoveRange(_index, _count);
-            }
+            _points.RemoveRange(_index, _count);
         }
 
         public List<Vector2> IntersectLine(Vector2 p1, Vector2 p2)
@@ -453,13 +468,15 @@ namespace Fonte.Data
             throw new NotImplementedException();
         }
 
-        public Vector2? ProjectPoint(Vector2 p)
+        public (Vector2, float)? ProjectPoint(Vector2 p)
         {
-            if (OnCurve.Type == PointType.Curve)
+            var onCurve = OnCurve;
+
+            if (onCurve.Type == PointType.Curve)
             {
                 return BezierMath.ProjectPointOnCurve(p, PointsInclusive);
             }
-            else if (OnCurve.Type == PointType.Line)
+            else if (onCurve.Type == PointType.Line)
             {
                 return BezierMath.ProjectPointOnLine(p, PointsInclusive);
             }
@@ -469,7 +486,38 @@ namespace Fonte.Data
 
         public void SplitAt(float t)
         {
-            throw new NotImplementedException();
+            var points = PointsInclusive;
+            var onCurve = points.Last();
+
+            if (onCurve.Type == PointType.Curve)
+            {
+                var curves = BezierMath.SplitCurve(points, t);
+
+                _points.InsertRange(_index, new List<Point>()
+                {
+                    new Point(curves[0, 1].X, curves[0, 1].Y),
+                    new Point(curves[0, 2].X, curves[0, 2].Y),
+                    new Point(curves[0, 3].X, curves[0, 3].Y, PointType.Curve, isSmooth: true)
+                });
+                points[1].X = curves[1, 1].X;
+                points[1].Y = curves[1, 1].Y;
+                points[2].X = curves[1, 2].X;
+                points[2].Y = curves[1, 2].Y;
+                points[3].X = curves[1, 3].X;
+                points[3].Y = curves[1, 3].Y;
+            }
+            else if (onCurve.Type == PointType.Line)
+            {
+                var loc = Vector2.Lerp(points.First().ToVector2(),
+                                       onCurve.ToVector2(),
+                                       t);
+
+                _points.Insert(_index, new Point(loc.X, loc.Y, PointType.Line));
+            }
+            else
+            {
+                throw new NotImplementedException($"Cannot split {onCurve.Type} segment");
+            }
         }
 
         public override string ToString()

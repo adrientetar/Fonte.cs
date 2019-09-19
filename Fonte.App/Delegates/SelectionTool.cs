@@ -12,6 +12,7 @@ namespace Fonte.App.Delegates
     using Microsoft.Graphics.Canvas.Geometry;
 
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Numerics;
     using Windows.Foundation;
@@ -28,6 +29,7 @@ namespace Fonte.App.Delegates
         private Point _origin = EmptyPoint;
         private Point _anchor;
         private Point _screenOrigin;
+        private List<Vector2> _points;
         private bool _canDrag = false;
         private object _tappedItem;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
@@ -44,7 +46,8 @@ namespace Fonte.App.Delegates
         {
             None = 0,
             DraggingItem,
-            DraggingRect
+            SelectingRect,
+            SelectingPoly
         };
 
         ActionType CurrentAction
@@ -55,9 +58,13 @@ namespace Fonte.App.Delegates
                 {
                     return ActionType.DraggingItem;
                 }
+                else if (_points != null)
+                {
+                    return ActionType.SelectingPoly;
+                }
                 else if (_origin != EmptyPoint)
                 {
-                    return ActionType.DraggingRect;
+                    return ActionType.SelectingRect;
                 }
                 return ActionType.None;
             }
@@ -74,19 +81,17 @@ namespace Fonte.App.Delegates
             return base.FindResource(canvas, resourceKey);
         }
 
-        public override void OnActivated(DesignCanvas canvas)
-        {
-            ((App)Application.Current).InvalidateData();
-        }
-
         public override void OnDisabled(DesignCanvas canvas)
         {
-            ((App)Application.Current).InvalidateData();
+            base.OnDisabled(canvas);
+
+            canvas.Invalidate();
         }
 
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
-            if (CurrentAction == ActionType.DraggingItem && _tappedItem is ISelectable)
+            var action = CurrentAction;
+            if (action == ActionType.DraggingItem && _tappedItem is ISelectable)
             {
                 // to parametrize this, could do a GetResource(key) that uses App.Resources[key]
                 // or just use FindResource, given that DesignCanvas takes on App's MergedDictionaries
@@ -94,7 +99,14 @@ namespace Fonte.App.Delegates
                 ds.DrawGeometry(_oldPaths.Item1, color, strokeWidth: rescale);
                 ds.DrawGeometry(_oldPaths.Item2, color, strokeWidth: rescale);
             }
-            else if (CurrentAction == ActionType.DraggingRect)
+            else if (action == ActionType.SelectingPoly)
+            {
+                using (var poly = CanvasGeometry.CreatePolygon(CanvasDevice.GetSharedDevice(), _points.ToArray()))
+                {
+                    ds.FillGeometry(poly, Color.FromArgb(51, 0, 120, 215));
+                }
+            }
+            else if (action == ActionType.SelectingRect)
             {
                 ds.FillRectangle(new Rect(_origin, _anchor), Color.FromArgb(51, 0, 120, 215));
             }
@@ -165,7 +177,8 @@ namespace Fonte.App.Delegates
 
                         _origin = GetOriginPoint(isel, canvasPos);
 
-                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
+                        _undoGroup = layer.CreateUndoGroup();
+                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             isel.IsSelected = !isel.IsSelected;
                         }
@@ -177,22 +190,32 @@ namespace Fonte.App.Delegates
                                 isel.IsSelected = true;
                             }
                         }
-                        _undoGroup = layer.CreateUndoGroup();
 
                         Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
                 }
                 else
                 {
-                    _origin = _anchor = canvasPos;
-
-                    var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-                    if (!ctrl.HasFlag(CoreVirtualKeyStates.Down))
+                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                    if (!shift.HasFlag(CoreVirtualKeyStates.Down))
                     {
                         layer.ClearSelection();
                     }
 
-                    Debug.Assert(CurrentAction == ActionType.DraggingRect);
+                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+                    if (alt.HasFlag(CoreVirtualKeyStates.Down))
+                    {
+                        _points = new List<Vector2>();
+                        _points.Add(canvasPos.ToVector2());
+
+                        Debug.Assert(CurrentAction == ActionType.SelectingPoly);
+                    }
+                    else
+                    {
+                        _origin = _anchor = canvasPos;
+
+                        Debug.Assert(CurrentAction == ActionType.SelectingRect);
+                    }
                 }
 
                 ((App)Application.Current).InvalidateData();
@@ -347,7 +370,14 @@ namespace Fonte.App.Delegates
                 }
                 else
                 {
-                    _anchor = pos;
+                    if (CurrentAction == ActionType.SelectingPoly)
+                    {
+                        _points.Add(pos.ToVector2());
+                    }
+                    else
+                    {
+                        _anchor = pos;
+                    }
                 }
 
                 ((App)Application.Current).InvalidateData();
@@ -379,7 +409,24 @@ namespace Fonte.App.Delegates
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
-            else if (CurrentAction == ActionType.DraggingRect)
+            else if (CurrentAction == ActionType.SelectingPoly)
+            {
+                using (var poly = CanvasGeometry.CreatePolygon(CanvasDevice.GetSharedDevice(), _points.ToArray()))
+                {
+                    foreach (var path in canvas.Layer.Paths)
+                    {
+                        foreach (var point in path.Points)
+                        {
+                            if (poly.FillContainsPoint(point.ToVector2()))
+                            {
+                                point.IsSelected = !point.IsSelected;
+                            }
+                        }
+                    }
+                }
+                _points = null;
+            }
+            else if (CurrentAction == ActionType.SelectingRect)
             {
                 var rect = new Rect(_origin, _anchor);
 
@@ -482,8 +529,8 @@ namespace Fonte.App.Delegates
             }
             else if (item is Data.Segment segment)
             {
-                // XXX: avoid reprojecting?
-                return segment.ProjectPoint(pos.ToVector2()).Value.ToPoint();
+                // TODO: avoid reprojecting?
+                return segment.ProjectPoint(pos.ToVector2()).Value.Item1.ToPoint();
             }
             else if (item is ILocatable iloc)
             {

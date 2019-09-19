@@ -557,7 +557,7 @@ namespace Fonte.App.Utilities
                     segment = next;
                 }
 
-                if (!Equals(firstSegment, default(Data.Segment)))
+                if (!Equals(firstSegment, secondSegment))
                 {
                     var samples = new List<Vector2>();
 

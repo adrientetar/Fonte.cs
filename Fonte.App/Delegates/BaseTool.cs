@@ -51,6 +51,7 @@ namespace Fonte.App.Delegates
 
         public virtual void OnDisabled(DesignCanvas canvas)
         {
+            Cursor = DefaultCursor;
         }
 
         public virtual void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)

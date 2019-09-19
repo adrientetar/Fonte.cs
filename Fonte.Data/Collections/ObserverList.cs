@@ -104,15 +104,7 @@ namespace Fonte.Data.Collections
 
         public void AddRange(List<T> list)
         {
-            if (list == null) throw new ArgumentNullException("collection");
-
-            if (list.Count > 0)
-            {
-                int index = _list.Count;
-                //List.AddRange(list);
-
-                OnChangeRequested(NotifyChangeRequestedAction.Add, list, index);
-            }
+            InsertRange(_list.Count, list);
         }
         public void AddRange(ObserverList<T> list)
         {
@@ -122,6 +114,19 @@ namespace Fonte.Data.Collections
         public List<T> GetRange(int index, int count)
         {
             return _list.GetRange(index, count);
+        }
+
+        public void InsertRange(int index, List<T> list)
+        {
+            if (list == null) throw new ArgumentNullException("collection");
+
+            //List.InsertRange(index, list);
+
+            OnChangeRequested(NotifyChangeRequestedAction.Add, list, index);
+        }
+        public void InsertRange(int index, ObserverList<T> list)
+        {
+            InsertRange(index, list._list);
         }
 
         public void RemoveRange(int index, int count)

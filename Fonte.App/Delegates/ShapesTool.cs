@@ -129,6 +129,9 @@ namespace Fonte.App.Delegates
             }
             else if (args.Key == VirtualKey.Escape && _origin.HasValue)
             {
+                _undoGroup.Reset();
+                _undoGroup.Dispose();
+                _undoGroup = null;
                 _origin = null;
             }
             else
@@ -247,16 +250,16 @@ namespace Fonte.App.Delegates
                         new List<Data.Point>() {
                             new Data.Point(x1 + dot225dx, y2),
                             new Data.Point(x1, y1 + dot775dy),
-                            new Data.Point(x1, y1 + dot5dy, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1, y1 + dot5dy, Data.PointType.Curve, isSmooth: true),
                             new Data.Point(x1, y1 + dot225dy),
                             new Data.Point(x1 + dot225dx, y1),
-                            new Data.Point(x1 + dot5dx, y1, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1 + dot5dx, y1, Data.PointType.Curve, isSmooth: true),
                             new Data.Point(x1 + dot775dx, y1),
                             new Data.Point(x2, y1 + dot225dy),
-                            new Data.Point(x2, y1 + dot5dy, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x2, y1 + dot5dy, Data.PointType.Curve, isSmooth: true),
                             new Data.Point(x2, y1 + dot775dy),
                             new Data.Point(x1 + dot775dx, y2),
-                            new Data.Point(x1 + dot5dx, y2, Data.PointType.Curve, smooth: true),
+                            new Data.Point(x1 + dot5dx, y2, Data.PointType.Curve, isSmooth: true),
                         }
                     );
                 }

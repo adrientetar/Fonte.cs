@@ -117,13 +117,13 @@ namespace Fonte.Data
         public Path Parent
         { get; internal set; }
 
-        public Point(float x, float y, PointType type = default, bool smooth = default,
+        public Point(float x, float y, PointType type = default, bool isSmooth = default,
                      Dictionary<string, object> extraData = default)
         {
             _x = x;
             _y = y;
             _type = type;
-            _isSmooth = smooth;
+            _isSmooth = isSmooth;
             _extraData = extraData;
         }
 

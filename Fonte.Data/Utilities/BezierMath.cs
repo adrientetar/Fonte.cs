@@ -5,12 +5,13 @@
 namespace Fonte.Data.Utilities
 {
     using System.Collections.Generic;
+    using System.Linq;
     using System.Numerics;
 
     public class BezierMath
     {
         // Adapted from PaperJS getNearestTime().
-        public static Vector2 ProjectPointOnCurve(Vector2 point, List<Point> curve)
+        public static (Vector2, float) ProjectPointOnCurve(Vector2 point, List<Point> curve)
         {
             var p0 = curve[0].ToVector2();
             var p1 = curve[1].ToVector2();
@@ -57,10 +58,10 @@ namespace Fonte.Data.Utilities
                     step = .5f * step;
                 }
             }
-            return minValue;
+            return (minValue, minT);
         }
 
-        public static Vector2? ProjectPointOnLine(Vector2 point, List<Point> line)
+        public static (Vector2, float)? ProjectPointOnLine(Vector2 point, List<Point> line)
         {
             var a = line[0].ToVector2();
             var b = line[1].ToVector2();
@@ -75,15 +76,47 @@ namespace Fonte.Data.Utilities
 
                 if (t >= 0 && t <= 1)
                 {
-                    return a + t * ab;
+                    return (a + t * ab, t);
                 }
             }
             else
             {
-                return a;
+                return (a, 0f);
             }
 
             return null;
+        }
+
+        /**
+         * Adapted from bezierjs by Pomax.
+         */
+        public static Vector2[,] SplitCurve(List<Point> curve, float t)
+        {
+            var q = DeCasteljauDecomposition(curve, t);
+
+            return new Vector2[,] { { q[0], q[4], q[7], q[9] }, { q[9], q[8], q[6], q[3] } };
+        }
+
+        static List<Vector2> DeCasteljauDecomposition(List<Point> curve, float t)
+        {
+            List<Vector2> points = new List<Vector2>();
+            points.AddRange(curve.Select(p => p.ToVector2())
+                                 .ToList());
+
+            var start = 0;
+            var end = points.Count - 1;
+            while (end - start > 0)
+            {
+                for (int i = start; i < end; ++i)
+                {
+                    var point = Vector2.Lerp(points[i], points[i + 1], t);
+                    points.Add(point);
+                }
+                start = end + 1;
+                end = points.Count - 1;
+            }
+
+            return points;
         }
     }
 }

@@ -282,7 +282,7 @@ namespace Fonte.App.Utilities
                     {
                         var proj = segment.ProjectPoint(p);
 
-                        if (proj.HasValue && (proj.Value - p).LengthSquared() <= tol_2)
+                        if (proj.HasValue && (proj.Value.Item1 - p).LengthSquared() <= tol_2)
                         {
                             return segment;
                         }

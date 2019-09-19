@@ -21,11 +21,11 @@ namespace Fonte.Data.Utilities
             }
         }
 
-        public static T NextItem<T>(IList<T> list, int index, int n = 1)
+        public static T NextItem<T>(IList<T> list, int index)
         {
             Debug.Assert(list.Count > 0);
 
-            var value = index + n;
+            var value = index + 1;
             if (value >= list.Count)
             {
                 value -= list.Count;
@@ -34,11 +34,11 @@ namespace Fonte.Data.Utilities
             return list[value];
         }
 
-        public static T PreviousItem<T>(IList<T> list, int index, int n = 1)
+        public static T PreviousItem<T>(IList<T> list, int index)
         {
             Debug.Assert(list.Count > 0);
 
-            var value = index - n;
+            var value = index - 1;
             if (value < 0)
             {
                 value += list.Count;

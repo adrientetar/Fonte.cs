@@ -13,12 +13,12 @@ namespace Fonte.App.Controls
     using muxp = Microsoft.UI.Xaml.Controls.Primitives;
 
     using System;
-    using System.Diagnostics;
     using System.Numerics;
     using Windows.ApplicationModel;
     using Windows.Foundation;
     using Windows.UI;
     using Windows.UI.Core;
+    using Windows.System;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
@@ -50,11 +50,12 @@ namespace Fonte.App.Controls
         internal static readonly int MinPointSizeForGrid = 10000;
         internal static readonly int MinPointSizeForGuidelines = 100;
 
-        private static readonly ICanvasDelegate PreviewTool = new PreviewTool();
+        private readonly ICanvasDelegate PreviewTool = new PreviewTool();
+        internal readonly ICanvasDelegate SelectionTool = new SelectionTool();
 
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
         private ICanvasDelegate _tool = new BaseTool();
-        private bool _isInPreview;
+        private ICanvasDelegate _toolOverride;
         private CoreCursor _previousCursor;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
@@ -66,30 +67,11 @@ namespace Fonte.App.Controls
             set { SetValue(LayerProperty, value); }
         }
 
-        public bool IsInPreview
-        {
-            get => _isInPreview;
-            set
-            {
-                if (value != _isInPreview)
-                {
-                    _isInPreview = value;
-
-                    Invalidate();
-                    InvalidateCursor();
-                }
-            }
-        }
-
         public ICanvasDelegate Tool
         {
             get
             {
-                if (_isInPreview)
-                {
-                    return PreviewTool;
-                }
-                return _tool;
+                return _toolOverride ?? _tool;
             }
             set
             {
@@ -99,6 +81,21 @@ namespace Fonte.App.Controls
                     _tool = value;
                     _tool.OnActivated(this);
 
+                    InvalidateCursor();
+                }
+            }
+        }
+
+        ICanvasDelegate ToolOverride
+        {
+            get => _toolOverride;
+            set
+            {
+                if (value != _toolOverride)
+                {
+                    _toolOverride = value;
+
+                    Invalidate();
                     InvalidateCursor();
                 }
             }
@@ -283,11 +280,32 @@ namespace Fonte.App.Controls
         void OnKeyDown(object sender, KeyRoutedEventArgs args)
         {
             Tool.OnKeyDown(this, args);
+
+            if (!args.Handled && args.KeyStatus.RepeatCount == 1)
+            {
+                if (args.Key == VirtualKey.Space)
+                {
+                    ToolOverride = PreviewTool;
+                }
+                else if (args.Key == VirtualKey.Control)
+                {
+                    ToolOverride = SelectionTool;
+                }
+            }
         }
 
         void OnKeyUp(object sender, KeyRoutedEventArgs args)
         {
             Tool.OnKeyUp(this, args);
+
+            if (args.Key == VirtualKey.Space)
+            {
+                if (_toolOverride == PreviewTool) ToolOverride = null;
+            }
+            else if (args.Key == VirtualKey.Control)
+            {
+                if (_toolOverride == SelectionTool) ToolOverride = null;
+            }
         }
 
         void OnPointerPressed(object sender, PointerRoutedEventArgs args)
