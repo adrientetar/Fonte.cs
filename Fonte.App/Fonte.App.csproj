@@ -152,6 +152,7 @@
     <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
     <Compile Include="Delegates\PenTool.cs" />
+    <Compile Include="Delegates\KnifeTool.cs" />
     <Compile Include="Delegates\SelectionTool.cs" />
     <Compile Include="Delegates\PreviewTool.cs" />
     <Compile Include="Delegates\ShapesTool.cs" />

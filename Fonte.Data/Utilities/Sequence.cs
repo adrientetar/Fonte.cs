@@ -23,12 +23,13 @@ namespace Fonte.Data.Utilities
 
         public static T NextItem<T>(IList<T> list, int index)
         {
-            Debug.Assert(list.Count > 0);
+            var count = list.Count;
+            Debug.Assert(count > 0);
 
             var value = index + 1;
-            if (value >= list.Count)
+            if (value >= count)
             {
-                value -= list.Count;
+                value -= count;
             }
 
             return list[value];
@@ -36,12 +37,13 @@ namespace Fonte.Data.Utilities
 
         public static T PreviousItem<T>(IList<T> list, int index)
         {
-            Debug.Assert(list.Count > 0);
+            var count = list.Count;
+            Debug.Assert(count > 0);
 
             var value = index - 1;
             if (value < 0)
             {
-                value += list.Count;
+                value += count;
             }
 
             return list[value];

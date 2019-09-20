@@ -14,6 +14,7 @@ namespace Fonte.App.Delegates
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Linq;
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
@@ -101,9 +102,22 @@ namespace Fonte.App.Delegates
             }
             else if (action == ActionType.SelectingPoly)
             {
-                using (var poly = CanvasGeometry.CreatePolygon(CanvasDevice.GetSharedDevice(), _points.ToArray()))
+                if (_points.Count > 1)
                 {
-                    ds.FillGeometry(poly, Color.FromArgb(51, 0, 120, 215));
+                    var device = CanvasDevice.GetSharedDevice();
+                    var builder = new CanvasPathBuilder(device);
+                    builder.BeginFigure(_points[0]);
+                    foreach (var point in _points.Skip(1))
+                    {
+                        builder.AddLine(point);
+                    }
+                    builder.EndFigure(CanvasFigureLoop.Open);
+
+                    using (var path = CanvasGeometry.CreatePath(builder))
+                    {
+                        ds.DrawGeometry(path, Color.FromArgb(225, 45, 45, 45), strokeWidth: rescale);
+                    }
+                    builder.Dispose();
                 }
             }
             else if (action == ActionType.SelectingRect)
@@ -155,7 +169,6 @@ namespace Fonte.App.Delegates
 
                 if (_tappedItem != null)
                 {
-                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
                     if (_tappedItem is UIBroker.BBoxHandle ||
                         _tappedItem is UIBroker.GuidelineRule)
                     {
@@ -164,7 +177,7 @@ namespace Fonte.App.Delegates
 
                         Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
-                    else if (_tappedItem is Data.Segment segment && alt.HasFlag(CoreVirtualKeyStates.Down))
+                    else if (_tappedItem is Data.Segment segment && args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu))
                     {
                         segment.ConvertTo(Data.PointType.Curve);
 
@@ -177,7 +190,6 @@ namespace Fonte.App.Delegates
 
                         _origin = GetOriginPoint(isel, canvasPos);
 
-                        _undoGroup = layer.CreateUndoGroup();
                         if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             isel.IsSelected = !isel.IsSelected;
@@ -190,20 +202,19 @@ namespace Fonte.App.Delegates
                                 isel.IsSelected = true;
                             }
                         }
+                        _undoGroup = layer.CreateUndoGroup();
 
                         Debug.Assert(CurrentAction == ActionType.DraggingItem);
                     }
                 }
                 else
                 {
-                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    if (!shift.HasFlag(CoreVirtualKeyStates.Down))
+                    if (!args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                     {
                         layer.ClearSelection();
                     }
 
-                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-                    if (alt.HasFlag(CoreVirtualKeyStates.Down))
+                    if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu))
                     {
                         _points = new List<Vector2>();
                         _points.Add(canvasPos.ToVector2());
@@ -253,11 +264,10 @@ namespace Fonte.App.Delegates
                     if (bounds.Width > 0)
                     {
                         var origin = Vector2.Zero;
-                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
 
                         var hr = delta.Y / bounds.Height;
                         var wr = delta.X / bounds.Width;
-                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             var lo = Math.Min(
                                     Math.Abs(hr),
@@ -309,8 +319,7 @@ namespace Fonte.App.Delegates
                     var deg = (float)Conversion.ToDegrees(angle);
 
                     // TODO: we could always modulo 180 to normalize since 0-180 and 180-360 are equivalent
-                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                    if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                     {
                         guideline.Angle = (int)(Conversion.ToDegrees(angle) + Math.Sign(deg) * 45) / 90 * 90;
                     }
@@ -323,7 +332,6 @@ namespace Fonte.App.Delegates
                 {
                     var layer = canvas.Layer;
 
-                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
                     if (_tappedItem is ILocatable iloc)
                     {
                         // No need for the _canDrag guard here because we're snapping to _tappedItem.
@@ -355,7 +363,7 @@ namespace Fonte.App.Delegates
                             if (!_canDrag) return;
                         }
 
-                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             pos = ClampToOrigin(pos, _origin);
                         }
@@ -376,6 +384,8 @@ namespace Fonte.App.Delegates
                     }
                     else
                     {
+                        Debug.Assert(CurrentAction == ActionType.SelectingRect);
+
                         _anchor = pos;
                     }
                 }

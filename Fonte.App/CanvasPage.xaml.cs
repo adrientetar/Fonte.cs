@@ -199,8 +199,8 @@ namespace Fonte.App
 
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs args)
         {
-            var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
 #if DEBUG
+            var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
             if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.VirtualKey == VirtualKey.D)
             {
                 try
@@ -218,13 +218,13 @@ namespace Fonte.App
                     return;
                 }
             }
-#endif
             else
             {
                 return;
             }
 
             args.Handled = true;
+#endif
         }
 
         /**/

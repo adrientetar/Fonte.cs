@@ -99,21 +99,16 @@ namespace Fonte.Data
                     var stack = new Vector2[2];
                     var stackIndex = 0;
 
-                    var start = Points[0];
-                    var skip = start.Type == PointType.Move;
-                    if (!skip)
+                    var start = _points[0];
+                    var isOpen = start.Type == PointType.Move;
+                    if (!isOpen)
                     {
-                        start = Points[Points.Count - 1];
+                        start = _points[_points.Count - 1];
                     }
                     builder.BeginFigure(start.X, start.Y);
 
-                    foreach (var point in Points)
+                    foreach (var point in _points.Skip(isOpen ? 1 : 0))
                     {
-                        if (skip)
-                        {
-                            skip = false;
-                            continue;
-                        }
                         switch (point.Type)
                         {
                             case PointType.Curve:
@@ -127,10 +122,12 @@ namespace Fonte.Data
                             case PointType.None:
                                 stack[stackIndex++] = point.ToVector2();
                                 break;
+                            default:
+                                throw new InvalidOperationException($"{point.Type} isn't a valid segment type here");
                         }
                     }
 
-                    builder.EndFigure(start.Type == PointType.Move ? CanvasFigureLoop.Open : CanvasFigureLoop.Closed);
+                    builder.EndFigure(isOpen ? CanvasFigureLoop.Open : CanvasFigureLoop.Closed);
 
                     _canvasPath = CanvasGeometry.CreatePath(builder);
                 }
@@ -169,15 +166,13 @@ namespace Fonte.Data
         {
             get
             {
-                var points = Points;
-
                 int start = 0, count = 0;
-                foreach (var point in points)
+                foreach (var point in _points)
                 {
                     ++count;
                     if (point.Type != PointType.None)
                     {
-                        yield return new Segment(points, start, count);
+                        yield return new Segment(this, start, count);
                         start += count;
                         count = 0;
                     }
@@ -199,12 +194,14 @@ namespace Fonte.Data
 
         public void Close()
         {
-            if (Points.Count > 0 && IsOpen)
+            var points = Points;
+
+            if (points.Count > 0 && IsOpen)
             {
                 using (var group = Parent?.CreateUndoGroup())
                 {
-                    var point = Points.PopAt(0);
-                    Points.Add(point);
+                    var point = points.PopAt(0);
+                    points.Add(point);
                     point.IsSmooth = false;
                     point.Type = PointType.Line;
                 }
@@ -305,9 +302,9 @@ namespace Fonte.Data
 
     public struct Segment : ISelectable
     {
-        private readonly int _count;
+        private readonly Path _path;
         private readonly int _index;
-        private readonly ObserverList<Point> _points;
+        private readonly int _count;
 
         public bool IsSelected
         {
@@ -329,7 +326,7 @@ namespace Fonte.Data
         {
             get
             {
-                return _points.GetRange(_index, _count - 1);
+                return _path._points.GetRange(_index, _count - 1);
             }
         }
 
@@ -337,7 +334,7 @@ namespace Fonte.Data
         {
             get
             {
-                return _points[_index + _count - 1];
+                return _path._points[_index + _count - 1];
             }
         }
 
@@ -345,7 +342,7 @@ namespace Fonte.Data
         {
             get
             {
-                return _points[_index].Parent;
+                return _path;
             }
         }
 
@@ -353,7 +350,7 @@ namespace Fonte.Data
         {
             get
             {
-                return _points.GetRange(_index, _count);
+                return _path._points.GetRange(_index, _count);
             }
         }
 
@@ -366,19 +363,19 @@ namespace Fonte.Data
                     var points = Points;
                     if (OnCurve.Type != PointType.Move)
                     {
-                        points.Insert(0, _points[_points.Count - 1]);
+                        points.Insert(0, _path._points.Last());
                     }
                     return points;
                 }
-                return _points.GetRange(_index - 1, _count + 1);
+                return _path._points.GetRange(_index - 1, _count + 1);
             }
         }
 
-        public Segment(ObserverList<Point> points, int index, int count)
+        public Segment(Path path, int index, int count)
         {
-            _count = count;
+            _path = path;
             _index = index;
-            _points = points;
+            _count = count;
         }
 
         public void ConvertTo(PointType type)
@@ -390,14 +387,15 @@ namespace Fonte.Data
             {
                 if (onCurve.Type == PointType.Line)
                 {
+                    var points = _path.Points;
                     var start = PointsInclusive[0];
 
                     onCurve.Type = PointType.Curve;
-                    _points.Insert(_index, new Point(
+                    points.Insert(_index, new Point(
                             start.X + .65f * (OnCurve.X - start.X),
                             start.Y + .65f * (OnCurve.Y - start.Y)
                         ));
-                    _points.Insert(_index, new Point(
+                    points.Insert(_index, new Point(
                             start.X + .35f * (OnCurve.X - start.X),
                             start.Y + .35f * (OnCurve.Y - start.Y)
                         ));
@@ -414,7 +412,7 @@ namespace Fonte.Data
                     onCurve.IsSmooth = false;
                     onCurve.Type = PointType.Line;
                     start.IsSmooth = false;
-                    _points.RemoveRange(_index, _count - 1);
+                    _path.Points.RemoveRange(_index, _count - 1);
 
                     ok = true;
                 }
@@ -430,7 +428,7 @@ namespace Fonte.Data
 
                     onCurve.IsSmooth = false;
                     onCurve.Type = PointType.Move;
-                    _points.RemoveRange(_index, _count - 1);
+                    _path.Points.RemoveRange(_index, _count - 1);
 
                     ok = true;
                 }
@@ -450,50 +448,66 @@ namespace Fonte.Data
             // Remove points around node, if a second curve segment follows
             if (nodeBias && onCurve.Type == PointType.Curve)
             {
-                var firstOff = _points[_index];
-                var nextOff = Sequence.NextItem(_points, _index + _count - 1);
+                var points = _path._points;
+                var firstOff = points[_index];
+                var nextOff = Sequence.NextItem(points, _index + _count - 1);
 
-                if (!(_points[0].Type == PointType.Move && _points.Last() == onCurve) &&
+                if (!(points[0].Type == PointType.Move && points.Last() == onCurve) &&
                     nextOff.Type == PointType.None)
                 {
                     nextOff.X = firstOff.X;
                     nextOff.Y = firstOff.Y;
                 }
             }
-            _points.RemoveRange(_index, _count);
+            _path.Points.RemoveRange(_index, _count);
         }
 
-        public List<Vector2> IntersectLine(Vector2 p1, Vector2 p2)
-        {
-            throw new NotImplementedException();
-        }
-
-        public (Vector2, float)? ProjectPoint(Vector2 p)
+        public (Vector2, float)[] IntersectLine(Vector2 p0, Vector2 p1)
         {
             var onCurve = OnCurve;
 
             if (onCurve.Type == PointType.Curve)
             {
-                return BezierMath.ProjectPointOnCurve(p, PointsInclusive);
+                return BezierMath.IntersectLineAndCurve(p0, p1, PointsInclusive.Select(p => p.ToVector2())
+                                                                               .ToArray());
             }
             else if (onCurve.Type == PointType.Line)
             {
-                return BezierMath.ProjectPointOnLine(p, PointsInclusive);
+                var result = BezierMath.IntersectLines(p0, p1, PointsInclusive.Select(p => p.ToVector2())
+                                                                              .ToArray());
+                if (result.HasValue) return new (Vector2, float)[] { result.Value };
             }
+            return new (Vector2, float)[0];
+        }
 
+        public (Vector2, float)? ProjectPoint(Vector2 point)
+        {
+            var onCurve = OnCurve;
+
+            if (onCurve.Type == PointType.Curve)
+            {
+                return BezierMath.ProjectPointOnCurve(point, PointsInclusive.Select(p => p.ToVector2())
+                                                                            .ToArray());
+            }
+            else if (onCurve.Type == PointType.Line)
+            {
+                return BezierMath.ProjectPointOnLine(point, PointsInclusive.Select(p => p.ToVector2())
+                                                                           .ToArray());
+            }
             return null;
         }
 
-        public void SplitAt(float t)
+        public Segment SplitAt(float t)
         {
             var points = PointsInclusive;
             var onCurve = points.Last();
 
             if (onCurve.Type == PointType.Curve)
             {
-                var curves = BezierMath.SplitCurve(points, t);
+                var curves = BezierMath.SplitCurve(points.Select(p => p.ToVector2())
+                                                         .ToArray(), t);
 
-                _points.InsertRange(_index, new List<Point>()
+                _path.Points.InsertRange(_index, new List<Point>()
                 {
                     new Point(curves[0, 1].X, curves[0, 1].Y),
                     new Point(curves[0, 2].X, curves[0, 2].Y),
@@ -512,12 +526,14 @@ namespace Fonte.Data
                                        onCurve.ToVector2(),
                                        t);
 
-                _points.Insert(_index, new Point(loc.X, loc.Y, PointType.Line));
+                _path.Points.Insert(_index, new Point(loc.X, loc.Y, PointType.Line));
             }
             else
             {
                 throw new NotImplementedException($"Cannot split {onCurve.Type} segment");
             }
+
+            return new Segment(_path, _index + _count, _count);
         }
 
         public override string ToString()

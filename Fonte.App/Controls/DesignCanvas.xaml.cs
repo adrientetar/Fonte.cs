@@ -69,10 +69,7 @@ namespace Fonte.App.Controls
 
         public ICanvasDelegate Tool
         {
-            get
-            {
-                return _toolOverride ?? _tool;
-            }
+            get => _toolOverride ?? _tool;
             set
             {
                 if (value != _tool)

@@ -166,13 +166,18 @@ namespace Fonte.App.Delegates
                     {
                         var t = result.Value.Item2;
 
-                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                        if (!shift.HasFlag(CoreVirtualKeyStates.Down))
+                        if (!args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             layer.ClearSelection();
                         }
-                        segment.SplitAt(t);
+                        var otherSegment = segment.SplitAt(t);
                         segment.OnCurve.IsSelected = true;
+
+                        foreach (var point in Enumerable.Concat(segment.Points, otherSegment.Points))
+                        {
+                            point.X = Outline.RoundToGrid(point.X);
+                            point.Y = Outline.RoundToGrid(point.Y);
+                        }
                     }
                 }
                 else
@@ -195,8 +200,7 @@ namespace Fonte.App.Delegates
                             // For shift origin, always use an onCurve
                             lastPoint = lastOn;
                         }
-                        var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                        if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                        if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             pos = ClampToOrigin(pos, new Point(lastPoint.X, lastPoint.Y));
                         }
@@ -243,7 +247,7 @@ namespace Fonte.App.Delegates
                     {
                         return;
                     }
-                    var makeOnSmooth = !Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
+                    var makeOnSmooth = !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu);
                     selPoint.IsSelected = false;
                     selPoint.IsSmooth = _path.Points.Count > 1 && makeOnSmooth;
 
@@ -298,8 +302,7 @@ namespace Fonte.App.Delegates
                         /* onCurveIndex = Count - 1 */
                         onCurve = _path.Points[onCurveIndex];
                     }
-                    var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
-                    if (shift.HasFlag(CoreVirtualKeyStates.Down))
+                    if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                     {
                         pos = ClampToOrigin(pos, new Point(onCurve.X, onCurve.Y));
                     }
