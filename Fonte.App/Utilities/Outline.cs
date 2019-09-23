@@ -38,9 +38,9 @@ namespace Fonte.App.Utilities
             if (path.IsOpen)
             {
                 points.RemoveRange(index, points.Count - index);
-                path.Parent.Paths.Add(
-                    new Data.Path(points: after)
-                );
+                var newPath = new Data.Path();
+                path.Parent.Paths.Add(newPath);
+                newPath.Points.AddRange(after);
             }
             else
             {

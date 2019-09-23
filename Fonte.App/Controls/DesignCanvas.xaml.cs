@@ -278,7 +278,7 @@ namespace Fonte.App.Controls
         {
             Tool.OnKeyDown(this, args);
 
-            if (!args.Handled && args.KeyStatus.RepeatCount == 1)
+            if (!args.Handled && !args.KeyStatus.WasKeyDown)
             {
                 if (args.Key == VirtualKey.Space)
                 {

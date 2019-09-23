@@ -165,6 +165,7 @@
     <Compile Include="Serialization\LayerSelectionConverter.cs" />
     <Compile Include="Utilities\BooleanOps.cs" />
     <Compile Include="Utilities\Cursors.cs" />
+    <Compile Include="Utilities\Slicing.cs" />
     <Compile Include="Utilities\UIBroker.cs" />
     <Compile Include="Utilities\Outline.cs" />
     <Compile Include="Utilities\Drawing.cs" />

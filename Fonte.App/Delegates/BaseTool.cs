@@ -102,13 +102,17 @@ namespace Fonte.App.Delegates
                     }
                 }
 
-                Outline.MoveSelection(canvas.Layer, dx, dy, GetMoveMode());
-
-                var selection = canvas.Layer.Selection;
-                if (selection.Count == 1 && selection.First() is Data.Point point)
+                var layer = canvas.Layer;
+                using (var group = layer.CreateUndoGroup())
                 {
-                    // TODO: add some kind of visual feedback with a timer?
-                    Outline.TryJoinPath(canvas.Layer, point);
+                    Outline.MoveSelection(layer, dx, dy, GetMoveMode());
+
+                    var selection = layer.Selection;
+                    if (selection.Count == 1 && selection.First() is Data.Point point)
+                    {
+                        // TODO: add some kind of visual feedback with a timer?
+                        Outline.TryJoinPath(layer, point);
+                    }
                 }
             }
             else if (args.Key == VirtualKey.Back ||

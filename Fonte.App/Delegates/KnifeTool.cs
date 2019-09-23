@@ -27,6 +27,7 @@ namespace Fonte.App.Delegates
         private Point? _origin;
         private Point _anchor;
         private Vector2[] _points;
+        private bool _shouldMoveOrigin;
 
         private IChangeGroup _undoGroup;
 
@@ -45,6 +46,45 @@ namespace Fonte.App.Delegates
                 }
                 ds.DrawLine(_origin.Value.ToVector2(), _anchor.ToVector2(), Color.FromArgb(120, 60, 60, 60), strokeWidth: rescale);
             }
+        }
+
+        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
+        {
+            if (args.Key == VirtualKey.Space && _origin != null)
+            {
+                _shouldMoveOrigin = true;
+            }
+            else if (args.Key == VirtualKey.Escape && _origin != null)
+            {
+                _points = null;
+                _undoGroup.Dispose();
+                _undoGroup = null;
+                _origin = null;
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else
+            {
+                base.OnKeyDown(canvas, args);
+                return;
+            }
+
+            args.Handled = true;
+        }
+
+        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
+        {
+            if (args.Key == VirtualKey.Space)
+            {
+                _shouldMoveOrigin = false;
+            }
+            else
+            {
+                base.OnKeyUp(canvas, args);
+                return;
+            }
+
+            args.Handled = true;
         }
 
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
@@ -70,11 +110,19 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue)
             {
-                _anchor = canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position);
+                var pos = canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position);
                 if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                 {
-                    _anchor = ClampToOrigin(_anchor, _origin.Value);
+                    pos = ClampToOrigin(pos, _origin.Value);
                 }
+
+                if (_shouldMoveOrigin)
+                {
+                    _origin = new Point(
+                        _origin.Value.X + pos.X - _anchor.X,
+                        _origin.Value.Y + pos.Y - _anchor.Y);
+                }
+                _anchor = pos;
 
                 _points = IntersectPaths(canvas.Layer, _origin.Value.ToVector2(), _anchor.ToVector2());
                 canvas.Invalidate();
@@ -85,36 +133,24 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerReleased(canvas, args);
 
-            if (_points != null)
+            if (_origin != null)
             {
-                var layer = canvas.Layer;
+                if (_points != null)
+                {
+                    var layer = canvas.Layer;
 
-                layer.ClearSelection();
-                SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2());
+                    layer.ClearSelection();
+                    Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2());
 
+                    ((App)Application.Current).InvalidateData();
+                }
                 _undoGroup.Dispose();
                 _undoGroup = null;
-                ((App)Application.Current).InvalidateData();
             }
             _origin = null;
             _points = null;
 
             canvas.Invalidate();
-        }
-
-        static IEnumerable<(T, T)> ByTwo<T>(IEnumerable<T> source)
-        {
-            using (var it = source.GetEnumerator())
-            {
-                while (it.MoveNext())
-                {
-                    var first = it.Current;
-                    if (it.MoveNext())
-                    {
-                        yield return (first, it.Current);
-                    }
-                }
-            }
         }
 
         static Vector2[] IntersectPaths(Data.Layer layer, Vector2 p0, Vector2 p1)
@@ -132,124 +168,6 @@ namespace Fonte.App.Delegates
                 }
             }
             return points.ToArray();
-        }
-
-        static Data.Path MakePath(Data.Segment endSegment, Dictionary<Data.Segment, IEnumerable<Data.Segment>> segmentsDict, Data.Path path = null, Data.Segment? targetSegment = null)
-        {
-            if (path == null)
-                path = new Data.Path();
-            if (targetSegment == null)
-                targetSegment = endSegment;
-
-            var remSegments = segmentsDict[targetSegment.Value];
-            segmentsDict.Remove(targetSegment.Value);
-
-            var jumpToSegment = remSegments.First();
-            {
-                var point = jumpToSegment.OnCurve.Clone();
-                point.IsSmooth = false;
-                point.Type = Data.PointType.Line;
-                path.Points.Add(point);
-            }
-
-            foreach (var segment in remSegments.Skip(1))
-            {
-                var isJump = segmentsDict.ContainsKey(segment);
-                var isLast = Equals(segment, endSegment);
-
-                foreach (var point in segment.Points)
-                {
-                    var outPoint = point.Clone();
-                    if ((isJump || isLast) && point.Type != Data.PointType.None)
-                    {
-                        outPoint.IsSmooth = false;
-                    }
-                    path.Points.Add(outPoint);
-                }
-                if (isLast) break;
-                if (isJump)
-                {
-                    MakePath(endSegment, segmentsDict, path, segment);
-                    break;
-                }
-            }
-
-            return path;
-        }
-
-        static bool SlicePaths(Data.Layer layer, Vector2 p0, Vector2 p1)
-        {
-            // TODO: handle open contours
-            var pathSegments = new List<Data.Segment[]>();
-            var splitSegments = new List<(Data.Segment, IEnumerable<Data.Segment>)>();
-            foreach (var path in layer.Paths)
-            {
-                var segments = path.Segments.ToArray();
-                var index = 0;
-                while (index < segments.Length)
-                {
-                    var segment = segments[index];
-                    var intersections = segment.IntersectLine(p0, p1);
-                    if (intersections.Length > 0)
-                    {
-                        // TODO: handle more intersections
-                        var (_, t) = intersections.First();
-                        segment.SplitAt(t);
-                        segments = path.Segments.ToArray();
-
-                        splitSegments.Add((
-                            segment,
-                            Sequence.IterAt(segments, index)
-                        ));
-                        index += 2;
-                    }
-                    else
-                    {
-                        index += 1;
-                    }
-                }
-                pathSegments.Add(segments);
-            }
-            var size = splitSegments.Count;
-            if (size >= 2)
-            {
-                // TODO: use black/white area for odd len elision
-                var segmentsDict = new Dictionary<Data.Segment, IEnumerable<Data.Segment>>();
-                // Sort segments by distance of the split point from p0 and build graph of pairs
-                foreach (var (split1, split2) in ByTwo(splitSegments.OrderBy(
-                                                       item =>
-                                                       {
-                                                           var seg = item.Item1;
-                                                           var d = seg.OnCurve.ToVector2() - p0;
-                                                           return d.LengthSquared();
-                                                       })))
-                {
-                    segmentsDict[split1.Item1] = split2.Item2;
-                    segmentsDict[split2.Item1] = split1.Item2;
-                }
-
-                var result = new List<Data.Path>();
-                foreach (var (path, segments) in layer.Paths.Zip(pathSegments, (p, ss) => (p, ss)))
-                {
-                    var hasCut = false;
-                    foreach (var segment in segments)
-                    {
-                        if (segmentsDict.ContainsKey(segment))
-                        {
-                            result.Add(MakePath(segment, segmentsDict));
-                            hasCut = true;
-                        }
-                    }
-                    if (!hasCut)
-                    {
-                        result.Add(path);
-                    }
-                }
-                layer.Paths.Clear();
-                layer.Paths.AddRange(result);
-                return true;
-            }
-            return false;
         }
 
         #region IToolBarEntry implementation

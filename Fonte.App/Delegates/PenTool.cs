@@ -34,9 +34,14 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas);
 
-            if (TryRemoveTrailingOffCurve(canvas))
+            if (_undoGroup != null)
             {
-                ((App)Application.Current).InvalidateData();
+                if (TryRemoveTrailingOffCurve(canvas.Layer))
+                {
+                    ((App)Application.Current).InvalidateData();
+                }
+                _undoGroup.Dispose();
+                _undoGroup = null;
             }
         }
 
@@ -44,7 +49,7 @@ namespace Fonte.App.Delegates
         {
             if (args.Key == VirtualKey.Menu)
             {
-                if (TrySetOnCurveSmoothness(canvas, false))
+                if (TrySetLastOnCurveSmoothness(false))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
@@ -55,13 +60,21 @@ namespace Fonte.App.Delegates
             }
             else if (args.Key == VirtualKey.Escape)
             {
-                TryRemoveTrailingOffCurve(canvas);
-                canvas.Layer.ClearSelection();
+                var layer = canvas.Layer;
+                TryRemoveTrailingOffCurve(layer);
+                layer.ClearSelection();
 
                 ((App)Application.Current).InvalidateData();
             }
             else
             {
+                var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
+                if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.Key == VirtualKey.Z)
+                {
+                    _undoGroup?.Dispose();
+                    _undoGroup = null;
+                }
+
                 base.OnKeyDown(canvas, args);
                 return;
             }
@@ -73,7 +86,7 @@ namespace Fonte.App.Delegates
         {
             if (args.Key == VirtualKey.Menu)
             {
-                if (TrySetOnCurveSmoothness(canvas, true))
+                if (TrySetLastOnCurveSmoothness(true))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
@@ -101,7 +114,12 @@ namespace Fonte.App.Delegates
                 var pos = canvas.FromClientPosition(ptPoint.Position);
                 // TODO: should we ignore Anchor/Component etc. here?
                 var tappedItem = canvas.HitTest(pos, testSegments: true);
-                var selPoint = GetSelectedPoint(canvas);
+                var selPoint = GetSelectedPoint(layer);
+
+                if (_undoGroup != null)
+                {
+                    _undoGroup.Dispose();
+                }
 
                 _screenOrigin = ptPoint.Position;
                 _undoGroup = layer.CreateUndoGroup();
@@ -147,7 +165,7 @@ namespace Fonte.App.Delegates
                     // If we clicked on an inside point, just break its path open.
                     else
                     {
-                        TryRemoveTrailingOffCurve(canvas);
+                        TryRemoveTrailingOffCurve(layer);
 
                         Outline.BreakPath(tappedPath, tappedPath.Points.IndexOf(tappedPoint));
                     }
@@ -173,7 +191,7 @@ namespace Fonte.App.Delegates
                         var otherSegment = segment.SplitAt(t);
                         segment.OnCurve.IsSelected = true;
 
-                        foreach (var point in Enumerable.Concat(segment.Points, otherSegment.Points))
+                        foreach (var point in Enumerable.Concat(segment.Points, otherSegment.OffCurves))
                         {
                             point.X = Outline.RoundToGrid(point.X);
                             point.Y = Outline.RoundToGrid(point.Y);
@@ -365,13 +383,7 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerReleased(canvas, args);
 
-            if (_undoGroup != null)
-            {
-                _undoGroup.Dispose();
-                _undoGroup = null;
-
-                ((App)Application.Current).InvalidateData();
-            }
+            /* _undoGroup closure is deferred because we want potential TryRemoveTrailingOffCurve to be part of it */
             _path = null;
             _screenOrigin = default;
             _shouldMoveOnCurve = false;
@@ -466,9 +478,9 @@ namespace Fonte.App.Delegates
             return point;
         }
 
-        Data.Point GetSelectedPoint(DesignCanvas canvas)
+        Data.Point GetSelectedPoint(Data.Layer layer)
         {
-            var selection = canvas.Layer.Selection;
+            var selection = layer.Selection;
 
             if (selection.Count == 1 && selection.First() is Data.Point point)
             {
@@ -477,9 +489,9 @@ namespace Fonte.App.Delegates
             return null;
         }
 
-        bool TryRemoveTrailingOffCurve(DesignCanvas canvas)
+        bool TryRemoveTrailingOffCurve(Data.Layer layer)
         {
-            if (GetSelectedPoint(canvas) is Data.Point selPoint)
+            if (GetSelectedPoint(layer) is Data.Point selPoint)
             {
                 var selPath = selPoint.Parent;
                 var selPoints = selPath.Points;
@@ -493,7 +505,7 @@ namespace Fonte.App.Delegates
             return false;
         }
 
-        bool TrySetOnCurveSmoothness(DesignCanvas canvas, bool value)
+        bool TrySetLastOnCurveSmoothness(bool value)
         {
             if (_path?.Points.Count >= 2)
             {
@@ -517,7 +529,15 @@ namespace Fonte.App.Delegates
 
 #region IToolBarEntry implementation
 
-        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uedfb" };
+        public override IconSource Icon { get; } = FromString("M7.52 16.51v-1.992h3.99v1.991z M10.819 14.498l3.719-3.974-5.02-8.02-5.028 8.027 3.737 3.973z M9.508 2.515v6.93 M9.509 9.42a1.089 1.089 0 1 1-1.089 1.089A1.089 1.089 0 0 1 9.509 9.42z");
+
+        static PathIconSource FromString(string data)
+        {
+            var iconSource = new PathIconSource();
+            iconSource.SetValue(PathIconSource.DataProperty, data);
+
+            return iconSource;
+        }
 
         public override string Name => "Pen";
 
