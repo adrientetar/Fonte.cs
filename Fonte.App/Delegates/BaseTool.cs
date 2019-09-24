@@ -129,12 +129,11 @@ namespace Fonte.App.Delegates
                 }
                 else
                 {
-                    using (var group = canvas.Layer.CreateUndoGroup())
+                    using var group = canvas.Layer.CreateUndoGroup();
+
+                    foreach (var point in selection.OfType<Data.Point>())
                     {
-                        foreach (var point in selection.OfType<Data.Point>())
-                        {
-                            Outline.TryTogglePointSmoothness(point);
-                        }
+                        Outline.TryTogglePointSmoothness(point);
                     }
                 }
             }

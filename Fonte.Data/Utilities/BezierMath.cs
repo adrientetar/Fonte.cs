@@ -186,8 +186,15 @@ namespace Fonte.Data.Utilities
             );
         }
 
+        /**
+         * Adapted from Roots3And4 by Jochen Schwarze.
+         */
         static double[] CubicRoots(float a, float b, float c, float d)
         {
+            if (Math.Abs(a) < 1e-6)
+            {
+                return QuadraticRoots(b, c, d);
+            }
             List<double> result = new List<double>();
 
             // normal form: x^3 + Ax^2 + Bx + C = 0
@@ -223,14 +230,14 @@ namespace Fonte.Data.Utilities
                 var phi = 1.0 / 3 * Math.Acos(-q / Math.Sqrt(-p_3));
                 var t = 2 * Math.Sqrt(-p);
 
-                result.Add(t * Math.Cos(phi));
+                result.Add( t * Math.Cos(phi));
                 result.Add(-t * Math.Cos(phi + Math.PI / 3));
                 result.Add(-t * Math.Cos(phi - Math.PI / 3));
             }
             else  // one real solution
             {
                 var sqrt_D = Math.Sqrt(D);
-                var u = Math.Pow(sqrt_D - q, 1.0 / 3);// Math.Cbrt(sqrt_D - q);
+                var u =  Math.Pow(sqrt_D - q, 1.0 / 3);// Math.Cbrt(sqrt_D - q);
                 var v = -Math.Pow(sqrt_D + q, 1.0 / 3);//-Math.Cbrt(sqrt_D + q);
 
                 result.Add(u + v);
@@ -260,6 +267,33 @@ namespace Fonte.Data.Utilities
             }
 
             return points;
+        }
+
+        /**
+         * Adapted from Roots3And4 by Jochen Schwarze.
+         */
+        static double[] QuadraticRoots(float a, float b, float c)
+        {
+            List<double> result = new List<double>();
+
+            // normal form: x^2 + px + q = 0
+            var p = b / (2 * a);
+            var q = c / a;
+
+            var D = p * p - q;
+
+            if (Math.Abs(D) < 1e-6)
+            {
+                result.Add(-p);
+            }
+            else if (D > 0)
+            {
+                var sqrt_D = Math.Sqrt(D);
+
+                result.Add( sqrt_D - p);
+                result.Add(-sqrt_D - p);
+            }
+            return result.ToArray();
         }
     }
 }

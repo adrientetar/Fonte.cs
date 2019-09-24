@@ -46,7 +46,7 @@ namespace Fonte.Data.Utilities
 
         public void Clear()
         {
-            if (_undoGroupIndex == 0)
+            if (HasOpenGroup)
                 throw new InvalidOperationException($"Cannot clear stack with an open {nameof(ChangeGroup)}");
             if (!IsEnabled)
                 throw new InvalidOperationException($"Cannot clear stack while undo store is disabled");

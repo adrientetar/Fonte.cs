@@ -216,8 +216,10 @@ namespace Fonte.App.Delegates
 
                     if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu))
                     {
-                        _points = new List<Vector2>();
-                        _points.Add(canvasPos.ToVector2());
+                        _points = new List<Vector2>
+                        {
+                            canvasPos.ToVector2()
+                        };
 
                         Debug.Assert(CurrentAction == ActionType.SelectingPoly);
                     }

@@ -7,12 +7,9 @@ namespace Fonte.App.Delegates
     using Fonte.App.Controls;
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
-    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
 
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;

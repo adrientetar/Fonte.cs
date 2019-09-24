@@ -34,12 +34,12 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas);
 
+            if (TryRemoveTrailingOffCurve(canvas.Layer))
+            {
+                ((App)Application.Current).InvalidateData();
+            }
             if (_undoGroup != null)
             {
-                if (TryRemoveTrailingOffCurve(canvas.Layer))
-                {
-                    ((App)Application.Current).InvalidateData();
-                }
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
@@ -66,15 +66,13 @@ namespace Fonte.App.Delegates
 
                 ((App)Application.Current).InvalidateData();
             }
+            else if (args.Key == VirtualKey.Control)
+            {
+                _undoGroup?.Dispose();
+                _undoGroup = null;
+            }
             else
             {
-                var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-                if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.Key == VirtualKey.Z)
-                {
-                    _undoGroup?.Dispose();
-                    _undoGroup = null;
-                }
-
                 base.OnKeyDown(canvas, args);
                 return;
             }
@@ -497,8 +495,13 @@ namespace Fonte.App.Delegates
                 var selPoints = selPath.Points;
                 if (selPoint.Type == Data.PointType.None && selPath.IsOpen && selPoints.Last() == selPoint)
                 {
-                    selPoints.Pop();
-                    selPoints.Last().IsSmooth = false;
+                    using (var group = layer.CreateUndoGroup())
+                    {
+                        selPoints.Pop();
+                        var last = selPoints.Last();
+                        last.IsSelected = selPoint.IsSelected;
+                        last.IsSmooth = false;
+                    }
                     return true;
                 }
             }

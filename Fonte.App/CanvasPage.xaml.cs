@@ -99,8 +99,9 @@ namespace Fonte.App
                 var json = JsonConvert.SerializeObject(Font);
 
                 await FileIO.WriteTextAsync(file, json);
-
                 _file = file;
+
+                Font.IsModified = false;
                 OnDataRefreshing();
 
                 return true;

@@ -14,7 +14,7 @@ namespace Fonte.Data
 
     public partial class Glyph
     {
-        private UndoStore _undoStore = new UndoStore();
+        private readonly UndoStore _undoStore = new UndoStore();
 
         /* For kerning groups, make a struct kinda like a rect containing 4 strings? */
 

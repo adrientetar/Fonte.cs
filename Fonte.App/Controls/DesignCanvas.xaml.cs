@@ -51,7 +51,7 @@ namespace Fonte.App.Controls
         internal static readonly int MinPointSizeForGuidelines = 100;
 
         private readonly ICanvasDelegate PreviewTool = new PreviewTool();
-        internal readonly ICanvasDelegate SelectionTool = new SelectionTool();
+        private readonly ICanvasDelegate SelectionTool = new SelectionTool();
 
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
         private ICanvasDelegate _tool = new BaseTool();
@@ -212,64 +212,63 @@ namespace Fonte.App.Controls
             {
                 foreach (var region in args.InvalidatedRegions)
                 {
-                    using (var ds = sender.CreateDrawingSession(region))
+                    using var ds = sender.CreateDrawingSession(region);
+
+                    ds.Transform = _matrix;
+
+                    var pointSize = PointSize;
+                    var rescale = 1f / sender.DpiScale;
+
+                    var drawDetails = pointSize >= MinPointSizeForDetails;
+                    var drawFill = (bool)FindResource(DrawFillKey);
+
+                    // TODO: need to refactor use of transformations...
+                    var drawingRect = Data.Geometry.Rect.Transform(new Data.Geometry.Rect(
+                            new Vector2((float)region.Left, (float)region.Top) - _matrix.Translation,
+                            new Vector2((float)region.Right, (float)region.Bottom) - _matrix.Translation
+                        ), GetInverseMatrix());
+
+                    if ((bool)FindResource(DrawMetricsKey))
                     {
-                        ds.Transform = _matrix;
-
-                        var pointSize = PointSize;
-                        var rescale = 1f / sender.DpiScale;
-
-                        var drawDetails = pointSize >= MinPointSizeForDetails;
-                        var drawFill = (bool)FindResource(DrawFillKey);
-
-                        // TODO: need to refactor use of transformations...
-                        var drawingRect = Data.Geometry.Rect.Transform(new Data.Geometry.Rect(
-                                new Vector2((float)region.Left, (float)region.Top) - _matrix.Translation,
-                                new Vector2((float)region.Right, (float)region.Bottom) - _matrix.Translation
-                            ), GetInverseMatrix());
-
-                        if ((bool)FindResource(DrawMetricsKey))
-                        {
-                            // TODO: divide MinPointSizeForGrid by gridSize
-                            if (pointSize >= MinPointSizeForGrid) Drawing.DrawGrid(
-                                layer, ds, rescale, drawingRect);
-                            Drawing.DrawMetrics(layer, ds, rescale, (bool)FindResource(DrawAlignmentZonesKey) ?
-                                                                    (Color?)FindResource(AlignmentZoneColorKey) :
-                                                                    null);
-                        }
-                        if (drawFill) Drawing.DrawFill(layer, ds, rescale, (Color)FindResource(FillColorKey));
-
-                        Tool.OnDraw(this, ds, rescale);
-
-                        if ((bool)FindResource(DrawLayersKey)) Drawing.DrawLayers(layer, ds, rescale, (Color)FindResource(LayersColorKey));
-                        if (pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey)) Drawing.DrawGuidelines(
+                        // TODO: divide MinPointSizeForGrid by gridSize
+                        if (pointSize >= MinPointSizeForGrid) Drawing.DrawGrid(
                             layer, ds, rescale, drawingRect);
-                        if (layer.Paths.Count > 0 || layer.Components.Count > 0)
-                        {
-                            var drawSelection = drawDetails && (bool)FindResource(DrawSelectionKey);
-                            var drawStroke = (bool)FindResource(DrawStrokeKey);
-
-                            Drawing.DrawComponents(layer, ds, rescale, (Color)FindResource(ComponentColorKey),
-                                                   drawSelection: drawSelection);
-                            if (drawSelection) Drawing.DrawSelection(layer, ds, rescale);
-                            if (drawDetails && (bool)FindResource(DrawPointsKey)) Drawing.DrawPoints(layer, ds, rescale,
-                                                                                                     (Color)FindResource(CornerPointColorKey), (Color)FindResource(SmoothPointColorKey),
-                                                                                                     (Color)FindResource(MarkerColorKey));
-                            // If we only draw fill, we still want to stroke open paths as we don't fill them whatsoever
-                            if (drawFill || drawStroke) Drawing.DrawStroke(layer, ds, rescale,
-                                                                           (Color)FindResource(StrokeColorKey),
-                                                                           drawStroke ? Drawing.StrokePaths.ClosedOpen : Drawing.StrokePaths.Open);
-                            if (drawDetails && (bool)FindResource(DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(layer, ds, rescale);
-                        }
-                        else
-                        {
-                            Drawing.DrawUnicode(layer, ds, rescale);
-                        }
-                        if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey)) Drawing.DrawAnchors(
-                            layer, ds, rescale, (Color)Tool.FindResource(this, AnchorColorKey));
-
-                        Tool.OnDrawCompleted(this, ds, rescale);
+                        Drawing.DrawMetrics(layer, ds, rescale, (bool)FindResource(DrawAlignmentZonesKey) ?
+                                                                (Color?)FindResource(AlignmentZoneColorKey) :
+                                                                null);
                     }
+                    if (drawFill) Drawing.DrawFill(layer, ds, rescale, (Color)FindResource(FillColorKey));
+
+                    Tool.OnDraw(this, ds, rescale);
+
+                    if ((bool)FindResource(DrawLayersKey)) Drawing.DrawLayers(layer, ds, rescale, (Color)FindResource(LayersColorKey));
+                    if (pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey)) Drawing.DrawGuidelines(
+                        layer, ds, rescale, drawingRect);
+                    if (layer.Paths.Count > 0 || layer.Components.Count > 0)
+                    {
+                        var drawSelection = drawDetails && (bool)FindResource(DrawSelectionKey);
+                        var drawStroke = (bool)FindResource(DrawStrokeKey);
+
+                        Drawing.DrawComponents(layer, ds, rescale, (Color)FindResource(ComponentColorKey),
+                                               drawSelection: drawSelection);
+                        if (drawSelection) Drawing.DrawSelection(layer, ds, rescale);
+                        if (drawDetails && (bool)FindResource(DrawPointsKey)) Drawing.DrawPoints(layer, ds, rescale,
+                                                                                                 (Color)FindResource(CornerPointColorKey), (Color)FindResource(SmoothPointColorKey),
+                                                                                                 (Color)FindResource(MarkerColorKey));
+                        // If we only draw fill, we still want to stroke open paths as we don't fill them whatsoever
+                        if (drawFill || drawStroke) Drawing.DrawStroke(layer, ds, rescale,
+                                                                       (Color)FindResource(StrokeColorKey),
+                                                                       drawStroke ? Drawing.StrokePaths.ClosedOpen : Drawing.StrokePaths.Open);
+                        if (drawDetails && (bool)FindResource(DrawSelectionBoundsKey)) Drawing.DrawSelectionBounds(layer, ds, rescale);
+                    }
+                    else
+                    {
+                        Drawing.DrawUnicode(layer, ds, rescale);
+                    }
+                    if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey)) Drawing.DrawAnchors(
+                        layer, ds, rescale, (Color)Tool.FindResource(this, AnchorColorKey));
+
+                    Tool.OnDrawCompleted(this, ds, rescale);
                 }
             }
         }

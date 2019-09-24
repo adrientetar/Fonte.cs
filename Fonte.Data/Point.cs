@@ -13,7 +13,6 @@ namespace Fonte.Data
     using System;
     using System.Collections.Generic;
     using System.Numerics;
-    using System.Reflection;
     using System.Runtime.Serialization;
 
     [JsonConverter(typeof(StringEnumConverter))]

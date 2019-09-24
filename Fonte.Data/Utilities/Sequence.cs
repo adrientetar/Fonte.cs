@@ -24,29 +24,19 @@ namespace Fonte.Data.Utilities
         public static T NextItem<T>(IList<T> list, int index)
         {
             var count = list.Count;
-            Debug.Assert(count > 0);
+            var n = 1;
 
-            var value = index + 1;
-            if (value >= count)
-            {
-                value -= count;
-            }
-
-            return list[value];
+            Debug.Assert(0 <= index && index < count);
+            return list[index <= count - 1 - n ? index + n : index + n - count];
         }
 
         public static T PreviousItem<T>(IList<T> list, int index)
         {
             var count = list.Count;
-            Debug.Assert(count > 0);
+            var n = 1;
 
-            var value = index - 1;
-            if (value < 0)
-            {
-                value += count;
-            }
-
-            return list[value];
+            Debug.Assert(0 <= index && index < count);
+            return list[index >= n ? index - n : index - n + count];
         }
     }
 }

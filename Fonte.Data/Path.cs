@@ -198,13 +198,12 @@ namespace Fonte.Data
 
             if (points.Count > 0 && IsOpen)
             {
-                using (var group = Parent?.CreateUndoGroup())
-                {
-                    var point = points.PopAt(0);
-                    points.Add(point);
-                    point.IsSmooth = false;
-                    point.Type = PointType.Line;
-                }
+                using var group = Parent?.CreateUndoGroup();
+
+                var point = points.PopAt(0);
+                points.Add(point);
+                point.IsSmooth = false;
+                point.Type = PointType.Line;
             }
         }
 
@@ -214,38 +213,37 @@ namespace Fonte.Data
 
             if (points.Count > 0)
             {
-                using (var group = Parent?.CreateUndoGroup())
+                using var group = Parent?.CreateUndoGroup();
+
+                var start = points[0];
+                var type = start.Type;
+
+                List<Point> result;
+                if (type != PointType.Move)
                 {
-                    var start = points[0];
-                    var type = start.Type;
+                    var pivot = points.Last();
 
-                    List<Point> result;
-                    if (type != PointType.Move)
-                    {
-                        var pivot = points.Last();
-
-                        result = points.GetRange(0, points.Count - 1);
-                        result.Reverse();
-                        result.Add(pivot);
-                        type = pivot.Type;
-                    }
-                    else
-                    {
-                        result = points.GetRange(0, points.Count);
-                        result.Reverse();
-                    }
-
-                    foreach (var point in result)
-                    {
-                        if (point.Type != PointType.None)
-                        {
-                            (point.Type, type) = (type, point.Type);
-                        }
-                    }
-                    // TODO: add a replace action? Could be introduced as a setter on the owner property
-                    points.Clear();
-                    points.AddRange(result);
+                    result = points.GetRange(0, points.Count - 1);
+                    result.Reverse();
+                    result.Add(pivot);
+                    type = pivot.Type;
                 }
+                else
+                {
+                    result = points.GetRange(0, points.Count);
+                    result.Reverse();
+                }
+
+                foreach (var point in result)
+                {
+                    if (point.Type != PointType.None)
+                    {
+                        (point.Type, type) = (type, point.Type);
+                    }
+                }
+                // TODO: add a replace action? Could be introduced as a setter on the owner property
+                points.Clear();
+                points.AddRange(result);
             }
         }
 
@@ -256,16 +254,15 @@ namespace Fonte.Data
 
             if (Points.Count - index + 1 != 0)
             {
-                using (var group = Parent?.CreateUndoGroup())
+                using var group = Parent?.CreateUndoGroup();
+
+                var end = Points.GetRange(0, index + 1);
+                if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
                 {
-                    var end = Points.GetRange(0, index + 1);
-                    if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
-                    {
-                        throw new InvalidOperationException($"Index {index} isn't at segment boundary");
-                    }
-                    Points.RemoveRange(0, index + 1);
-                    Points.AddRange(end);
+                    throw new InvalidOperationException($"Index {index} isn't at segment boundary");
                 }
+                Points.RemoveRange(0, index + 1);
+                Points.AddRange(end);
             }
         }
 
@@ -276,17 +273,16 @@ namespace Fonte.Data
 
         public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
-            using (var group = Parent?.CreateUndoGroup())
-            {
-                foreach (var point in Points)
-                {
-                    if (!selectionOnly || point.IsSelected)
-                    {
-                        var pos = Vector2.Transform(point.ToVector2(), matrix);
+            using var group = Parent?.CreateUndoGroup();
 
-                        point.X = pos.X;
-                        point.Y = pos.Y;
-                    }
+            foreach (var point in Points)
+            {
+                if (!selectionOnly || point.IsSelected)
+                {
+                    var pos = Vector2.Transform(point.ToVector2(), matrix);
+
+                    point.X = pos.X;
+                    point.Y = pos.Y;
                 }
             }
         }

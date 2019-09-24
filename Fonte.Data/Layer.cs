@@ -515,41 +515,40 @@ namespace Fonte.Data
 
         public void Transform(Matrix3x2 matrix, bool selectionOnly = false)
         {
-            using (var group = CreateUndoGroup())
+            using var group = CreateUndoGroup();
+
+            foreach (var anchor in Anchors)
             {
-                foreach (var anchor in Anchors)
+                if (!selectionOnly || anchor.IsSelected)
                 {
-                    if (!selectionOnly || anchor.IsSelected)
-                    {
-                        var pos = Vector2.Transform(anchor.ToVector2(), matrix);
+                    var pos = Vector2.Transform(anchor.ToVector2(), matrix);
 
-                        anchor.X = pos.X;
-                        anchor.Y = pos.Y;
-                    }
+                    anchor.X = pos.X;
+                    anchor.Y = pos.Y;
                 }
-                foreach (var component in Components)
+            }
+            foreach (var component in Components)
+            {
+                if (!selectionOnly || component.IsSelected)
                 {
-                    if (!selectionOnly || component.IsSelected)
-                    {
-                        component.Transformation *= matrix;
-                    }
+                    component.Transformation *= matrix;
                 }
-                foreach (var guideline in Guidelines)
+            }
+            foreach (var guideline in Guidelines)
+            {
+                if (!selectionOnly || guideline.IsSelected)
                 {
-                    if (!selectionOnly || guideline.IsSelected)
-                    {
-                        // XXX: also transform the angle vector
-                        //guideline.Direction = Vector2.Transform(guideline.Direction, matrix);
-                        var pos = Vector2.Transform(guideline.ToVector2(), matrix);
+                    // XXX: also transform the angle vector
+                    //guideline.Direction = Vector2.Transform(guideline.Direction, matrix);
+                    var pos = Vector2.Transform(guideline.ToVector2(), matrix);
 
-                        guideline.X = pos.X;
-                        guideline.Y = pos.Y;
-                    }
+                    guideline.X = pos.X;
+                    guideline.Y = pos.Y;
                 }
-                foreach (var path in Paths)
-                {
-                    path.Transform(matrix, selectionOnly);
-                }
+            }
+            foreach (var path in Paths)
+            {
+                path.Transform(matrix, selectionOnly);
             }
         }
 

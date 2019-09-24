@@ -27,6 +27,7 @@
     </PackageCertificateKeyFile>
     <PackageCertificateThumbprint>CF1AE72DAA1CA0E7DC469825681543F8A43AC52C</PackageCertificateThumbprint>
     <Win32Resource>Assets\Resource.res</Win32Resource>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
