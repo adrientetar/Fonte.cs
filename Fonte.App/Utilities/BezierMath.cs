@@ -6,6 +6,7 @@ namespace Fonte.App.Utilities
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
 
@@ -180,6 +181,45 @@ namespace Fonte.App.Utilities
 
         /**/
 
+        /**
+         * Adapted from BezierInfo by Pomax.
+         */
+        public static (Vector2, Vector2) ConstrainCurve(IList<Vector2> curve, Vector2 point, float t)
+        {
+            Debug.Assert(curve.Count == 4);
+            var p0 = curve[0];
+            var p3 = curve[3];
+
+            var q = DeCasteljauDecomposition(curve, t);
+            var initialA = q[5];
+            var initialPoint = q[9];
+
+            var bottom = t * t * t + (1 - t) * (1 - t) * (1 - t);
+            var top = bottom - 1;
+            var ratio = Math.Abs(top / bottom);
+
+            var C = Data.Utilities.BezierMath.IntersectLines(initialA, initialPoint, new Vector2[] { p0, p3 }, testLineInfinite: true) switch
+            {
+                var (c, _) => c,
+                _ => initialA + .5f * (initialPoint - initialA)
+            };
+            var A = point - (C - point) / ratio;
+
+            var dbl = q[7] - initialPoint;
+            var dbr = q[8] - initialPoint;
+
+            var pc1 = point + dbl;
+            var sc1 = A - (A - pc1) / (1 - t);
+
+            var pc2 = point + dbr;
+            var sc2 = A + (pc2 - A) / t;
+
+            return (
+                p0 + (sc1 - p0) / t,
+                p3 - (p3 - sc2) / (1 - t)
+            );
+        }
+
         public static Vector2 ProjectPointOnLine(Vector2 point, Vector2 origin, Vector2 direction)
         {
             var pointDirection = point - origin;
@@ -207,6 +247,26 @@ namespace Fonte.App.Utilities
         {
             return (points[2] - 2 * points[1] + points[0]) * 6 * (1 - t) +
                    (points[3] - 2 * points[2] + points[1]) * 6 * t;
+        }
+
+        static Vector2[] DeCasteljauDecomposition(IList<Vector2> curve, float t)
+        {
+            var points = curve.ToList();
+
+            var start = 0;
+            var end = points.Count - 1;
+            while (end - start > 0)
+            {
+                for (int i = start; i < end; ++i)
+                {
+                    var point = Vector2.Lerp(points[i], points[i + 1], t);
+                    points.Add(point);
+                }
+                start = end + 1;
+                end = points.Count - 1;
+            }
+
+            return points.ToArray();
         }
     }
 }

@@ -46,8 +46,7 @@
                 <Setter Property="FontSize" Value="12"/>
                 <Setter Property="Foreground" Value="#222"/>
                 <Setter Property="Margin" Value="4"/>
-                <!-- shouldn't have to do this... -->
-                <Setter Property="Padding" Value="0,2,0,0"/>
+                <Setter Property="Padding" Value="0,4,0,1"/>
                 <Setter Property="HorizontalAlignment" Value="Left"/>
             </Style>
             <Style TargetType="TextBox">
@@ -59,9 +58,9 @@
                 <Setter Property="Margin" Value="4"/>
                 <Setter Property="MinHeight" Value="26"/>
                 <Setter Property="MinWidth" Value="56"/>
+                <Setter Property="Padding" Value="4,4,4,1"/>
                 <Setter Property="Width" Value="{StaticResource FixedColumnSize}"/>
                 <Setter Property="Template" Value="{StaticResource SimpleTextBoxTemplate}"/>
-                <Setter Property="VerticalContentAlignment" Value="Center"/>
             </Style>
 
             <Style x:Key="HeaderButtonStyle" TargetType="parts:TwoToneButton">

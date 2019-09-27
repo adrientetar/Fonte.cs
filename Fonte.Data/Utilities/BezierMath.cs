@@ -55,7 +55,7 @@ namespace Fonte.Data.Utilities
         /**
          * Adapted from Andre LaMothe, "Tricks of the Windows Game Programming Gurus".
          */
-        public static (Vector2, float)? IntersectLines(Vector2 p0, Vector2 p1, IList<Vector2> line)
+        public static (Vector2, float)? IntersectLines(Vector2 p0, Vector2 p1, IList<Vector2> line, bool testLineInfinite = false)
         {
             Debug.Assert(line.Count == 2);
             var p2 = line[0];
@@ -69,7 +69,8 @@ namespace Fonte.Data.Utilities
             {
                 var s = ( p23.X * (p2.Y - p0.Y) - p23.Y * (p2.X - p0.X)) / determinant;
                 var t = ( p01.X * (p2.Y - p0.Y) - p01.Y * (p2.X - p0.X)) / determinant;
-                if (0 <= s && s <= 1 && 0 <= t && t <= 1)
+                if ((testLineInfinite || 0 <= s && s <= 1) &&
+                    0 <= t && t <= 1)
                 {
                     return (p2 + p23 * t, t);
                 }
@@ -249,7 +250,7 @@ namespace Fonte.Data.Utilities
                          .ToArray();
         }
 
-        static List<Vector2> DeCasteljauDecomposition(IList<Vector2> curve, float t)
+        static Vector2[] DeCasteljauDecomposition(IList<Vector2> curve, float t)
         {
             var points = curve.ToList();
 
@@ -266,7 +267,7 @@ namespace Fonte.Data.Utilities
                 end = points.Count - 1;
             }
 
-            return points;
+            return points.ToArray();
         }
 
         /**

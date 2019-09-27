@@ -374,11 +374,16 @@ namespace Fonte.Data
             _count = count;
         }
 
-        public void ConvertTo(PointType type)
+        public Segment ConvertTo(PointType type)
         {
             var onCurve = OnCurve;
+            if (type == onCurve.Type)
+            {
+                return this;
+            }
 
-            bool ok = type == onCurve.Type;
+            using var group = Parent.Parent?.CreateUndoGroup();
+
             if (type == PointType.Curve)
             {
                 if (onCurve.Type == PointType.Line)
@@ -396,7 +401,7 @@ namespace Fonte.Data
                             start.Y + .35f * (OnCurve.Y - start.Y)
                         ));
 
-                    ok = true;
+                    return new Segment(_path, _index, 3);
                 }
             }
             else if (type == PointType.Line)
@@ -410,7 +415,7 @@ namespace Fonte.Data
                     start.IsSmooth = false;
                     _path.Points.RemoveRange(_index, _count - 1);
 
-                    ok = true;
+                    return new Segment(_path, _index, 1);
                 }
             }
             else if (type == PointType.Move)
@@ -426,15 +431,12 @@ namespace Fonte.Data
                     onCurve.Type = PointType.Move;
                     _path.Points.RemoveRange(_index, _count - 1);
 
-                    ok = true;
+                    return new Segment(_path, _index, 1);
                 }
             }
 
-            if (!ok)
-            {
-                throw new InvalidOperationException(
-                    string.Format("Cannot convert from {0} to {1}", onCurve.Type, type));
-            }
+            throw new InvalidOperationException(
+                string.Format("Cannot convert from {0} to {1}", onCurve.Type, type));
         }
 
         public void Remove(bool nodeBias = false)

@@ -184,17 +184,15 @@ namespace Fonte.App.Utilities
             }
         }
 
-        // https://github.com/dotnet/corefx/issues/35434
-        static float Cross(Vector2 value1, Vector2 value2)
+        static int GetAngleSign(Vector2 u, Vector2 v)
         {
-            return value1.X * value2.Y
-                 - value1.Y * value2.X;
-        }
+            var w = new Vector2(-u.Y, u.X);
+            var det = Vector2.Dot(v, w);  // sin
+            var dot = Vector2.Dot(u, v);  // cos
+            if (det == 0 || dot == 0)
+                throw new InvalidOperationException("Cannot compute angle from zero vector");
 
-        static int GetAngleSign(Vector2 reference, Vector2 vector)
-        {
-            var angle = Math.Atan2(Cross(reference, vector), Vector2.Dot(reference, vector));
-
+            var angle = Math.Atan2(det, dot);
             return Math.Sign(angle);
         }
 

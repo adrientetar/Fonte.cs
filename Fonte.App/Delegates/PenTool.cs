@@ -165,6 +165,7 @@ namespace Fonte.App.Delegates
                     {
                         TryRemoveTrailingOffCurve(layer);
 
+                        layer.ClearSelection();
                         Outline.BreakPath(tappedPath, tappedPath.Points.IndexOf(tappedPoint));
                     }
                     

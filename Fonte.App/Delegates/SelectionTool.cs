@@ -30,9 +30,11 @@ namespace Fonte.App.Delegates
         private Point _origin = EmptyPoint;
         private Point _anchor;
         private Point _screenOrigin;
+        private Point _focusPoint = EmptyPoint;
         private List<Vector2> _points;
         private bool _canDrag = false;
         private object _tappedItem;
+        private (Vector2, float)? _tappedLocation;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
         private SnapResult _snapResult;
         private ThreadPoolTimer _timer;
@@ -47,15 +49,20 @@ namespace Fonte.App.Delegates
         {
             None = 0,
             DraggingItem,
+            SelectingPoly,
             SelectingRect,
-            SelectingPoly
+            ShapingCurve
         };
 
         ActionType CurrentAction
         {
             get
             {
-                if (_undoGroup != null)
+                if (_tappedLocation != null)
+                {
+                    return ActionType.ShapingCurve;
+                }
+                else if (_undoGroup != null)
                 {
                     return ActionType.DraggingItem;
                 }
@@ -124,6 +131,13 @@ namespace Fonte.App.Delegates
             {
                 ds.FillRectangle(new Rect(_origin, _anchor), Color.FromArgb(51, 0, 120, 215));
             }
+            else if (action == ActionType.ShapingCurve)
+            {
+                if (_focusPoint != EmptyPoint)
+                {
+                    ds.FillCircle(_focusPoint.ToVector2(), 4 * rescale, Color.FromArgb(225, 172, 100, 68));
+                }
+            }
         }
 
         public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
@@ -179,9 +193,15 @@ namespace Fonte.App.Delegates
                     }
                     else if (_tappedItem is Data.Segment segment && args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu))
                     {
-                        segment.ConvertTo(Data.PointType.Curve);
+                        _screenOrigin = ptPoint.Position;
 
-                        Debug.Assert(CurrentAction == ActionType.None);
+                        // TODO: avoid reprojecting?
+                        _tappedLocation = segment.ProjectPoint(canvasPos.ToVector2());
+                        _tappedItem = segment.ConvertTo(Data.PointType.Curve);
+
+                        _undoGroup = layer.CreateUndoGroup();
+
+                        Debug.Assert(CurrentAction == ActionType.ShapingCurve);
                     }
                     else if (_tappedItem is ISelectable isel)
                     {
@@ -330,6 +350,26 @@ namespace Fonte.App.Delegates
                         guideline.Angle = .1f * Outline.RoundToGrid(10f * deg);
                     }
                 }
+                else if (_tappedItem is Data.Segment segment && _tappedLocation.HasValue)
+                {
+                    if (!_canDrag)
+                    {
+                        _canDrag = CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+
+                        if (!_canDrag) return;
+                    }
+
+                    var curve = segment.PointsInclusive;
+                    var (p1, p2) = Utilities.BezierMath.ConstrainCurve(curve.Select(p => p.ToVector2())
+                                                                            .ToArray(), pos.ToVector2(), _tappedLocation.Value.Item2);
+
+                    curve[1].X = Outline.RoundToGrid(p1.X);
+                    curve[1].Y = Outline.RoundToGrid(p1.Y);
+                    curve[2].X = Outline.RoundToGrid(p2.X);
+                    curve[2].Y = Outline.RoundToGrid(p2.Y);
+
+                    _focusPoint = pos;
+                }
                 else if (_tappedItem is ISelectable isel)
                 {
                     var layer = canvas.Layer;
@@ -418,8 +458,6 @@ namespace Fonte.App.Delegates
                 }
                 _timer?.Cancel();
                 _timer = null;
-                _undoGroup.Dispose();
-                _undoGroup = null;
             }
             else if (CurrentAction == ActionType.SelectingPoly)
             {
@@ -453,16 +491,22 @@ namespace Fonte.App.Delegates
                     }
                 }
             }
-            else
+            else if (CurrentAction == ActionType.None)
             {
                 return;
             }
 
+            if (_undoGroup != null)
+            {
+                _undoGroup.Dispose();
+                _undoGroup = null;
+            }
             _screenOrigin = default;
             _snapResult = null;
             _origin = EmptyPoint;
             _canDrag = false;
-            _tappedItem = null;
+            _focusPoint = EmptyPoint;
+            _tappedItem = _tappedLocation = null;
             ((App)Application.Current).InvalidateData();
 
             Debug.Assert(CurrentAction == ActionType.None);
