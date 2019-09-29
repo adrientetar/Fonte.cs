@@ -4,7 +4,7 @@
 
 namespace Fonte.App.Utilities
 {
-    class Is
+    public static class Is
     {
         public static bool AtOpenBoundary(Data.Point point)
         {

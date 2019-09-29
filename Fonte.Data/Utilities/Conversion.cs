@@ -8,7 +8,7 @@ namespace Fonte.Data.Utilities
 
     using System;
 
-    public class Conversion
+    public static class Conversion
     {
         public static Rect FromFoundationRect(Windows.Foundation.Rect rect)
         {

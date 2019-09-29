@@ -134,10 +134,12 @@ namespace Fonte.App.Delegates
             {
                 if (_points != null)
                 {
+                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
                     var layer = canvas.Layer;
 
                     layer.ClearSelection();
-                    Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2());
+                    Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2(),
+                                       breakPaths: !alt.HasFlag(CoreVirtualKeyStates.Down));
 
                     ((App)Application.Current).InvalidateData();
                 }

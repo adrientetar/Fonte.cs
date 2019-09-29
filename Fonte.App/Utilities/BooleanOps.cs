@@ -12,7 +12,7 @@ namespace Fonte.App.Utilities
     using System.Linq;
     using System.Numerics;
 
-    public class BooleanOps
+    public static class BooleanOps
     {
         public static List<Data.Path> Exclude(IEnumerable<Data.Path> paths, IEnumerable<Data.Path> otherPaths)
         {
@@ -38,11 +38,10 @@ namespace Fonte.App.Utilities
         {
             if (otherPaths != null)
             {
-                using (CanvasGeometry geom1 = MakeGeometry(paths),
-                                      geom2 = MakeGeometry(otherPaths))
-                {
-                    return geom1.CompareWith(geom2) != CanvasGeometryRelation.Disjoint;
-                }
+                using CanvasGeometry geom1 = MakeGeometry(paths),
+                                     geom2 = MakeGeometry(otherPaths);
+
+                return geom1.CompareWith(geom2) != CanvasGeometryRelation.Disjoint;
             }
             else
             {
@@ -50,25 +49,23 @@ namespace Fonte.App.Utilities
                 for (int ix = 0; ix < pathsList.Count; ++ix)
                 {
                     var path = new[] { pathsList[ix] };
-                    using (var geom = MakeGeometry(path))
+                    using var geom = MakeGeometry(path);
+
+                    // Check for self-intersections
+                    using (var evenOddGeom = MakeGeometry(path, CanvasFilledRegionDetermination.Alternate))
                     {
-                        // Check for self-intersections
-                        using (var evenOddGeom = MakeGeometry(path, CanvasFilledRegionDetermination.Alternate))
-                        {
-                            var selfIntersectingGeom = geom.CombineWith(
-                                evenOddGeom, Matrix3x2.Identity, CanvasGeometryCombine.Exclude, float.Epsilon);
-                            if (Math.Abs(selfIntersectingGeom.ComputeArea()) > float.Epsilon)
-                                return true;
-                        }
-                        // Check for overlaps with remaining paths
-                        if (ix < pathsList.Count - 1)
-                        {
-                            using (var other = MakeGeometry(pathsList.GetRange(ix + 1, pathsList.Count - (ix + 1))))
-                            {
-                                if (geom.CompareWith(other, Matrix3x2.Identity, float.Epsilon) != CanvasGeometryRelation.Disjoint)
-                                    return true;
-                            }
-                        }
+                        var selfIntersectingGeom = geom.CombineWith(
+                            evenOddGeom, Matrix3x2.Identity, CanvasGeometryCombine.Exclude, float.Epsilon);
+                        if (Math.Abs(selfIntersectingGeom.ComputeArea()) > float.Epsilon)
+                            return true;
+                    }
+                    // Check for overlaps with remaining paths
+                    if (ix < pathsList.Count - 1)
+                    {
+                        using var other = MakeGeometry(pathsList.GetRange(ix + 1, pathsList.Count - (ix + 1)));
+
+                        if (geom.CompareWith(other, Matrix3x2.Identity, float.Epsilon) != CanvasGeometryRelation.Disjoint)
+                            return true;
                     }
                 }
                 return false;
@@ -77,17 +74,14 @@ namespace Fonte.App.Utilities
 
         static List<Data.Path> Op(IEnumerable<Data.Path> paths, IEnumerable<Data.Path> otherPaths, CanvasGeometryCombine operation)
         {
-            using (CanvasGeometry geom1 = MakeGeometry(paths),
-                                  geom2 = MakeGeometry(otherPaths))
-            {
-                using (var result = geom1.CombineWith(geom2, Matrix3x2.Identity, operation, float.Epsilon))
-                {
-                    var recv = new GeometrySink();
-                    result.SendPathTo(recv);
+            using CanvasGeometry geom1 = MakeGeometry(paths),
+                                 geom2 = MakeGeometry(otherPaths);
+            using var result = geom1.CombineWith(geom2, Matrix3x2.Identity, operation, float.Epsilon);
 
-                    return recv.Paths;
-                }
-            }
+            var recv = new GeometrySink();
+            result.SendPathTo(recv);
+
+            return recv.Paths;
         }
 
         static CanvasGeometry MakeGeometry(IEnumerable<Data.Path> paths, CanvasFilledRegionDetermination fillRule = CanvasFilledRegionDetermination.Winding)

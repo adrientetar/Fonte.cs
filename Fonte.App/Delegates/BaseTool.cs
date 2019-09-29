@@ -311,27 +311,6 @@ namespace Fonte.App.Delegates
 
         /**/
 
-        // origin and pos should be in screen coordinates
-        protected bool CanStartDragging(Point pos, Point origin, int px = 7)
-        {
-            var dx = pos.X - origin.X;
-            var dy = pos.Y - origin.Y;
-
-            return Math.Abs(dx) >= px || Math.Abs(dy) >= 1.2f * px;
-        }
-
-        protected Point ClampToOrigin(Point pos, Point origin)
-        {
-            var dx = pos.X - origin.X;
-            var dy = pos.Y - origin.Y;
-
-            if (Math.Abs(dy) >= Math.Abs(dx))
-            {
-                return new Point(origin.X, pos.Y);
-            }
-            return new Point(pos.X, origin.Y);
-        }
-
         protected CoreCursor GetItemCursor(object item)
         {
             if (item is UIBroker.BBoxHandle handle)
@@ -359,7 +338,28 @@ namespace Fonte.App.Delegates
             return DefaultCursor;
         }
 
-        protected MoveMode GetMoveMode()
+        // origin and pos should be in screen coordinates
+        protected static bool CanStartDragging(Point pos, Point origin, int px = 7)
+        {
+            var dx = pos.X - origin.X;
+            var dy = pos.Y - origin.Y;
+
+            return Math.Abs(dx) >= px || Math.Abs(dy) >= 1.2f * px;
+        }
+
+        protected static Point ClampToOrigin(Point pos, Point origin)
+        {
+            var dx = pos.X - origin.X;
+            var dy = pos.Y - origin.Y;
+
+            if (Math.Abs(dy) >= Math.Abs(dx))
+            {
+                return new Point(origin.X, pos.Y);
+            }
+            return new Point(pos.X, origin.Y);
+        }
+
+        protected static MoveMode GetMoveMode()
         {
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
             var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);

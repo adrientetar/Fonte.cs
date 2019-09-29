@@ -7,7 +7,7 @@ namespace Fonte.Data.Utilities
     using System.Collections.Generic;
     using System.Diagnostics;
 
-    public class Sequence
+    public static class Sequence
     {
         public static IEnumerable<T> IterAt<T>(IList<T> list, int index)
         {

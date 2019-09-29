@@ -60,7 +60,7 @@ namespace Fonte.App.Utilities
         }
     }
 
-    public class UIBroker
+    static class UIBroker
     {
         public struct BBoxHandle
         {

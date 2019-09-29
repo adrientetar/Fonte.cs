@@ -15,7 +15,7 @@ namespace Fonte.App.Utilities
     using System.Numerics;
     using Windows.UI;
 
-    class Drawing
+    public static class Drawing
     {
         public static void DrawAnchors(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
         {

@@ -11,7 +11,7 @@ namespace Fonte.App.Utilities
     using System.Linq;
     using System.Numerics;
 
-    class Slicing
+    static class Slicing
     {
         struct SplitIterator
         {
@@ -39,7 +39,7 @@ namespace Fonte.App.Utilities
             }
         };
 
-        public static bool SlicePaths(Data.Layer layer, Vector2 p0, Vector2 p1)
+        public static void SlicePaths(Data.Layer layer, Vector2 p0, Vector2 p1, bool breakPaths = true)
         {
             var openSplitPoints = new HashSet<Data.Point>();
             var splitPoints = new List<Data.Point>();
@@ -70,7 +70,11 @@ namespace Fonte.App.Utilities
                                 point.Y = Outline.RoundToGrid(point.Y);
                             }
 
-                            if (isOpen)
+                            if (!breakPaths)
+                            {
+                                segment.OnCurve.IsSelected = true;
+                            }
+                            else if (isOpen)
                             {
                                 openSplitPoints.Add(segment.OnCurve);
                             }
@@ -141,7 +145,7 @@ namespace Fonte.App.Utilities
 
                             if (openSplitPoints.Contains(onCurve))
                             {
-                                result.Add(SplitPath(path, path.Points.IndexOf(onCurve)));
+                                result.Add(BreakPath(path, path.Points.IndexOf(onCurve)));
                             }
                         }
                         result.Add(path);
@@ -163,11 +167,6 @@ namespace Fonte.App.Utilities
                 layer.Paths.Clear();
                 layer.Paths.AddRange(result);
             }
-            else
-            {
-                return false;
-            }
-            return true;
         }
 
         static IEnumerable<(T, T)> ByTwo<T>(IEnumerable<T> source)
@@ -204,7 +203,7 @@ namespace Fonte.App.Utilities
             return GetAngleSign(reference, fromVector) != GetAngleSign(reference, toVector);
         }
 
-        static Data.Path SplitPath(Data.Path path, int index)
+        static Data.Path BreakPath(Data.Path path, int index)
         {
             var points = path.Points;
             var point = points[index];

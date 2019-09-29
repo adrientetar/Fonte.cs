@@ -6,7 +6,7 @@ namespace Fonte.App.Utilities
 {
     using Windows.UI.Core;
 
-    static class Cursors
+    public static class Cursors
     {
         public static readonly CoreCursor Arrow = new CoreCursor(CoreCursorType.Custom, 101);
         public static readonly CoreCursor ArrowWithPoint = new CoreCursor(CoreCursorType.Custom, 102);

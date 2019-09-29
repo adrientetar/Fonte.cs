@@ -55,53 +55,53 @@ namespace Fonte.App.Utilities
 
         public static void DeleteSelection(Data.Layer layer, bool breakPaths = false)
         {
-            using (var group = layer.CreateUndoGroup())
+            using var group = layer.CreateUndoGroup();
+
+            for (int ix = layer.Anchors.Count - 1; ix >= 0; --ix)
             {
-                for (int ix = layer.Anchors.Count - 1; ix >= 0; --ix)
+                var anchor = layer.Anchors[ix];
+                if (anchor.IsSelected)
                 {
-                    var anchor = layer.Anchors[ix];
-                    if (anchor.IsSelected)
-                    {
-                        layer.Anchors.RemoveAt(ix);
-                    }
+                    layer.Anchors.RemoveAt(ix);
                 }
+            }
 
-                for (int ix = layer.Components.Count - 1; ix >= 0; --ix)
+            for (int ix = layer.Components.Count - 1; ix >= 0; --ix)
+            {
+                var component = layer.Components[ix];
+                if (component.IsSelected)
                 {
-                    var component = layer.Components[ix];
-                    if (component.IsSelected)
-                    {
-                        layer.Components.RemoveAt(ix);
-                    }
+                    layer.Components.RemoveAt(ix);
                 }
+            }
 
-                if (layer.Master is Data.Master master)
+            if (layer.Master is Data.Master master)
+            {
+                for (int ix = master.Guidelines.Count - 1; ix >= 0; --ix)
                 {
-                    for (int ix = master.Guidelines.Count - 1; ix >= 0; --ix)
-                    {
-                        var guideline = master.Guidelines[ix];
-                        if (guideline.IsSelected)
-                        {
-                            master.Guidelines.RemoveAt(ix);
-                        }
-                    }
-                }
-                for (int ix = layer.Guidelines.Count - 1; ix >= 0; --ix)
-                {
-                    var guideline = layer.Guidelines[ix];
+                    var guideline = master.Guidelines[ix];
                     if (guideline.IsSelected)
                     {
-                        layer.Guidelines.RemoveAt(ix);
+                        master.Guidelines.RemoveAt(ix);
                     }
                 }
-                if (breakPaths)
+            }
+            for (int ix = layer.Guidelines.Count - 1; ix >= 0; --ix)
+            {
+                var guideline = layer.Guidelines[ix];
+                if (guideline.IsSelected)
                 {
-                    BreakPathsSelection(layer);
+                    layer.Guidelines.RemoveAt(ix);
                 }
-                else
-                {
-                    DeletePathsSelection(layer);
-                }
+            }
+
+            if (breakPaths)
+            {
+                BreakPathsSelection(layer);
+            }
+            else
+            {
+                DeletePathsSelection(layer);
             }
         }
 
@@ -158,38 +158,37 @@ namespace Fonte.App.Utilities
 
         public static void MoveSelection(Data.Layer layer, float dx, float dy, MoveMode mode = MoveMode.Normal)
         {
-            using (var group = layer.CreateUndoGroup())
+            using var group = layer.CreateUndoGroup();
+
+            foreach (var anchor in layer.Anchors)
             {
-                foreach (var anchor in layer.Anchors)
+                if (anchor.IsSelected)
                 {
-                    if (anchor.IsSelected)
-                    {
-                        anchor.X = RoundToGrid(anchor.X + dx);
-                        anchor.Y = RoundToGrid(anchor.Y + dy);
-                    }
+                    anchor.X = RoundToGrid(anchor.X + dx);
+                    anchor.Y = RoundToGrid(anchor.Y + dy);
                 }
-                foreach (var component in layer.Components)
+            }
+            foreach (var component in layer.Components)
+            {
+                if (component.IsSelected)
                 {
-                    if (component.IsSelected)
-                    {
-                        var t = component.Transformation;
-                        t.M31 = RoundToGrid(t.M31 + dx);
-                        t.M32 = RoundToGrid(t.M32 + dy);
-                        component.Transformation = t;
-                    }
+                    var t = component.Transformation;
+                    t.M31 = RoundToGrid(t.M31 + dx);
+                    t.M32 = RoundToGrid(t.M32 + dy);
+                    component.Transformation = t;
                 }
-                foreach (var guideline in UIBroker.GetAllGuidelines(layer))
+            }
+            foreach (var guideline in UIBroker.GetAllGuidelines(layer))
+            {
+                if (guideline.IsSelected)
                 {
-                    if (guideline.IsSelected)
-                    {
-                        guideline.X = RoundToGrid(guideline.X + dx);
-                        guideline.Y = RoundToGrid(guideline.Y + dy);
-                    }
+                    guideline.X = RoundToGrid(guideline.X + dx);
+                    guideline.Y = RoundToGrid(guideline.Y + dy);
                 }
-                foreach (var path in layer.Paths)
-                {
-                    MoveSelection(path, dx, dy, mode);
-                }
+            }
+            foreach (var path in layer.Paths)
+            {
+                MoveSelection(path, dx, dy, mode);
             }
         }
 
@@ -275,48 +274,69 @@ namespace Fonte.App.Utilities
             }
         }
 
+        public static void NudgeCurve(IList<Data.Point> curve, float dx, float dy)
+        {
+            Debug.Assert(curve.Count == 4);
+
+            var tangentLeft = curve[1].ToVector2();
+            var tangentRight = curve[2].ToVector2();
+
+            curve[1].X = RoundToGrid(curve[1].X + dx);
+            curve[1].Y = RoundToGrid(curve[1].Y + dy);
+            if (curve[0].IsSmooth)
+            {
+                VectorProjection(curve[1], curve[0].ToVector2(), tangentLeft);
+            }
+
+            curve[2].X = RoundToGrid(curve[2].X + dx);
+            curve[2].Y = RoundToGrid(curve[2].Y + dy);
+            if (curve[3].IsSmooth)
+            {
+                VectorProjection(curve[2], curve[3].ToVector2(), tangentRight);
+            }
+        }
+
         public static void RoundSelection(Data.Layer layer)
         {
-            using (var group = layer.CreateUndoGroup())
+            using var group = layer.CreateUndoGroup();
+
+            foreach (var anchor in layer.Anchors)
             {
-                foreach (var anchor in layer.Anchors)
+                if (anchor.IsSelected)
                 {
-                    if (anchor.IsSelected)
-                    {
-                        anchor.X = RoundToGrid(anchor.X);
-                        anchor.Y = RoundToGrid(anchor.Y);
-                    }
+                    anchor.X = RoundToGrid(anchor.X);
+                    anchor.Y = RoundToGrid(anchor.Y);
                 }
-                foreach (var component in layer.Components)
+            }
+            foreach (var component in layer.Components)
+            {
+                if (component.IsSelected)
                 {
-                    if (component.IsSelected)
-                    {
-                        var t = component.Transformation;
-                        // TODO: could round scale to 2 decimal digits, like we do when transforming
-                        // worth having a round to digits (default = 2) method here?
-                        t.M31 = RoundToGrid(t.M31);
-                        t.M32 = RoundToGrid(t.M32);
-                        component.Transformation = t;
-                    }
+                    var t = component.Transformation;
+                    // TODO: could round scale to 2 decimal digits, like we do when transforming
+                    // worth having a round to digits (default = 2) method here?
+                    t.M31 = RoundToGrid(t.M31);
+                    t.M32 = RoundToGrid(t.M32);
+                    component.Transformation = t;
                 }
-                foreach (var guideline in UIBroker.GetAllGuidelines(layer))
+            }
+            foreach (var guideline in UIBroker.GetAllGuidelines(layer))
+            {
+                if (guideline.IsSelected)
                 {
-                    if (guideline.IsSelected)
-                    {
-                        // TODO: introduce some angle rounding?
-                        guideline.X = RoundToGrid(guideline.X);
-                        guideline.Y = RoundToGrid(guideline.Y);
-                    }
+                    // TODO: introduce some angle rounding?
+                    guideline.X = RoundToGrid(guideline.X);
+                    guideline.Y = RoundToGrid(guideline.Y);
                 }
-                foreach (var path in layer.Paths)
+            }
+            foreach (var path in layer.Paths)
+            {
+                foreach (var point in path.Points)
                 {
-                    foreach (var point in path.Points)
+                    if (point.IsSelected)
                     {
-                        if (point.IsSelected)
-                        {
-                            point.X = RoundToGrid(point.X);
-                            point.Y = RoundToGrid(point.Y);
-                        }
+                        point.X = RoundToGrid(point.X);
+                        point.Y = RoundToGrid(point.Y);
                     }
                 }
             }

@@ -7,7 +7,7 @@ namespace Fonte.Data.Utilities
     using System.Collections.Generic;
     using System.Linq;
 
-    public class Selection
+    public static class Selection
     {
         public static List<Path> FilterSelection(IEnumerable<Path> paths, bool invert = false)
         {

@@ -10,7 +10,7 @@ namespace Fonte.Data.Utilities
     using System.Linq;
     using System.Numerics;
 
-    public class BezierMath
+    public static class BezierMath
     {
         /**
          * Adapted from https://www.particleincell.com/2013/cubic-line-intersection/.

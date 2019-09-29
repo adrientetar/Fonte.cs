@@ -34,7 +34,7 @@ namespace Fonte.App.Delegates
         private List<Vector2> _points;
         private bool _canDrag = false;
         private object _tappedItem;
-        private (Vector2, float)? _tappedLocation;
+        private float? _tappedLocation;
         private (CanvasGeometry, CanvasGeometry) _oldPaths;
         private SnapResult _snapResult;
         private ThreadPoolTimer _timer;
@@ -195,8 +195,9 @@ namespace Fonte.App.Delegates
                     {
                         _screenOrigin = ptPoint.Position;
 
+                        _origin = canvasPos;
                         // TODO: avoid reprojecting?
-                        _tappedLocation = segment.ProjectPoint(canvasPos.ToVector2());
+                        _tappedLocation = segment.ProjectPoint(canvasPos.ToVector2())?.Item2;
                         _tappedItem = segment.ConvertTo(Data.PointType.Curve);
 
                         _undoGroup = layer.CreateUndoGroup();
@@ -360,15 +361,12 @@ namespace Fonte.App.Delegates
                     }
 
                     var curve = segment.PointsInclusive;
-                    var (p1, p2) = Utilities.BezierMath.ConstrainCurve(curve.Select(p => p.ToVector2())
-                                                                            .ToArray(), pos.ToVector2(), _tappedLocation.Value.Item2);
+                    Outline.NudgeCurve(curve, (float)(pos.X - _origin.X),
+                                              (float)(pos.Y - _origin.Y));
 
-                    curve[1].X = Outline.RoundToGrid(p1.X);
-                    curve[1].Y = Outline.RoundToGrid(p1.Y);
-                    curve[2].X = Outline.RoundToGrid(p2.X);
-                    curve[2].Y = Outline.RoundToGrid(p2.Y);
-
-                    _focusPoint = pos;
+                    _focusPoint = Utilities.BezierMath.Q(curve.Select(p => p.ToVector2())
+                                                              .ToArray(), _tappedLocation.Value)
+                                           .ToPoint();
                 }
                 else if (_tappedItem is ISelectable isel)
                 {
@@ -387,9 +385,13 @@ namespace Fonte.App.Delegates
                             {
                                 await canvas.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
                                 {
-                                    _snapResult.Hide();
+                                    var snapResult = _snapResult;
+                                    if (snapResult != null)
+                                    {
+                                        snapResult.Hide();
 
-                                    canvas.Invalidate();
+                                        canvas.Invalidate();
+                                    }
                                 });
                             }, TimeSpan.FromMilliseconds(600));
                         }
