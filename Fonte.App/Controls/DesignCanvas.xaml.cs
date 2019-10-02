@@ -25,30 +25,31 @@ namespace Fonte.App.Controls
 
     public partial class DesignCanvas : UserControl
     {
-        internal static readonly string DrawAlignmentZonesKey = "DrawAlignmentZones";
-        internal static readonly string DrawAnchorsKey = "DrawAnchors";
-        internal static readonly string DrawFillKey = "DrawFill";
-        internal static readonly string DrawGuidelinesKey = "DrawGuidelines";
-        internal static readonly string DrawLayersKey = "DrawLayers";
-        internal static readonly string DrawMetricsKey = "DrawMetrics";
-        internal static readonly string DrawPointsKey = "DrawPoints";
-        internal static readonly string DrawSelectionKey = "DrawSelection";
-        internal static readonly string DrawSelectionBoundsKey = "DrawSelectionBounds";
-        internal static readonly string DrawStrokeKey = "DrawStroke";
+        internal const string DrawAlignmentZonesKey = "DrawAlignmentZones";
+        internal const string DrawAnchorsKey = "DrawAnchors";
+        internal const string DrawCoordinatesKey = "DrawCoordinates";
+        internal const string DrawFillKey = "DrawFill";
+        internal const string DrawGuidelinesKey = "DrawGuidelines";
+        internal const string DrawLayersKey = "DrawLayers";
+        internal const string DrawMetricsKey = "DrawMetrics";
+        internal const string DrawPointsKey = "DrawPoints";
+        internal const string DrawSelectionKey = "DrawSelection";
+        internal const string DrawSelectionBoundsKey = "DrawSelectionBounds";
+        internal const string DrawStrokeKey = "DrawStroke";
 
-        internal static readonly string AlignmentZoneColorKey = "AlignmentZoneColor";
-        internal static readonly string AnchorColorKey = "AnchorColor";
-        internal static readonly string ComponentColorKey = "ComponentColor";
-        internal static readonly string CornerPointColorKey = "CornerPointColor";
-        internal static readonly string FillColorKey = "FillColor";
-        internal static readonly string LayersColorKey = "LayersColor";
-        internal static readonly string MarkerColorKey = "MarkerColor";
-        internal static readonly string SmoothPointColorKey = "SmoothPointColor";
-        internal static readonly string StrokeColorKey = "StrokeColor";
+        internal const string AlignmentZoneColorKey = "AlignmentZoneColor";
+        internal const string AnchorColorKey = "AnchorColor";
+        internal const string ComponentColorKey = "ComponentColor";
+        internal const string CornerPointColorKey = "CornerPointColor";
+        internal const string FillColorKey = "FillColor";
+        internal const string LayersColorKey = "LayersColor";
+        internal const string MarkerColorKey = "MarkerColor";
+        internal const string SmoothPointColorKey = "SmoothPointColor";
+        internal const string StrokeColorKey = "StrokeColor";
 
-        internal static readonly int MinPointSizeForDetails = 175;
-        internal static readonly int MinPointSizeForGrid = 10000;
-        internal static readonly int MinPointSizeForGuidelines = 100;
+        internal const int MinPointSizeForDetails = 175;
+        internal const int MinPointSizeForGrid = 10000;
+        internal const int MinPointSizeForGuidelines = 100;
 
         private readonly ICanvasDelegate PreviewTool = new PreviewTool();
         private readonly ICanvasDelegate SelectionTool = new SelectionTool();
@@ -255,6 +256,7 @@ namespace Fonte.App.Controls
                         if (drawDetails && (bool)FindResource(DrawPointsKey)) Drawing.DrawPoints(layer, ds, rescale,
                                                                                                  (Color)FindResource(CornerPointColorKey), (Color)FindResource(SmoothPointColorKey),
                                                                                                  (Color)FindResource(MarkerColorKey));
+                        if (drawDetails && (bool)FindResource(DrawCoordinatesKey)) Drawing.DrawCoordinates(layer, ds, rescale);
                         // If we only draw fill, we still want to stroke open paths as we don't fill them whatsoever
                         if (drawFill || drawStroke) Drawing.DrawStroke(layer, ds, rescale,
                                                                        (Color)FindResource(StrokeColorKey),
@@ -283,7 +285,7 @@ namespace Fonte.App.Controls
                 {
                     ToolOverride = PreviewTool;
                 }
-                else if (args.Key == VirtualKey.Control)
+                else if (args.Key == VirtualKey.Control && ToolOverride == null)
                 {
                     ToolOverride = SelectionTool;
                 }
@@ -344,7 +346,7 @@ namespace Fonte.App.Controls
 
         object FindResource(string resourceKey)
         {
-            return Tool.FindResource(this, resourceKey);
+            return (Tool is PreviewTool tool ? tool : _tool).FindResource(this, resourceKey);
         }
 
         Matrix3x2 GetMatrix()

@@ -39,6 +39,23 @@ namespace Fonte.App.Utilities
             }
         };
 
+        public static Vector2[] IntersectPaths(Data.Layer layer, Vector2 p0, Vector2 p1)
+        {
+            var points = new List<Vector2>();
+
+            foreach (var path in layer.Paths)
+            {
+                foreach (var segment in path.Segments)
+                {
+                    foreach (var loc in segment.IntersectLine(p0, p1))
+                    {
+                        points.Add(loc.Item1);
+                    }
+                }
+            }
+            return points.ToArray();
+        }
+
         public static void SlicePaths(Data.Layer layer, Vector2 p0, Vector2 p1, bool breakPaths = true)
         {
             var openSplitPoints = new HashSet<Data.Point>();
@@ -183,24 +200,14 @@ namespace Fonte.App.Utilities
             }
         }
 
-        static int GetAngleSign(Vector2 u, Vector2 v)
-        {
-            var w = new Vector2(-u.Y, u.X);
-            var det = Vector2.Dot(v, w);  // sin
-            var dot = Vector2.Dot(u, v);  // cos
-            if (det == 0 || dot == 0)
-                throw new InvalidOperationException("Cannot compute angle from zero vector");
-
-            var angle = Math.Atan2(det, dot);
-            return Math.Sign(angle);
-        }
+        static int AngleSign(Vector2 u, Vector2 v) => Math.Sign(Conversion.ToRadians(u, v));
 
         static bool RunningOppositeSides(Data.Point from, Data.Point to, Vector2 reference)
         {
             var fromVector = StartPointFromOnCurve(from).ToVector2() - from.ToVector2();
             var toVector = StartPointFromOnCurve(to).ToVector2() - to.ToVector2();
 
-            return GetAngleSign(reference, fromVector) != GetAngleSign(reference, toVector);
+            return AngleSign(reference, fromVector) != AngleSign(reference, toVector);
         }
 
         static Data.Path BreakPath(Data.Path path, int index)

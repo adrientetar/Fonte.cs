@@ -6,7 +6,6 @@ namespace Fonte.App.Utilities
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
 

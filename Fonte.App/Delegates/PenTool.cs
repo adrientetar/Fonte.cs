@@ -402,7 +402,7 @@ namespace Fonte.App.Delegates
                 return Cursors.PenWithPlus;
             }
 
-            return Cursors.Pen;
+            return DefaultCursor;
         }
 
         bool AreVisiblyDistinct(DesignCanvas canvas, Data.Point point, Data.Point other)
@@ -533,15 +533,7 @@ namespace Fonte.App.Delegates
 
 #region IToolBarEntry implementation
 
-        public override IconSource Icon { get; } = FromString("M7.52 16.51v-1.992h3.99v1.991z M10.819 14.498l3.719-3.974-5.02-8.02-5.028 8.027 3.737 3.973z M9.508 2.515v6.93 M9.509 9.42a1.089 1.089 0 1 1-1.089 1.089A1.089 1.089 0 0 1 9.509 9.42z");
-
-        static PathIconSource FromString(string data)
-        {
-            var iconSource = new PathIconSource();
-            iconSource.SetValue(PathIconSource.DataProperty, data);
-
-            return iconSource;
-        }
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uedfb" };
 
         public override string Name => "Pen";
 

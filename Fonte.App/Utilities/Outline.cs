@@ -135,15 +135,12 @@ namespace Fonte.App.Utilities
                 }
 
                 var points = path.Points;
-                PointType type;
-                if (mergeJoin)
+                var type = mergeJoin switch
                 {
-                    type = points.Pop().Type;
-                }
-                else
-                {
-                    type = PointType.Line;
-                }
+                    true => points.Pop().Type,
+                    _    => PointType.Line
+                };
+
                 var layer = path.Parent;
                 layer.ClearSelection();
                 var otherPoints = otherPath.Points.ToList();
@@ -204,6 +201,7 @@ namespace Fonte.App.Utilities
                 }
                 return;
             }
+
             // First pass: move
             var prev = path.Points[path.Points.Count - 2];
             var point = path.Points.Last();
@@ -278,21 +276,21 @@ namespace Fonte.App.Utilities
         {
             Debug.Assert(curve.Count == 4);
 
-            var tangentLeft = curve[1].ToVector2();
-            var tangentRight = curve[2].ToVector2();
+            var leftVector = curve[1].ToVector2();
+            var rightVector = curve[2].ToVector2();
 
             curve[1].X = RoundToGrid(curve[1].X + dx);
             curve[1].Y = RoundToGrid(curve[1].Y + dy);
             if (curve[0].IsSmooth)
             {
-                VectorProjection(curve[1], curve[0].ToVector2(), tangentLeft);
+                VectorProjection(curve[1], curve[0].ToVector2(), leftVector);
             }
 
             curve[2].X = RoundToGrid(curve[2].X + dx);
             curve[2].Y = RoundToGrid(curve[2].Y + dy);
             if (curve[3].IsSmooth)
             {
-                VectorProjection(curve[2], curve[3].ToVector2(), tangentRight);
+                VectorProjection(curve[2], curve[3].ToVector2(), rightVector);
             }
         }
 

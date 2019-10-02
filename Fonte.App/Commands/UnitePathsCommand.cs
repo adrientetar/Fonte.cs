@@ -20,7 +20,8 @@ namespace Fonte.App.Commands
         {
             if (parameter is Data.Layer layer)
             {
-                return layer.Paths.Count > 0;
+                return layer.Paths.Where(path => !path.IsOpen)
+                                  .Any();
             }
             return false;
         }

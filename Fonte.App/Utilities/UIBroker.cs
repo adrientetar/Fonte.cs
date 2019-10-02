@@ -6,6 +6,7 @@ namespace Fonte.App.Utilities
 {
     using Fonte.Data.Geometry;
     using Fonte.Data.Interfaces;
+    using Fonte.Data.Utilities;
 
     using System;
     using System.Collections.Generic;
@@ -62,6 +63,9 @@ namespace Fonte.App.Utilities
 
     static class UIBroker
     {
+        const float PI_1_2 = 1f / 2 * MathF.PI;
+        const float PI_2 = 2 * MathF.PI;
+
         public struct BBoxHandle
         {
             public HandleKind Kind { get; }
@@ -145,6 +149,76 @@ namespace Fonte.App.Utilities
             return new BBoxHandle(kind, pos);
         }
 
+        public static IEnumerable<(Data.Point, float)> GetCurvePointsPreferredAngle(Data.Path path)
+        {
+            if (path.Points.Count <= 1)
+            {
+                var point = path.Points.First();
+
+                yield return (point, 0f);
+            }
+
+            var canvasPath = path.Parent.ClosedCanvasPath;
+            var isOpen = path.IsOpen;
+
+            var segment = path.Segments.First();
+            var points = segment.PointsInclusive;
+            foreach (var nextSegment in Enumerable.Concat(path.Segments.Skip(1), new Data.Segment[] { segment }))
+            {
+                var onCurve = points.Last();
+                var nextPoints = nextSegment.PointsInclusive;
+
+                var onVector = onCurve.ToVector2();
+                var prevVector = segment.OnCurve.Type switch
+                {
+                    Data.PointType.Move => Vector2.Zero,
+                    _ => points[points.Count - 2].ToVector2() - onVector
+                };
+                var nextVector = nextSegment.OnCurve.Type switch
+                {
+                    Data.PointType.Move => Vector2.Zero,
+                    _ => nextPoints[1].ToVector2() - onVector
+                };
+
+                var angle = 0f;
+                if (nextVector == Vector2.Zero)
+                {
+                    if (prevVector != Vector2.Zero)
+                    {
+                        angle = Conversion.ToRadians(prevVector) - PI_1_2;
+                    }
+                }
+                else if (prevVector == Vector2.Zero)
+                {
+                    if (nextVector != Vector2.Zero)
+                    {
+                        angle = Conversion.ToRadians(nextVector) + PI_1_2;
+                    }
+                }
+                else
+                {
+                    var prevAngle = Conversion.ToRadians(prevVector);
+                    var nextAngle = Conversion.ToRadians(nextVector);
+                    var onAngle = nextAngle - prevAngle;
+
+                    angle = prevAngle + .5f * onAngle;
+                    if (isOpen switch
+                    {
+                        true  => MathF.Abs(onAngle) < MathF.PI,
+                        false => canvasPath.FillContainsPoint(onVector + Conversion.FromAngle(angle) * .12345f, Matrix3x2.Identity, 1e-4f)
+                    })
+                    {
+                        angle -= MathF.PI;
+                    }
+                }
+
+                yield return (onCurve, Ops.Modulo(angle, PI_2));
+
+                segment = nextSegment;
+                points = nextPoints;
+            }
+        }
+
         public struct GuidelineRule
         {
             public Data.Guideline Guideline { get; }
@@ -169,10 +243,7 @@ namespace Fonte.App.Utilities
         {
             var selection = layer.Selection;
 
-            if (selection.Count > 1)
-            {
-            }
-            else if (selection.Count > 0)
+            if (selection.Count == 1)
             {
                 return layer.Selection.First() as Data.Guideline;
             }

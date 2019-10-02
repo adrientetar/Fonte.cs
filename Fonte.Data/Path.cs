@@ -475,7 +475,7 @@ namespace Fonte.Data
                                                                               .ToArray());
                 if (result.HasValue) return new (Vector2, float)[] { result.Value };
             }
-            return new (Vector2, float)[0];
+            return Array.Empty<(Vector2, float)>();
         }
 
         public (Vector2, float)? ProjectPoint(Vector2 point)

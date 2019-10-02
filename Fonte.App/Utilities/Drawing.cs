@@ -4,6 +4,7 @@
 
 namespace Fonte.App.Utilities
 {
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Brushes;
     using Microsoft.Graphics.Canvas.Geometry;
@@ -13,10 +14,20 @@ namespace Fonte.App.Utilities
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Numerics;
+    using Windows.Foundation;
     using Windows.UI;
 
     public static class Drawing
     {
+        const float PI_1_8 = 1f / 8 * MathF.PI;
+        const float PI_3_8 = 3f / 8 * MathF.PI;
+        const float PI_5_8 = 5f / 8 * MathF.PI;
+        const float PI_7_8 = 7f / 8 * MathF.PI;
+        const float PI_9_8 = 9f / 8 * MathF.PI;
+        const float PI_11_8 = 11f / 8 * MathF.PI;
+        const float PI_13_8 = 13f / 8 * MathF.PI;
+        const float PI_15_8 = 15f / 8 * MathF.PI;
+
         public static void DrawAnchors(Data.Layer layer, CanvasDrawingSession ds, float rescale, Color color)
         {
             var size = 9 * rescale;
@@ -33,8 +44,8 @@ namespace Fonte.App.Utilities
 
                 if (anchor.IsSelected && !string.IsNullOrEmpty(anchor.Name))
                 {
-                    DrawText(ds, anchor.Name, anchor.ToVector2() + margin, Color.FromArgb(255, 35, 35, 35),
-                             hAlignment: CanvasHorizontalAlignment.Left, rescale: rescale);
+                    DrawText(ds, anchor.Name, anchor.ToVector2() + margin, Colors.White, rescale: rescale,
+                             hAlignment: CanvasHorizontalAlignment.Left, vAlignment: CanvasVerticalAlignment.Center, backplateColor: Color.FromArgb(135, 45, 45, 45));
                 }
             }
         }
@@ -61,6 +72,58 @@ namespace Fonte.App.Utilities
                     var origin = component.Origin;
                     ds.DrawLine(origin.X, origin.Y + margin, origin.X, origin.Y - margin, originColor, strokeWidth: rescale);
                     ds.DrawLine(origin.X - margin, origin.Y, origin.X + margin, origin.Y, originColor, strokeWidth: rescale);
+                }
+            }
+        }
+
+        public static void DrawCoordinates(Data.Layer layer, CanvasDrawingSession ds, float rescale)
+        {
+            var color = Color.FromArgb(255, 21, 116, 212);
+            var canvasPath = layer.ClosedCanvasPath;
+            var margin = 8 * rescale;
+
+            foreach (var path in layer.Paths)
+            {
+                foreach (var (point, angle) in UIBroker.GetCurvePointsPreferredAngle(path))
+                {
+                    var pos = point.ToVector2() + margin * Conversion.FromAngle(angle);
+
+                    CanvasHorizontalAlignment hAlignment;
+                    if (PI_5_8 <= angle && angle < PI_11_8)
+                    {
+                        hAlignment = CanvasHorizontalAlignment.Right;
+                    }
+                    // No && condition here, because we check around 0 or around 360 deg
+                    else if (angle < PI_3_8 || PI_13_8 <= angle)
+                    {
+                        hAlignment = CanvasHorizontalAlignment.Left;
+                    }
+                    else
+                    {
+                        hAlignment = CanvasHorizontalAlignment.Center;
+                    }
+
+                    float? baseline;
+                    CanvasVerticalAlignment vAlignment;
+                    if (PI_1_8 <= angle && angle < PI_7_8)
+                    {
+                        baseline = null;
+                        vAlignment = CanvasVerticalAlignment.Bottom;
+                    }
+                    else if (PI_9_8 <= angle && angle < PI_15_8)
+                    {
+                        baseline = .78f;
+                        vAlignment = CanvasVerticalAlignment.Top;
+                    }
+                    else
+                    {
+                        baseline = .93f;
+                        vAlignment = CanvasVerticalAlignment.Center;
+                    }
+
+                    var rx = MathF.Round(point.X, 1);
+                    var ry = MathF.Round(point.Y, 1);
+                    DrawText(ds, $"{rx}, {ry}", pos, color, fontSize: 10, hAlignment: hAlignment, vAlignment: vAlignment, baseline: baseline, rescale: rescale);
                 }
             }
         }
@@ -393,31 +456,31 @@ namespace Fonte.App.Utilities
                 var size = 2f * halfSize;
                 var halfStrokeWidth = .5f * rescale;
                 var strokeWidth = 2f * halfStrokeWidth;
-                using (var geometry = CreateOuterRoundedRect(ds, 0, 0, size: size, strokeWidth: rescale))
+
+                using var geometry = CreateOuterRoundedRect(ds, 0, 0, size: size, strokeWidth: rescale);
+
+                var borderBrush = new CanvasLinearGradientBrush(
+                    ds,
+                    Color.FromArgb(225, 160, 160, 160),
+                    Color.FromArgb(225, 135, 135, 135)
+                );
+                var color = Color.FromArgb(195, 255, 255, 255);
+
+                foreach (var handle in UIBroker.GetSelectionHandles(layer, rescale))
                 {
-                    var borderBrush = new CanvasLinearGradientBrush(
-                        ds,
-                        Color.FromArgb(225, 160, 160, 160),
-                        Color.FromArgb(225, 135, 135, 135)
-                    );
-                    var color = Color.FromArgb(195, 255, 255, 255);
+                    borderBrush.StartPoint = new Vector2(
+                            handle.Position.X, handle.Position.Y + halfSize + halfStrokeWidth);
+                    borderBrush.EndPoint = new Vector2(
+                        handle.Position.X, handle.Position.Y - halfSize - halfStrokeWidth);
 
-                    foreach (var handle in UIBroker.GetSelectionHandles(layer, rescale))
-                    {
-                        borderBrush.StartPoint = new Vector2(
-                                handle.Position.X, handle.Position.Y + halfSize + halfStrokeWidth);
-                        borderBrush.EndPoint = new Vector2(
-                            handle.Position.X, handle.Position.Y - halfSize - halfStrokeWidth);
-
-                        ds.FillRectangle(handle.Position.X - halfSize + halfStrokeWidth,
-                                         handle.Position.Y - halfSize + halfStrokeWidth,
-                                         size - strokeWidth,
-                                         size - strokeWidth,
-                                         color);
-                        ds.FillGeometry(geometry, handle.Position, borderBrush);
-                    }
-                    borderBrush.Dispose();
+                    ds.FillRectangle(handle.Position.X - halfSize + halfStrokeWidth,
+                                        handle.Position.Y - halfSize + halfStrokeWidth,
+                                        size - strokeWidth,
+                                        size - strokeWidth,
+                                        color);
+                    ds.FillGeometry(geometry, handle.Position, borderBrush);
                 }
+                borderBrush.Dispose();
             }
         }
 
@@ -443,19 +506,15 @@ namespace Fonte.App.Utilities
                 var color = Color.FromArgb(102, 192, 192, 192);
                 var height = layer.Parent?.Parent.UnitsPerEm ?? 1000;
 
-                DrawText(ds, ch, new Vector2(.5f * layer.Width, 0), color, height, CanvasHorizontalAlignment.Center, VerticalAlignment.Baseline);
+                DrawText(ds, ch, new Vector2(.5f * layer.Width, 0), color, fontSize: height, vAlignment: null);
             }
         }
 
-        enum VerticalAlignment
-        {
-            Center,
-            Baseline
-        };
+        /**/
 
-        static void DrawText(CanvasDrawingSession ds, string text, Vector2 point, Color color, float fontSize = 12,
-                             CanvasHorizontalAlignment hAlignment = CanvasHorizontalAlignment.Center, VerticalAlignment vAlignment = VerticalAlignment.Center,
-                             float? rescale = null)
+        public static void DrawText(CanvasDrawingSession ds, string text, Vector2 point, Color color, float? rescale = null, float fontSize = 12,
+                                    CanvasHorizontalAlignment hAlignment = CanvasHorizontalAlignment.Center, CanvasVerticalAlignment? vAlignment = CanvasVerticalAlignment.Center,
+                                    float? baseline = null, Color? backplateColor = null)
         {
             var ot = ds.Transform;
             var t = ds.Transform;
@@ -470,26 +529,47 @@ namespace Fonte.App.Utilities
             }
             t.Translation += new Vector2(point.X, -point.Y);
 
-            var format = new CanvasTextFormat
+            var textFormat = new CanvasTextFormat
             {
                 FontFamily = "Segoe UI",
                 FontSize = fontSize,
                 HorizontalAlignment = hAlignment
             };
-            if (vAlignment.HasFlag(VerticalAlignment.Baseline))
+            if (vAlignment.HasValue)
             {
-                format.LineSpacing = 1;
-                format.LineSpacingBaseline = 0;
+                textFormat.VerticalAlignment = vAlignment.Value;
+
+                if (baseline.HasValue)
+                {
+                    textFormat.LineSpacingMode = CanvasLineSpacingMode.Proportional;
+                    textFormat.LineSpacing = 1;
+                    textFormat.LineSpacingBaseline = baseline.Value;
+                }
             }
             else
             {
-                format.VerticalAlignment = CanvasVerticalAlignment.Center;
+                textFormat.LineSpacing = 1;
+                textFormat.LineSpacingBaseline = 0;
             }
 
             try
             {
                 ds.Transform = t;
-                ds.DrawText(text, Vector2.Zero, color, format);
+                if (backplateColor is Color)
+                {
+                    var textLayout = new CanvasTextLayout(ds, text, textFormat, 0, 0)
+                    {
+                        WordWrapping = CanvasWordWrapping.NoWrap
+                    };
+                    var rect = InflateBy(textLayout.LayoutBounds, 4, -2, 4, 0);
+
+                    ds.FillRoundedRectangle(rect, .5f * fontSize, .5f * fontSize, backplateColor.Value);
+                    ds.DrawTextLayout(textLayout, Vector2.Zero, color);
+                }
+                else
+                {
+                    ds.DrawText(text, Vector2.Zero, color, textFormat);
+                }
             }
             finally
             {
@@ -527,21 +607,20 @@ namespace Fonte.App.Utilities
             var halfStrokeWidth = .5f * strokeWidth;
             var radius = 1.5f * strokeWidth;
 
-            using (CanvasGeometry roundedRectangle = CanvasGeometry.CreateRoundedRectangle(ds,
-                                                                                           x - halfSize,
-                                                                                           y - halfSize,
-                                                                                           size, size,
-                                                                                           radius, radius),
-                                  innerRectangle = CanvasGeometry.CreateRectangle(ds,
-                                                                                  x - halfSize + halfStrokeWidth,
-                                                                                  y - halfSize + halfStrokeWidth,
-                                                                                  size - strokeWidth,
-                                                                                  size - strokeWidth))
-            {
-                return roundedRectangle.Stroke(strokeWidth).CombineWith(innerRectangle,
-                                                                        Matrix3x2.Identity,
-                                                                        CanvasGeometryCombine.Exclude);
-            }
+            using CanvasGeometry roundedRectangle = CanvasGeometry.CreateRoundedRectangle(ds,
+                                                                                          x - halfSize,
+                                                                                          y - halfSize,
+                                                                                          size, size,
+                                                                                          radius, radius),
+                                 innerRectangle = CanvasGeometry.CreateRectangle(ds,
+                                                                                 x - halfSize + halfStrokeWidth,
+                                                                                 y - halfSize + halfStrokeWidth,
+                                                                                 size - strokeWidth,
+                                                                                 size - strokeWidth);
+
+            return roundedRectangle.Stroke(strokeWidth).CombineWith(innerRectangle,
+                                                                    Matrix3x2.Identity,
+                                                                    CanvasGeometryCombine.Exclude);
         }
 
         static CanvasGeometry CreateTriangle(CanvasDrawingSession ds, float x, float y, double angle, float size)
@@ -564,6 +643,17 @@ namespace Fonte.App.Utilities
             ));
             builder.EndFigure(CanvasFigureLoop.Closed);
             return CanvasGeometry.CreatePath(builder);
+        }
+
+        static Rect InflateBy(Rect rect, int left, int top, int right, int bottom)
+        {
+            rect.X -= left;
+            rect.Y -= top;
+
+            rect.Width += left + right;
+            rect.Height += top + bottom;
+
+            return rect;
         }
     }
 }

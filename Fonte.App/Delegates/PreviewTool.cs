@@ -18,6 +18,22 @@ namespace Fonte.App.Delegates
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Hand;
 
+        public override void OnActivated(DesignCanvas canvas)
+        {
+            base.OnActivated(canvas);
+
+            canvas.Invalidate();
+        }
+
+        public override void OnDisabled(DesignCanvas canvas)
+        {
+            base.OnDisabled(canvas);
+
+            _previousPoint = null;
+
+            canvas.Invalidate();
+        }
+
         public override object FindResource(DesignCanvas canvas, object resourceKey)
         {
             var key = (string)resourceKey;

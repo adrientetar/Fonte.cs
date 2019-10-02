@@ -187,6 +187,12 @@ namespace Fonte.Data.Utilities
             );
         }
 
+        static double Cbrt(double value) => value switch
+        {
+            var v when v < 0 => -Math.Pow(-value, 1.0 / 3),
+            _ => Math.Pow(value, 1.0 / 3)
+        };
+
         /**
          * Adapted from Roots3And4 by Jochen Schwarze.
          */
@@ -238,8 +244,8 @@ namespace Fonte.Data.Utilities
             else  // one real solution
             {
                 var sqrt_D = Math.Sqrt(D);
-                var u =  Math.Pow(sqrt_D - q, 1.0 / 3);// Math.Cbrt(sqrt_D - q);
-                var v = -Math.Pow(sqrt_D + q, 1.0 / 3);//-Math.Cbrt(sqrt_D + q);
+                var u =  Cbrt(sqrt_D - q);
+                var v = -Cbrt(sqrt_D + q);
 
                 result.Add(u + v);
             }

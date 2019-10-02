@@ -23,7 +23,8 @@ namespace Fonte.App.Commands
         {
             if (parameter is Data.Layer layer)
             {
-                return layer.Paths.Count >= 2;
+                return layer.Paths.Where(path => !path.IsOpen)
+                                  .Skip(1).Any();
             }
             return false;
         }
@@ -61,9 +62,11 @@ namespace Fonte.App.Commands
                 usePaths.RemoveAt(usePaths.Count - 1);
             }
 
-            var resultPaths = BooleanFunc(usePaths, new List<Data.Path>() { refPath });
-            if (resultPaths.Count != usePaths.Count + 1)
+            var refPathArray = new Data.Path[] { refPath };
+            if (BooleanOps.HasOverlaps(usePaths, refPathArray))
             {
+                var resultPaths = BooleanFunc(usePaths, refPathArray);
+
                 using (var group = layer.CreateUndoGroup())
                 {
                     layer.Paths.Clear();

@@ -169,6 +169,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\BezierMath.cs" />
     <Compile Include="Utilities\Conversion.cs" />
+    <Compile Include="Utilities\Ops.cs" />
     <Compile Include="Utilities\UndoStore.cs" />
     <Compile Include="Utilities\Sequence.cs" />
     <Compile Include="Utilities\Selection.cs" />

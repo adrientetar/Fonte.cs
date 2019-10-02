@@ -18,6 +18,7 @@
     <UserControl.Resources>
         <x:Boolean x:Key="DrawAlignmentZones">true</x:Boolean>
         <x:Boolean x:Key="DrawAnchors">true</x:Boolean>
+        <x:Boolean x:Key="DrawCoordinates">false</x:Boolean>
         <x:Boolean x:Key="DrawFill">true</x:Boolean>
         <x:Boolean x:Key="DrawGuidelines">true</x:Boolean>
         <x:Boolean x:Key="DrawLayers">true</x:Boolean>

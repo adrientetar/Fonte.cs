@@ -365,8 +365,8 @@ namespace Fonte.App.Delegates
                                               (float)(pos.Y - _origin.Y));
 
                     _focusPoint = Utilities.BezierMath.Q(curve.Select(p => p.ToVector2())
-                                                              .ToArray(), _tappedLocation.Value)
-                                           .ToPoint();
+                                                      .ToArray(), _tappedLocation.Value)
+                                                      .ToPoint();
                 }
                 else if (_tappedItem is ISelectable isel)
                 {

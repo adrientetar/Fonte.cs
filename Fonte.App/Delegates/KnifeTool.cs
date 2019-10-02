@@ -9,7 +9,6 @@ namespace Fonte.App.Delegates
     using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
 
-    using System.Collections.Generic;
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
@@ -53,12 +52,12 @@ namespace Fonte.App.Delegates
             }
             else if (args.Key == VirtualKey.Escape && _origin != null)
             {
-                _points = null;
                 _undoGroup.Dispose();
                 _undoGroup = null;
                 _origin = null;
+                _points = null;
 
-                ((App)Application.Current).InvalidateData();
+                canvas.Invalidate();
             }
             else
             {
@@ -121,7 +120,7 @@ namespace Fonte.App.Delegates
                 }
                 _anchor = pos;
 
-                _points = IntersectPaths(canvas.Layer, _origin.Value.ToVector2(), _anchor.ToVector2());
+                _points = Slicing.IntersectPaths(canvas.Layer, _origin.Value.ToVector2(), _anchor.ToVector2());
                 canvas.Invalidate();
             }
         }
@@ -152,26 +151,9 @@ namespace Fonte.App.Delegates
             canvas.Invalidate();
         }
 
-        static Vector2[] IntersectPaths(Data.Layer layer, Vector2 p0, Vector2 p1)
-        {
-            var points = new List<Vector2>();
-
-            foreach (var path in layer.Paths)
-            {
-                foreach (var segment in path.Segments)
-                {
-                    foreach (var loc in segment.IntersectLine(p0, p1))
-                    {
-                        points.Add(loc.Item1);
-                    }
-                }
-            }
-            return points.ToArray();
-        }
-
         #region IToolBarEntry implementation
 
-        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\ue7e6" };
+        public override IconSource Icon { get; } = new FontIconSource() { FontSize = 16, Glyph = "\uf406" };
 
         public override string Name => "Knife";
 
