@@ -365,7 +365,7 @@ namespace Fonte.App.Delegates
                                               (float)(pos.Y - _origin.Y));
 
                     _focusPoint = Utilities.BezierMath.Q(curve.Select(p => p.ToVector2())
-                                                      .ToArray(), _tappedLocation.Value)
+                                                              .ToArray(), _tappedLocation.Value)
                                                       .ToPoint();
                 }
                 else if (_tappedItem is ISelectable isel)
@@ -546,7 +546,7 @@ namespace Fonte.App.Delegates
 
         protected new CoreCursor GetItemCursor(object item)
         {
-            if (item is Data.Point)
+            if (item is Data.Anchor || item is Data.Component || item is Data.Guideline || item is Data.Point)
             {
                 return Cursors.ArrowWithPoint;
             }

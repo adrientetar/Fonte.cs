@@ -16,13 +16,6 @@
             <Setter Property="Margin" Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Template" Value="{StaticResource SimpleButtonTemplate}"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="VerticalAlignment" Value="Stretch"/>
-        </Style>
-
-        <Style TargetType="ContentControl">
-            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
         </Style>
 
 
@@ -40,8 +33,8 @@
             <ColumnDefinition Width="1"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <ContentControl Content="{x:Bind Left}" IsTabStop="False"/>
+        <ContentPresenter Content="{x:Bind Left}"/>
         <Border BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Grid.Column="1"/>
-        <ContentControl Content="{x:Bind Right}" IsTabStop="False" Grid.Column="2"/>
+        <ContentPresenter Content="{x:Bind Right}" Grid.Column="2"/>
     </Grid>
 </UserControl>

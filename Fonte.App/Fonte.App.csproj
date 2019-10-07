@@ -129,6 +129,9 @@
     <Compile Include="Controls\Sidebar.xaml.cs">
       <DependentUpon>Sidebar.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SidebarParts\IconToggleButton.xaml.cs">
+      <DependentUpon>IconToggleButton.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\SidebarParts\OriginButton.xaml.cs">
       <DependentUpon>OriginButton.xaml</DependentUpon>
     </Compile>
@@ -210,6 +213,10 @@
     <Page Include="Controls\Sidebar.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\SidebarParts\IconToggleButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\SidebarParts\OriginButton.xaml">
       <Generator>MSBuild:Compile</Generator>

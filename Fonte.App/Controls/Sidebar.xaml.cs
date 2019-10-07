@@ -7,6 +7,7 @@ namespace Fonte.App.Controls
 
     using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Globalization;
     using System.Linq;
     using System.Numerics;
@@ -18,6 +19,8 @@ namespace Fonte.App.Controls
 
     public partial class Sidebar : UserControl
     {
+        private bool _skipRefresh;
+
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
             "Layer", typeof(Data.Layer), typeof(Sidebar), new PropertyMetadata(null, OnLayerChanged));
 
@@ -28,11 +31,11 @@ namespace Fonte.App.Controls
         }
 
         public static DependencyProperty LayersProperty = DependencyProperty.Register(
-            "Layers", typeof(IList<Data.Layer>), typeof(Sidebar), null);
+            "Layers", typeof(ObservableCollection<Data.Layer>), typeof(Sidebar), null);
 
-        public IList<Data.Layer> Layers
+        public ObservableCollection<Data.Layer> Layers
         {
-            get => (IList<Data.Layer>)GetValue(LayersProperty);
+            get => (ObservableCollection<Data.Layer>)GetValue(LayersProperty);
             set { SetValue(LayersProperty, value); }
         }
 
@@ -88,15 +91,7 @@ namespace Fonte.App.Controls
         {
             InitializeComponent();
 
-            if (DesignMode.DesignMode2Enabled)
-            {
-                Layers = new List<Data.Layer>()
-                {
-                    new Data.Layer() { Name = "Regular" },
-                    new Data.Layer() { Name = "Bold" },
-                    new Data.Layer() { Name = "Heavy" }
-                };
-            }
+            Layers = new ObservableCollection<Data.Layer>();
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs args)
@@ -122,8 +117,11 @@ namespace Fonte.App.Controls
         void OnDataRefreshing()
         {
             var layer = Layer;
-            if (layer != null && layer.IsEditing)
+            if (_skipRefresh || (layer != null && layer.IsEditing))
+            {
+                _skipRefresh = false;
                 return;
+            }
 
             if (layer != null && !layer.SelectionBounds.IsEmpty)
             {
@@ -143,8 +141,11 @@ namespace Fonte.App.Controls
             if (layer?.Parent is Data.Glyph glyph)
             {
                 // TODO: we could rewind this more selectively...
-                Layers = SortAllLayers(glyph);
-                LayersView.SelectedItem = Layer;
+                var layers = Layers;
+                layers.Clear();
+                foreach (var l in GetSortedLayers(glyph)) { layers.Add(l); }
+
+                LayersView.SelectedItem = layer;
             }
             else
             {
@@ -334,6 +335,13 @@ namespace Fonte.App.Controls
             Layer = layer;
         }
 
+        void OnLayerVisibilityChanged(object sender, RoutedEventArgs args)
+        {
+            _skipRefresh = true;
+
+            ((App)Application.Current).InvalidateData();
+        }
+
         /**/
 
         float GetControlSign(object control)
@@ -341,20 +349,20 @@ namespace Fonte.App.Controls
             return ((string)((FrameworkElement)control).Tag) == "!" ? -1f : 1f;
         }
 
-        IList<Data.Layer> SortAllLayers(Data.Glyph glyph)
+        IEnumerable<Data.Layer> GetSortedLayers(Data.Glyph glyph)
         {
             var font = glyph.Parent;
-            var layers = new List<Data.Layer>(glyph.Layers);
+            var layers = glyph.Layers;
+
             foreach (var master in font.Masters)
             {
                 if (!glyph.TryGetLayer(master.Name, out Data.Layer layer))
                 {
-                    layers.Append(layer);
+                    layers.Add(layer);
                 }
             }
-            layers.Sort();
 
-            return layers;
+            return glyph.Layers.OrderBy(e => e);
         }
     }
 }

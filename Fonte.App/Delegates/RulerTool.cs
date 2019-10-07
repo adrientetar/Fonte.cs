@@ -111,7 +111,7 @@ namespace Fonte.App.Delegates
                     vAlignment = CanvasVerticalAlignment.Bottom;
                 }
 
-                Drawing.DrawText(ds, $"{deg}º", anchor + 20 * Vector2.Normalize(vector), Colors.White, rescale: rescale, fontSize: 11,
+                Drawing.DrawText(ds, $"{deg}°", anchor + 20 * Vector2.Normalize(vector), Colors.White, rescale: rescale, fontSize: 11,
                                  hAlignment: hAlignment, vAlignment: vAlignment, backplateColor: backplateColor);
             }
         }

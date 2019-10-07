@@ -7,12 +7,12 @@ namespace Fonte.App.Controls.SidebarParts
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
 
-    [TemplatePart(Name = "Left", Type = typeof(object))]
-    [TemplatePart(Name = "Right", Type = typeof(object))]
+    [TemplatePart(Name = "Left", Type = typeof(Control))]
+    [TemplatePart(Name = "Right", Type = typeof(Control))]
     public partial class PairControl : UserControl
     {
         public static DependencyProperty LeftProperty = DependencyProperty.Register(
-            "LeftButton", typeof(Control), typeof(PairControl), new PropertyMetadata(null, OnLeftChanged));
+            "Left", typeof(Control), typeof(PairControl), new PropertyMetadata(null, OnLeftChanged));
 
         public Control Left
         {
@@ -21,7 +21,7 @@ namespace Fonte.App.Controls.SidebarParts
         }
 
         public static DependencyProperty RightProperty = DependencyProperty.Register(
-            "RightButton", typeof(Control), typeof(PairControl), new PropertyMetadata(null, OnRightChanged));
+            "Right", typeof(Control), typeof(PairControl), new PropertyMetadata(null, OnRightChanged));
 
         public Control Right
         {
@@ -38,7 +38,17 @@ namespace Fonte.App.Controls.SidebarParts
             RegisterPropertyChangedCallback(CornerRadiusProperty, OnPropertyChanged);
         }
 
-        void UpdateUI()
+        static void OnLeftChanged(object sender, DependencyPropertyChangedEventArgs args)
+        {
+            ((PairControl)sender).UpdateLeft();
+        }
+
+        static void OnRightChanged(object sender, DependencyPropertyChangedEventArgs args)
+        {
+            ((PairControl)sender).UpdateRight();
+        }
+
+        void OnPropertyChanged(DependencyObject sender, DependencyProperty dp)
         {
             UpdateLeft();
             UpdateRight();
@@ -57,11 +67,6 @@ namespace Fonte.App.Controls.SidebarParts
             }
         }
 
-        static void OnLeftChanged(object sender, DependencyPropertyChangedEventArgs args)
-        {
-            ((PairControl)sender).UpdateLeft();
-        }
-
         void UpdateRight()
         {
             if (Right != null)
@@ -73,16 +78,6 @@ namespace Fonte.App.Controls.SidebarParts
                 Right.HorizontalAlignment = HorizontalAlignment.Stretch;
                 Right.VerticalAlignment = VerticalAlignment.Stretch;
             }
-        }
-
-        static void OnRightChanged(object sender, DependencyPropertyChangedEventArgs args)
-        {
-            ((PairControl)sender).UpdateRight();
-        }
-
-        void OnPropertyChanged(DependencyObject sender, DependencyProperty dp)
-        {
-            UpdateUI();
         }
     }
 }

@@ -86,7 +86,7 @@
             </Style>
             <Style x:Key="HeaderTextBlockStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Margin" Value="4,0,0,2"/>
+                <Setter Property="Margin" Value="4,0,0,1"/>
                 <Setter Property="Padding" Value="0"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
@@ -405,6 +405,12 @@
                   ItemClick="OnLayersItemClick"
                   ItemsSource="{x:Bind Layers, Mode=OneWay}"
                   Grid.Row="7">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="8,0,8,0"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <VirtualizingStackPanel>
@@ -416,8 +422,33 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:Layer">
-                    <Grid Margin="-4,0,-4,0">
-                        <TextBlock FontSize="12" Text="{x:Bind ActualName}"/>
+                    <Grid HorizontalAlignment="Stretch">
+                        <Grid.Resources>
+                            <Style TargetType="ToggleButton">
+                                <Setter Property="Margin" Value="0"/>
+                                <Setter Property="Padding" Value="0"/>
+                            </Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontSize" Value="12"/>
+                                <Setter Property="Margin" Value="0,0,0,1"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                            </Style>
+                        </Grid.Resources>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Text="{x:Bind ActualName}"/>
+                        <parts:IconToggleButton IsChecked="{x:Bind IsVisible, Mode=TwoWay}" Toggled="OnLayerVisibilityChanged" Grid.Column="1">
+                            <parts:IconToggleButton.CheckedContent>
+                                <FontIcon FontSize="12" Glyph="&#xe7b3;"/>
+                            </parts:IconToggleButton.CheckedContent>
+                            <parts:IconToggleButton.UncheckedContent>
+                                <FontIcon FontSize="12" Glyph="&#xE700;"/>
+                            </parts:IconToggleButton.UncheckedContent>
+                        </parts:IconToggleButton>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

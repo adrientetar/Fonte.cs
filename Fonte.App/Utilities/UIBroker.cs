@@ -205,6 +205,7 @@ namespace Fonte.App.Utilities
                     if (isOpen switch
                     {
                         true  => MathF.Abs(onAngle) < MathF.PI,
+                        // TODO: we could test the fill only once per path
                         false => canvasPath.FillContainsPoint(onVector + Conversion.FromAngle(angle) * .12345f, Matrix3x2.Identity, 1e-4f)
                     })
                     {
@@ -275,7 +276,7 @@ namespace Fonte.App.Utilities
         public static object HitTest(Data.Layer layer, Point pos, float rescale, ILayerElement ignoreElement = null,
                                      bool testAnchors = true, bool testGuidelines = true, bool testSelectionHandles = true, bool testPoints = true, bool testSegments = true)
         {
-            var halfSize = 5 * rescale;
+            var halfSize = 6 * rescale;
 
             if (testAnchors)
                 foreach (var anchor in layer.Anchors.AsEnumerable().Reverse())
