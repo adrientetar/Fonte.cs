@@ -12,6 +12,8 @@ namespace Fonte.Data.Utilities
 
     public static class BezierMath
     {
+        const double PI_1_3 = 1 / 3 * Math.PI;
+
         /**
          * Adapted from https://www.particleincell.com/2013/cubic-line-intersection/.
          */
@@ -238,8 +240,8 @@ namespace Fonte.Data.Utilities
                 var t = 2 * Math.Sqrt(-p);
 
                 result.Add( t * Math.Cos(phi));
-                result.Add(-t * Math.Cos(phi + Math.PI / 3));
-                result.Add(-t * Math.Cos(phi - Math.PI / 3));
+                result.Add(-t * Math.Cos(phi + PI_1_3));
+                result.Add(-t * Math.Cos(phi - PI_1_3));
             }
             else  // one real solution
             {

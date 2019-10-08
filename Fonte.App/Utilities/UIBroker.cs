@@ -63,9 +63,6 @@ namespace Fonte.App.Utilities
 
     static class UIBroker
     {
-        const float PI_1_2 = 1f / 2 * MathF.PI;
-        const float PI_2 = 2 * MathF.PI;
-
         public struct BBoxHandle
         {
             public HandleKind Kind { get; }
@@ -185,20 +182,20 @@ namespace Fonte.App.Utilities
                 {
                     if (prevVector != Vector2.Zero)
                     {
-                        angle = Conversion.ToRadians(prevVector) - PI_1_2;
+                        angle = Conversion.FromVector(prevVector) - Ops.PI_1_2;
                     }
                 }
                 else if (prevVector == Vector2.Zero)
                 {
                     if (nextVector != Vector2.Zero)
                     {
-                        angle = Conversion.ToRadians(nextVector) + PI_1_2;
+                        angle = Conversion.FromVector(nextVector) + Ops.PI_1_2;
                     }
                 }
                 else
                 {
-                    var prevAngle = Conversion.ToRadians(prevVector);
-                    var nextAngle = Conversion.ToRadians(nextVector);
+                    var prevAngle = Conversion.FromVector(prevVector);
+                    var nextAngle = Conversion.FromVector(nextVector);
                     var onAngle = nextAngle - prevAngle;
 
                     angle = prevAngle + .5f * onAngle;
@@ -206,14 +203,14 @@ namespace Fonte.App.Utilities
                     {
                         true  => MathF.Abs(onAngle) < MathF.PI,
                         // TODO: we could test the fill only once per path
-                        false => canvasPath.FillContainsPoint(onVector + Conversion.FromAngle(angle) * .12345f, Matrix3x2.Identity, 1e-4f)
+                        false => canvasPath.FillContainsPoint(onVector + Conversion.ToVector(angle) * .12345f, Matrix3x2.Identity, 1e-4f)
                     })
                     {
                         angle -= MathF.PI;
                     }
                 }
 
-                yield return (onCurve, Ops.Modulo(angle, PI_2));
+                yield return (onCurve, Ops.Modulo(angle, Ops.PI_2));
 
                 segment = nextSegment;
                 points = nextPoints;
@@ -362,7 +359,9 @@ namespace Fonte.App.Utilities
                 }
             if (testGuidelines && testSegments && GetSelectedGuideline(layer) is Data.Guideline selGuideline)
             {
-                var proj = BezierMath.ProjectPointOnLine(p, selGuideline.ToVector2(), selGuideline.Direction);
+                var direction = Conversion.ToVector(
+                    Conversion.FromDegrees(selGuideline.Angle));
+                var proj = BezierMath.ProjectPointOnLine(p, selGuideline.ToVector2(), direction);
 
                 if ((proj - p).LengthSquared() <= tol_2)
                 {

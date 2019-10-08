@@ -4,6 +4,7 @@
 
 namespace Fonte.App.Utilities
 {
+    using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
     using Microsoft.Graphics.Canvas.Geometry;
 
@@ -87,7 +88,8 @@ namespace Fonte.App.Utilities
         static CanvasGeometry MakeGeometry(IEnumerable<Data.Path> paths, CanvasFilledRegionDetermination fillRule = CanvasFilledRegionDetermination.Winding)
         {
             var device = CanvasDevice.GetSharedDevice();
-            var builder = new CanvasPathBuilder(device);
+            using var builder = new CanvasPathBuilder(device);
+
             if (paths != null)
             {
                 foreach (var path in paths)
@@ -207,7 +209,7 @@ namespace Fonte.App.Utilities
             var p01 = p1.ToVector2() - p0.ToVector2();
             var p12 = p2.ToVector2() - p1.ToVector2();
 
-            return Math.Abs(Math.Atan2(p01.Y, p01.X) - Math.Atan2(p12.Y, p12.X)) <= tol;
+            return Math.Abs(Ops.AngleBetween(p01, p12)) <= tol;
         }
     }
 }

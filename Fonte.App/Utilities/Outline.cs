@@ -343,7 +343,7 @@ namespace Fonte.App.Utilities
         public static float RoundToGrid(float value)
         {
             // TODO: get rounding info from the app, cache as static value
-            return (float)Math.Round(value);
+            return MathF.Round(value);
         }
 
         public static bool TryJoinPath(Data.Layer layer, Data.Point point)

@@ -6,14 +6,13 @@ namespace Fonte.Data.Geometry
 {
     using System;
     using System.Globalization;
-    using System.Numerics;
 
     // Same as Windows.UI.Xaml.Thickness, but:
     // - name change
     // - uniform ctor is removed (doesn't make much sense)
     // - uses float instead of double
     // - adds Empty
-    public struct Margins
+    public struct Margins : IEquatable<Margins>
     {
         private float _left;
         private float _top;
@@ -84,6 +83,25 @@ namespace Fonte.Data.Geometry
             return margins;
         }
 
+        public bool Equals(Margins other)
+        {
+            return _left == other._left &&
+                   _top == other._top &&
+                   _right == other._right &&
+                   _bottom == other._bottom;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Margins &&
+                   Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return _left.GetHashCode() ^ _top.GetHashCode() ^ _right.GetHashCode() ^ _bottom.GetHashCode();
+        }
+
         public override string ToString()
         {
             var separator = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
@@ -96,33 +114,14 @@ namespace Fonte.Data.Geometry
                                  _bottom);
         }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is Margins otherObj)
-            {
-                return (this == otherObj);
-            }
-            return (false);
-        }
-
-        public bool Equals(Margins thickness)
-        {
-            return (this == thickness);
-        }
-
-        public override int GetHashCode()
-        {
-            return _left.GetHashCode() ^ _top.GetHashCode() ^ _right.GetHashCode() ^ _bottom.GetHashCode();
-        }
-
         public static bool operator ==(Margins t1, Margins t2)
         {
-            return t1._left == t2._left && t1._top == t2._top && t1._right == t2._right && t1._bottom == t2._bottom;
+            return t1.Equals(t2);
         }
 
         public static bool operator !=(Margins t1, Margins t2)
         {
-            return (!(t1 == t2));
+            return !(t1 == t2);
         }
     }
 }

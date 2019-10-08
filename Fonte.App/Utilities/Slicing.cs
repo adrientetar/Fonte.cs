@@ -186,29 +186,7 @@ namespace Fonte.App.Utilities
             }
         }
 
-        static IEnumerable<(T, T)> ByTwo<T>(IEnumerable<T> source)
-        {
-            using var it = source.GetEnumerator();
-
-            while (it.MoveNext())
-            {
-                var first = it.Current;
-                if (it.MoveNext())
-                {
-                    yield return (first, it.Current);
-                }
-            }
-        }
-
-        static int AngleSign(Vector2 u, Vector2 v) => Math.Sign(Conversion.ToRadians(u, v));
-
-        static bool RunningOppositeSides(Data.Point from, Data.Point to, Vector2 reference)
-        {
-            var fromVector = StartPointFromOnCurve(from).ToVector2() - from.ToVector2();
-            var toVector = StartPointFromOnCurve(to).ToVector2() - to.ToVector2();
-
-            return AngleSign(reference, fromVector) != AngleSign(reference, toVector);
-        }
+        static int AngleSign(Vector2 u, Vector2 v) => Math.Sign(Ops.AngleBetween(u, v));
 
         static Data.Path BreakPath(Data.Path path, int index)
         {
@@ -224,6 +202,28 @@ namespace Fonte.App.Utilities
             after[0].Type = Data.PointType.Move;
 
             return new Data.Path(points: after);
+        }
+
+        static IEnumerable<(T, T)> ByTwo<T>(IEnumerable<T> source)
+        {
+            using var it = source.GetEnumerator();
+
+            while (it.MoveNext())
+            {
+                var first = it.Current;
+                if (it.MoveNext())
+                {
+                    yield return (first, it.Current);
+                }
+            }
+        }
+
+        static bool RunningOppositeSides(Data.Point from, Data.Point to, Vector2 reference)
+        {
+            var fromVector = StartPointFromOnCurve(from).ToVector2() - from.ToVector2();
+            var toVector = StartPointFromOnCurve(to).ToVector2() - to.ToVector2();
+
+            return AngleSign(reference, fromVector) != AngleSign(reference, toVector);
         }
 
         static Data.Point StartPointFromOnCurve(Data.Point point)

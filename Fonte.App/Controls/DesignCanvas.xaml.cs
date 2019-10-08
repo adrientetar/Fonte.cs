@@ -45,6 +45,7 @@ namespace Fonte.App.Controls
         internal const string LayersColorKey = "LayersColor";
         internal const string MarkerColorKey = "MarkerColor";
         internal const string SmoothPointColorKey = "SmoothPointColor";
+        internal const string SnapLineColorKey = "SnapLineColor";
         internal const string StrokeColorKey = "StrokeColor";
 
         internal const int MinPointSizeForDetails = 175;

@@ -255,8 +255,7 @@ namespace Fonte.App.Delegates
             if (_path != null && isLeftButtonPressed)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
-                var selPoint = GetMovingPoint();
-                Debug.Assert(selPoint.Parent == _path);
+                var selPoint = GetMovingPoint(_path);
 
                 if (selPoint.Type != Data.PointType.None && !_shouldMoveOnCurve)
                 {
@@ -463,31 +462,6 @@ namespace Fonte.App.Delegates
             onCurve.IsSmooth = smooth;
         }
 
-        Data.Point GetMovingPoint()
-        {
-            var point = _path.Points[_path.Points.Count - 1];
-            if (!_path.IsOpen && point.Type == Data.PointType.Curve)
-            {
-                var pt = _path.Points[_path.Points.Count - 2];
-                if (pt.IsSelected)
-                {
-                    point = pt;
-                }
-            }
-            return point;
-        }
-
-        Data.Point GetSelectedPoint(Data.Layer layer)
-        {
-            var selection = layer.Selection;
-
-            if (selection.Count == 1 && selection.First() is Data.Point point)
-            {
-                return point;
-            }
-            return null;
-        }
-
         bool TryRemoveTrailingOffCurve(Data.Layer layer)
         {
             if (GetSelectedPoint(layer) is Data.Point selPoint)
@@ -529,6 +503,31 @@ namespace Fonte.App.Delegates
                 }
             }
             return false;
+        }
+
+        static Data.Point GetMovingPoint(Data.Path path)
+        {
+            var point = path.Points[path.Points.Count - 1];
+            if (!path.IsOpen && point.Type == Data.PointType.Curve)
+            {
+                var pt = path.Points[path.Points.Count - 2];
+                if (pt.IsSelected)
+                {
+                    point = pt;
+                }
+            }
+            return point;
+        }
+
+        static Data.Point GetSelectedPoint(Data.Layer layer)
+        {
+            var selection = layer.Selection;
+
+            if (selection.Count == 1 && selection.First() is Data.Point point)
+            {
+                return point;
+            }
+            return null;
         }
 
 #region IToolBarEntry implementation

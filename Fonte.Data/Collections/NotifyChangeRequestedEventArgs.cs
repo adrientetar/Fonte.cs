@@ -454,12 +454,12 @@ namespace Fonte.Data.Collections
         }
     }
 
-    internal sealed class SR
+    internal static class SR
     {
-        internal static readonly string WrongActionForCtor = "Constructor supports only the '{0}' action.";
-        internal static readonly string MustBeResetAddOrRemoveActionForCtor = "Constructor only supports either a Reset, Add, or Remove action.";
-        internal static readonly string ResetActionRequiresNullItem = "Reset action must be initialized with no changed items.";
-        internal static readonly string ResetActionRequiresIndexMinus1 = "Reset action must be initialized with index -1.";
-        internal static readonly string IndexCannotBeNegative = "Index cannot be negative.";
+        internal const string WrongActionForCtor = "Constructor supports only the '{0}' action.";
+        internal const string MustBeResetAddOrRemoveActionForCtor = "Constructor only supports either a Reset, Add, or Remove action.";
+        internal const string ResetActionRequiresNullItem = "Reset action must be initialized with no changed items.";
+        internal const string ResetActionRequiresIndexMinus1 = "Reset action must be initialized with index -1.";
+        internal const string IndexCannotBeNegative = "Index cannot be negative.";
     }
 }

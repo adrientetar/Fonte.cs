@@ -32,8 +32,7 @@ namespace Fonte.App.Controls
             {
                 if (value < 0 || value >= Items.Count)
                 {
-                    throw new ArgumentException(string.Format(
-                        "Invalid index {0} given items count {1}", value, Items.Count));
+                    throw new ArgumentException($"Invalid index {value} given items count {Items.Count}");
                 }
                 _selectedIndex = value;
                 CheckActiveButton();

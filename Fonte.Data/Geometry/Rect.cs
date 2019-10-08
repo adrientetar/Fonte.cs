@@ -16,7 +16,7 @@ namespace Fonte.Data.Geometry
     //
     // Foundation is used by Windows UI for things like window geometry, we're doing font geometry
     // so it makes sense to redefine whatsoever.
-    public struct Rect
+    public struct Rect : IEquatable<Rect>
     {
         private float _x;
         private float _y;
@@ -216,35 +216,10 @@ namespace Fonte.Data.Geometry
                    (rect.Y + rect.Height >= Y);
         }
 
-        static Rect CreateEmptyRect()
-        {
-            Rect rect = new Rect
-            {
-                _x = EmptyX,
-                _y = EmptyY,
-                _width = EmptyWidth,
-                _height = EmptyHeight
-            };
-
-            return rect;
-        }
-
         public Windows.Foundation.Rect ToFoundationRect()
         {
             return new Windows.Foundation.Rect(
                 _x, _y, _width, _height);
-        }
-
-        public override string ToString()
-        {
-            var separator = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
-
-            return string.Format("{1:}{0}{2:}{0}{3:}{0}{4:}",
-                                 separator,
-                                 _x,
-                                 _y,
-                                 _width,
-                                 _height);
         }
 
         public static Rect Transform(Rect rect, Matrix3x2 matrix)
@@ -264,17 +239,43 @@ namespace Fonte.Data.Geometry
             return tRect;
         }
 
-        public bool Equals(Rect value)
+        public bool Equals(Rect other)
         {
-            return (this == value);
+            return _x == other._x &&
+                   _y == other._y &&
+                   _width == other._width &&
+                   _height == other._height;
+        }
+
+        public override bool Equals(object other)
+        {
+            return other is Rect rect &&
+                   Equals(rect);
+        }
+
+        public override int GetHashCode()
+        {
+            return X.GetHashCode() ^
+                   Y.GetHashCode() ^
+                   Width.GetHashCode() ^
+                   Height.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            var separator = CultureInfo.CurrentCulture.TextInfo.ListSeparator;
+
+            return string.Format("{1:}{0}{2:}{0}{3:}{0}{4:}",
+                                 separator,
+                                 _x,
+                                 _y,
+                                 _width,
+                                 _height);
         }
 
         public static bool operator ==(Rect rect1, Rect rect2)
         {
-            return rect1.X == rect2.X &&
-                   rect1.Y == rect2.Y &&
-                   rect1.Width == rect2.Width &&
-                   rect1.Height == rect2.Height;
+            return rect1.Equals(rect2);
         }
 
         public static bool operator !=(Rect rect1, Rect rect2)
@@ -282,18 +283,17 @@ namespace Fonte.Data.Geometry
             return !(rect1 == rect2);
         }
 
-        public override bool Equals(object o)
+        static Rect CreateEmptyRect()
         {
-            return o is Rect && this == (Rect)o;
-        }
+            var rect = new Rect
+            {
+                _x = EmptyX,
+                _y = EmptyY,
+                _width = EmptyWidth,
+                _height = EmptyHeight
+            };
 
-        public override int GetHashCode()
-        {
-            // Perform field-by-field XOR of HashCodes
-            return X.GetHashCode() ^
-                   Y.GetHashCode() ^
-                   Width.GetHashCode() ^
-                   Height.GetHashCode();
+            return rect;
         }
     }
 }

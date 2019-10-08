@@ -78,19 +78,6 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
-        public Vector2 Direction
-        {
-            get
-            {
-                var rad = Conversion.ToRadians(Angle);
-                return new Vector2(
-                    (float)Math.Cos(rad),
-                    (float)Math.Sin(rad)
-                );
-            }
-        }
-
-        [JsonIgnore]
         public bool IsSelected
         {
             get => _isSelected;

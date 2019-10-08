@@ -28,8 +28,6 @@ namespace Fonte.App.Delegates
         private IList<Vector2> _points;
         private bool _shouldMoveOrigin;
 
-        const float PI_1_2 = .5f * MathF.PI;
-
         protected override CoreCursor DefaultCursor { get; } = Cursors.Ruler;
 
         public override object FindResource(DesignCanvas canvas, object resourceKey)
@@ -87,11 +85,11 @@ namespace Fonte.App.Delegates
                 }
 
                 var vector = anchor - origin;
-                var angle = Conversion.ToRadians(vector);
-                var deg = Math.Round(Conversion.ToDegrees(angle), 1);
+                var angle = Conversion.FromVector(vector);
+                var deg = MathF.Round(Conversion.ToDegrees(angle), 1);
 
                 CanvasHorizontalAlignment hAlignment;
-                if (angle > PI_1_2 || angle < -PI_1_2)
+                if (angle > Ops.PI_1_2 || angle < -Ops.PI_1_2)
                 {
                     hAlignment = CanvasHorizontalAlignment.Right;
                 }
@@ -101,7 +99,7 @@ namespace Fonte.App.Delegates
                 }
 
                 CanvasVerticalAlignment vAlignment;
-                if (angle < -PI_1_2)
+                if (angle < -Ops.PI_1_2)
                 {
                     vAlignment = CanvasVerticalAlignment.Top;
                 }

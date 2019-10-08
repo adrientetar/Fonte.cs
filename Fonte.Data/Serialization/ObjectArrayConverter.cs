@@ -95,7 +95,7 @@ namespace Fonte.Data.Converters
         public static JsonReader MoveToContentAndAssert(this JsonReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(reader));
             if (reader.TokenType == JsonToken.None)       // Skip past beginning of stream.
                 reader.ReadAndAssert();
             while (reader.TokenType == JsonToken.Comment) // Skip past comments.
@@ -106,7 +106,7 @@ namespace Fonte.Data.Converters
         public static JsonReader ReadAndAssert(this JsonReader reader)
         {
             if (reader == null)
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(reader));
             if (!reader.Read())
                 throw new JsonReaderException("Unexpected end of JSON stream.");
             return reader;

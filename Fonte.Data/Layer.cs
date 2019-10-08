@@ -569,7 +569,7 @@ namespace Fonte.Data
         CanvasGeometry CollectPaths(Func<Path, bool> predicate)
         {
             var device = CanvasDevice.GetSharedDevice();
-            var builder = new CanvasPathBuilder(device);
+            using var builder = new CanvasPathBuilder(device);
 
             foreach (var path in Paths)
             {

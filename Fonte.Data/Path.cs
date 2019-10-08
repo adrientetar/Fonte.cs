@@ -94,7 +94,7 @@ namespace Fonte.Data
                 if (_canvasPath == null)
                 {
                     var device = CanvasDevice.GetSharedDevice();
-                    var builder = new CanvasPathBuilder(device);
+                    using var builder = new CanvasPathBuilder(device);
 
                     var stack = new Vector2[2];
                     var stackIndex = 0;

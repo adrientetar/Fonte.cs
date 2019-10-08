@@ -19,7 +19,7 @@ namespace Fonte.App.Controls
 
     public partial class Sidebar : UserControl
     {
-        private bool _skipRefresh;
+        private bool _shouldIgnoreNextRefresh;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
             "Layer", typeof(Data.Layer), typeof(Sidebar), new PropertyMetadata(null, OnLayerChanged));
@@ -36,7 +36,6 @@ namespace Fonte.App.Controls
         public ObservableCollection<Data.Layer> Layers
         {
             get => (ObservableCollection<Data.Layer>)GetValue(LayersProperty);
-            set { SetValue(LayersProperty, value); }
         }
 
         public static DependencyProperty XPositionProperty = DependencyProperty.Register(
@@ -91,7 +90,7 @@ namespace Fonte.App.Controls
         {
             InitializeComponent();
 
-            Layers = new ObservableCollection<Data.Layer>();
+            SetValue(LayersProperty, new ObservableCollection<Data.Layer>());
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs args)
@@ -117,9 +116,9 @@ namespace Fonte.App.Controls
         void OnDataRefreshing()
         {
             var layer = Layer;
-            if (_skipRefresh || (layer != null && layer.IsEditing))
+            if (_shouldIgnoreNextRefresh || (layer != null && layer.IsEditing))
             {
-                _skipRefresh = false;
+                _shouldIgnoreNextRefresh = false;
                 return;
             }
 
@@ -149,7 +148,7 @@ namespace Fonte.App.Controls
             }
             else
             {
-                Layers = null;
+                Layers.Clear();
             }
 
             ((AlignLeftCommand)AlignLeftCommand).NotifyCanExecuteChanged();
@@ -284,7 +283,7 @@ namespace Fonte.App.Controls
 
             if (result != 0f)
             {
-                var rad = GetControlSign(sender) * (float)Conversion.ToRadians(result);
+                var rad = GetControlSign(sender) * Conversion.FromDegrees(result);
                 Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -315,7 +314,7 @@ namespace Fonte.App.Controls
 
             if (result != 0)
             {
-                var rad = GetControlSign(sender) * (float)Conversion.ToRadians(result);
+                var rad = GetControlSign(sender) * Conversion.FromDegrees(result);
                 Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -337,19 +336,17 @@ namespace Fonte.App.Controls
 
         void OnLayerVisibilityChanged(object sender, RoutedEventArgs args)
         {
-            _skipRefresh = true;
+            _shouldIgnoreNextRefresh = true;
 
             ((App)Application.Current).InvalidateData();
         }
 
-        /**/
-
-        float GetControlSign(object control)
+        static float GetControlSign(object control)
         {
             return ((string)((FrameworkElement)control).Tag) == "!" ? -1f : 1f;
         }
 
-        IEnumerable<Data.Layer> GetSortedLayers(Data.Glyph glyph)
+        static IEnumerable<Data.Layer> GetSortedLayers(Data.Glyph glyph)
         {
             var font = glyph.Parent;
             var layers = glyph.Layers;

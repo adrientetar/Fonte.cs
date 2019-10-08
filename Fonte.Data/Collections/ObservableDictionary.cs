@@ -60,7 +60,7 @@ namespace System.Collections.ObjectModel
 
         public bool Remove(TKey key)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
 
             TValue value;
             Dictionary.TryGetValue(key, out value);
@@ -158,7 +158,7 @@ namespace System.Collections.ObjectModel
 
         public void AddRange(IDictionary<TKey, TValue> items)
         {
-            if (items == null) throw new ArgumentNullException("items");
+            if (items == null) throw new ArgumentNullException(nameof(items));
 
             if (items.Count > 0)
             {

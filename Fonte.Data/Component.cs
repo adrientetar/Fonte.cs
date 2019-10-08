@@ -115,7 +115,7 @@ namespace Fonte.Data
         CanvasGeometry CollectPaths(Func<Layer, CanvasGeometry> predicate)
         {
             var device = CanvasDevice.GetSharedDevice();
-            var builder = new CanvasPathBuilder(device);
+            using var builder = new CanvasPathBuilder(device);
             builder.SetFilledRegionDetermination(CanvasFilledRegionDetermination.Winding);
 
             if (Layer is Layer layer)

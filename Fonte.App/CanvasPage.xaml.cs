@@ -30,7 +30,7 @@ namespace Fonte.App
 
     public sealed partial class CanvasPage : Page
     {
-        static readonly string JsonFormatId = "Fonte.App.Json";
+        const string JsonFormatId = "Fonte.App.Json";
 
         private StorageFile _file;
 

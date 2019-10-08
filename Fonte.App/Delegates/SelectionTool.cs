@@ -41,7 +41,6 @@ namespace Fonte.App.Delegates
         private IChangeGroup _undoGroup;
 
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
-        static readonly string SnapLineColorKey = "SnapLineColor";
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Arrow;
 
@@ -144,7 +143,7 @@ namespace Fonte.App.Delegates
         {
             if (_snapResult != null)
             {
-                var color = (Color)FindResource(canvas, SnapLineColorKey);
+                var color = (Color)FindResource(canvas, DesignCanvas.SnapLineColorKey);
                 var halfSize = 2.5f * rescale;
 
                 if (_snapResult.NearPoint is Data.Point point)
@@ -338,13 +337,13 @@ namespace Fonte.App.Delegates
                 else if (_tappedItem is UIBroker.GuidelineRule rule)
                 {
                     var guideline = rule.Guideline;
-                    var angle = Math.Atan2(pos.Y - guideline.Y, pos.X - guideline.X);
-                    var deg = (float)Conversion.ToDegrees(angle);
+                    var deg = Conversion.ToDegrees(
+                        Conversion.FromVector(pos.ToVector2() - guideline.ToVector2()));
 
                     // TODO: we could always modulo 180 to normalize since 0-180 and 180-360 are equivalent
                     if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                     {
-                        guideline.Angle = (int)(Conversion.ToDegrees(angle) + Math.Sign(deg) * 45) / 90 * 90;
+                        guideline.Angle = (int)(deg + MathF.Sign(deg) * 45) / 90 * 90;
                     }
                     else
                     {

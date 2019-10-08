@@ -29,10 +29,10 @@ namespace Fonte.Data
         public string Name { get; set; }
 
         [JsonProperty("location")]
-        public Dictionary<string, int> Location { get; set; }
+        public Dictionary<string, int> Location { get; }
 
         [JsonProperty("alignmentZones")]
-        public List<AlignmentZone> AlignmentZones { get; set; }
+        public List<AlignmentZone> AlignmentZones { get; }
 
         [JsonProperty("guidelines")]
         public ObserverList<Guideline> Guidelines
