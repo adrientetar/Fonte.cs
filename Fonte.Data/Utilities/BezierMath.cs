@@ -12,7 +12,7 @@ namespace Fonte.Data.Utilities
 
     public static class BezierMath
     {
-        const double PI_1_3 = 1 / 3 * Math.PI;
+        const double PI_1_3 = 1.0 / 3 * Math.PI;
 
         /**
          * Adapted from https://www.particleincell.com/2013/cubic-line-intersection/.

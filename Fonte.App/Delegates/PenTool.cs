@@ -448,12 +448,8 @@ namespace Fonte.App.Delegates
             }
             else
             {
-                var x = Outline.RoundToGrid(
-                    prevOn.X + (float)Math.Round(.35 * (onCurve.X - prevOn.X))
-                    );
-                var y = Outline.RoundToGrid(
-                    prevOn.Y + (float)Math.Round(.35 * (onCurve.Y - prevOn.Y))
-                    );
+                var x = Outline.RoundToGrid(prevOn.X + .35f * (onCurve.X - prevOn.X));
+                var y = Outline.RoundToGrid(prevOn.Y + .35f * (onCurve.Y - prevOn.Y));
                 _path.Points.Insert(index, new Data.Point(x, y));
             }
 

@@ -91,10 +91,10 @@ namespace Fonte.Data.Geometry
                    _bottom == other._bottom;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object other)
         {
-            return obj is Margins &&
-                   Equals(obj);
+            return other is Margins margins &&
+                   Equals(margins);
         }
 
         public override int GetHashCode()

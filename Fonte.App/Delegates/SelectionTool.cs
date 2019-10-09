@@ -35,7 +35,7 @@ namespace Fonte.App.Delegates
         private bool _canDrag = false;
         private object _tappedItem;
         private float? _tappedLocation;
-        private (CanvasGeometry, CanvasGeometry) _oldPaths;
+        private (CanvasGeometry, CanvasGeometry)? _oldPaths;
         private SnapResult _snapResult;
         private ThreadPoolTimer _timer;
         private IChangeGroup _undoGroup;
@@ -97,16 +97,16 @@ namespace Fonte.App.Delegates
 
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
-            var action = CurrentAction;
-            if (action == ActionType.DraggingItem && _tappedItem is ISelectable)
+            if (_oldPaths != null)
             {
-                // to parametrize this, could do a GetResource(key) that uses App.Resources[key]
-                // or just use FindResource, given that DesignCanvas takes on App's MergedDictionaries
                 var color = Color.FromArgb(255, 210, 210, 210);
-                ds.DrawGeometry(_oldPaths.Item1, color, strokeWidth: rescale);
-                ds.DrawGeometry(_oldPaths.Item2, color, strokeWidth: rescale);
+
+                ds.DrawGeometry(_oldPaths.Value.Item1, color, strokeWidth: rescale);
+                ds.DrawGeometry(_oldPaths.Value.Item2, color, strokeWidth: rescale);
             }
-            else if (action == ActionType.SelectingPoly)
+
+            var action = CurrentAction;
+            if (action == ActionType.SelectingPoly)
             {
                 if (_points.Count > 1)
                 {
@@ -193,6 +193,7 @@ namespace Fonte.App.Delegates
                     else if (_tappedItem is Data.Segment segment && args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu))
                     {
                         _screenOrigin = ptPoint.Position;
+                        _oldPaths = (layer.ClosedCanvasPath, layer.OpenCanvasPath);
 
                         _origin = canvasPos;
                         // TODO: avoid reprojecting?
@@ -508,6 +509,7 @@ namespace Fonte.App.Delegates
             _canDrag = false;
             _focusPoint = EmptyPoint;
             _tappedItem = _tappedLocation = null;
+            _oldPaths = null;
             ((App)Application.Current).InvalidateData();
 
             Debug.Assert(CurrentAction == ActionType.None);
@@ -521,7 +523,7 @@ namespace Fonte.App.Delegates
             }
             else if (_tappedItem is Data.Guideline guideline)
             {
-                guideline.Angle = (float)Math.Round(guideline.Angle + 90) % 360;
+                guideline.Angle = MathF.Round(guideline.Angle + 90) % 360;
 
                 ((App)Application.Current).InvalidateData();
             }
