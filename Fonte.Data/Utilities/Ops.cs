@@ -18,7 +18,7 @@ namespace Fonte.Data.Utilities
             var w = new Vector2(-u.Y, u.X);
             var det = Vector2.Dot(v, w);  // sin
             var dot = Vector2.Dot(u, v);  // cos
-            if (det == 0 || dot == 0)
+            if (det == 0 && dot == 0)
                 throw new InvalidOperationException("Cannot compute angle from zero vector");
 
             return MathF.Atan2(det, dot);

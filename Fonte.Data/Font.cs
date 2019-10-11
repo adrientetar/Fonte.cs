@@ -11,6 +11,12 @@ namespace Fonte.Data
 
     public partial class Font
     {
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+
+        [JsonProperty("familyName")]
+        public string FamilyName { get; set; }
+
         [JsonProperty("glyphs")]
         public List<Glyph> Glyphs { get; }
 
@@ -25,9 +31,6 @@ namespace Fonte.Data
 
         [JsonProperty("designerURL")]
         public string DesignerURL { get; set; }
-
-        [JsonProperty("familyName")]
-        public string FamilyName { get; set; }
 
         [JsonProperty("manufacturer")]
         public string Manufacturer { get; set; }
@@ -75,7 +78,7 @@ namespace Fonte.Data
         }
 
         [JsonConstructor]
-        public Font(List<Glyph> glyphs = null, List<Master> masters = null, string copyright = null, string designer = null, string designerURL = null,
+        public Font(List<Glyph> glyphs = null, List<Master> masters = null, string copyright = null, DateTime? date = null, string designer = null, string designerURL = null,
                     string familyName = null, string manufacturer = null, string manufacturerURL = null, int unitsPerEm = 1000,
                     int versionMajor = 1, int versionMinor = 0)
         {
@@ -83,6 +86,7 @@ namespace Fonte.Data
             Masters = masters ?? new List<Master>() { new Master(name: "Regular") };
 
             Copyright = copyright ?? string.Empty;
+            Date = date ?? DateTime.UtcNow;
             Designer = designer ?? string.Empty;
             DesignerURL = designerURL ?? string.Empty;
             FamilyName = familyName ?? "New Font";

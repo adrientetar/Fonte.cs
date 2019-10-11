@@ -16,16 +16,16 @@ namespace Fonte.Data
     {
         private readonly UndoStore _undoStore = new UndoStore();
 
-        /* For kerning groups, make a struct kinda like a rect containing 4 strings? */
-
-        [JsonProperty("layers")]
-        public List<Layer> Layers { get; }
-
         [JsonProperty("name")]
         public string Name { get; set; }
 
         [JsonProperty("unicodes")]
         public List<string> Unicodes { get; set; }
+
+        [JsonProperty("layers")]
+        public List<Layer> Layers { get; }
+
+        /* For kerning groups, make a struct kinda like a rect containing 4 strings? */
 
         /**/
 

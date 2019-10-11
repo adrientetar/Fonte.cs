@@ -7,13 +7,36 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="Pick a Glyph"
-    PrimaryButtonText="Select"  
+    DefaultButton="Primary"
+    PrimaryButtonText="Select"
     CloseButtonText="Cancel"
     PrimaryButtonClick="OnPrimaryButtonClick">
 
-    <Grid>
-        <ListView x:Name="List" ItemsSource="{x:Bind Glyphs}">
+    <ContentDialog.TitleTemplate>
+        <DataTemplate/>
+    </ContentDialog.TitleTemplate>
+
+    <Grid RowSpacing="4">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="420"/>
+        </Grid.RowDefinitions>
+
+        <AutoSuggestBox PlaceholderText="Search…"
+                        TextChanged="OnAutoSuggestBoxTextChanged"
+                        PreviewKeyDown="OnAutoSuggestBoxKeyDown"/>
+
+        <ListView x:Name="List" ItemsSource="{x:Bind CurrentGlyphs}" Grid.Row="1">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel>
+                        <VirtualizingStackPanel.ChildrenTransitions>
+                            <TransitionCollection/>
+                        </VirtualizingStackPanel.ChildrenTransitions>
+                    </VirtualizingStackPanel>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:Glyph">
                     <Grid>

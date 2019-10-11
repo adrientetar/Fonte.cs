@@ -549,7 +549,7 @@ namespace Fonte.App.Delegates
         {
             if (item is Data.Anchor || item is Data.Component || item is Data.Guideline || item is Data.Point)
             {
-                return Cursors.ArrowWithPoint;
+                return Cursors.ArrowWithSquare;
             }
 
             return base.GetItemCursor(item);

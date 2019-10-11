@@ -184,7 +184,7 @@ namespace Fonte.App.Delegates
                 }
                 _anchor = pos;
 
-                _points = PointsWithEndpoints(canvas.Layer, addIntersections: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
+                _points = GetPointsWithEndpoints(canvas.Layer, addIntersections: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
                 canvas.Invalidate();
             }
         }
@@ -199,7 +199,7 @@ namespace Fonte.App.Delegates
             canvas.Invalidate();
         }
 
-        IList<Vector2> PointsWithEndpoints(Data.Layer layer, bool addIntersections = true)
+        IList<Vector2> GetPointsWithEndpoints(Data.Layer layer, bool addIntersections = true)
         {
             var origin = _origin.Value.ToVector2();
             var anchor = _anchor.ToVector2();

@@ -123,6 +123,9 @@ namespace Fonte.App.Delegates
                 _points = Slicing.IntersectPaths(canvas.Layer, _origin.Value.ToVector2(), _anchor.ToVector2());
                 canvas.Invalidate();
             }
+
+            Cursor = args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu) ? Cursors.KnifeWithPlus : DefaultCursor;
+            canvas.InvalidateCursor();
         }
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
@@ -133,12 +136,11 @@ namespace Fonte.App.Delegates
             {
                 if (_points != null)
                 {
-                    var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
                     var layer = canvas.Layer;
 
                     layer.ClearSelection();
                     Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2(),
-                                       breakPaths: !alt.HasFlag(CoreVirtualKeyStates.Down));
+                                       breakPaths: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
 
                     ((App)Application.Current).InvalidateData();
                 }

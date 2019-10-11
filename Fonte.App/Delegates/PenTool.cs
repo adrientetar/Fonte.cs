@@ -38,18 +38,13 @@ namespace Fonte.App.Delegates
             {
                 ((App)Application.Current).InvalidateData();
             }
-            if (_undoGroup != null)
-            {
-                _undoGroup.Dispose();
-                _undoGroup = null;
-            }
         }
 
         public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
             if (args.Key == VirtualKey.Menu)
             {
-                if (TrySetLastOnCurveSmoothness(false))
+                if (TrySetLastOnCurveSmoothness(_path, false))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
@@ -66,11 +61,6 @@ namespace Fonte.App.Delegates
 
                 ((App)Application.Current).InvalidateData();
             }
-            else if (args.Key == VirtualKey.Control)
-            {
-                _undoGroup?.Dispose();
-                _undoGroup = null;
-            }
             else
             {
                 base.OnKeyDown(canvas, args);
@@ -84,7 +74,7 @@ namespace Fonte.App.Delegates
         {
             if (args.Key == VirtualKey.Menu)
             {
-                if (TrySetLastOnCurveSmoothness(true))
+                if (TrySetLastOnCurveSmoothness(_path, true))
                 {
                     ((App)Application.Current).InvalidateData();
                 }
@@ -113,11 +103,6 @@ namespace Fonte.App.Delegates
                 // TODO: should we ignore Anchor/Component etc. here?
                 var tappedItem = canvas.HitTest(pos, testSegments: true);
                 var selPoint = GetSelectedPoint(layer);
-
-                if (_undoGroup != null)
-                {
-                    _undoGroup.Dispose();
-                }
 
                 _screenOrigin = ptPoint.Position;
                 _undoGroup = layer.CreateUndoGroup();
@@ -381,7 +366,13 @@ namespace Fonte.App.Delegates
         {
             base.OnPointerReleased(canvas, args);
 
-            /* _undoGroup closure is deferred because we want potential TryRemoveTrailingOffCurve to be part of it */
+            if (_undoGroup != null)
+            {
+                _undoGroup.Dispose();
+                _undoGroup = null;
+
+                ((App)Application.Current).InvalidateData();
+            }
             _path = null;
             _screenOrigin = default;
             _shouldMoveOnCurve = false;
@@ -394,7 +385,7 @@ namespace Fonte.App.Delegates
         {
             if (item is Data.Point point && point.Type != Data.PointType.None)
             {
-                return Cursors.PenWithPoint;
+                return Cursors.PenWithSquare;
             }
             else if (item is Data.Segment)
             {
@@ -458,49 +449,6 @@ namespace Fonte.App.Delegates
             onCurve.IsSmooth = smooth;
         }
 
-        bool TryRemoveTrailingOffCurve(Data.Layer layer)
-        {
-            if (GetSelectedPoint(layer) is Data.Point selPoint)
-            {
-                var selPath = selPoint.Parent;
-                var selPoints = selPath.Points;
-                if (selPoint.Type == Data.PointType.None && selPath.IsOpen && selPoints.Last() == selPoint)
-                {
-                    using (var group = layer.CreateUndoGroup())
-                    {
-                        selPoints.Pop();
-                        var last = selPoints.Last();
-                        last.IsSelected = selPoint.IsSelected;
-                        last.IsSmooth = false;
-                    }
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        bool TrySetLastOnCurveSmoothness(bool value)
-        {
-            if (_path?.Points.Count >= 2)
-            {
-                var point = _path.Points.Last();
-                if (point.IsSelected)
-                {
-                    if (point.Type == Data.PointType.None)
-                    {
-                        point = _path.Points[_path.Points.Count - 2];
-                        if (point.Type == Data.PointType.None || point == _path.Points[0])
-                        {
-                            return false;
-                        }
-                    }
-                    point.IsSmooth = value;
-                    return true;
-                }
-            }
-            return false;
-        }
-
         static Data.Point GetMovingPoint(Data.Path path)
         {
             var point = path.Points[path.Points.Count - 1];
@@ -524,6 +472,50 @@ namespace Fonte.App.Delegates
                 return point;
             }
             return null;
+        }
+
+        static bool TryRemoveTrailingOffCurve(Data.Layer layer)
+        {
+            if (GetSelectedPoint(layer) is Data.Point selPoint)
+            {
+                var selPath = selPoint.Parent;
+                var selPoints = selPath.Points;
+                if (selPoint.Type == Data.PointType.None && selPath.IsOpen && selPoints.Last() == selPoint)
+                {
+                    // XXX: this should be !IsShallow change group
+                    using (var group = layer.CreateUndoGroup())
+                    {
+                        selPoints.Pop();
+                        var last = selPoints.Last();
+                        last.IsSelected = selPoint.IsSelected;
+                        last.IsSmooth = false;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static bool TrySetLastOnCurveSmoothness(Data.Path path, bool value)
+        {
+            if (path?.Points.Count >= 2)
+            {
+                var point = path.Points.Last();
+                if (point.IsSelected)
+                {
+                    if (point.Type == Data.PointType.None)
+                    {
+                        point = path.Points[path.Points.Count - 2];
+                        if (point.Type == Data.PointType.None || point == path.Points[0])
+                        {
+                            return false;
+                        }
+                    }
+                    point.IsSmooth = value;
+                    return true;
+                }
+            }
+            return false;
         }
 
 #region IToolBarEntry implementation

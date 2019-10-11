@@ -167,6 +167,9 @@
     <Compile Include="Interfaces\ICanvasDelegate.cs" />
     <Compile Include="Interfaces\IToolbarItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\JsonBroker.cs" />
+    <Compile Include="Serialization\ElidingContractResolver.cs" />
+    <Compile Include="Serialization\ElidingDecimalConverter.cs" />
     <Compile Include="Serialization\LayerSelectionConverter.cs" />
     <Compile Include="Utilities\BooleanOps.cs" />
     <Compile Include="Utilities\Cursors.cs" />

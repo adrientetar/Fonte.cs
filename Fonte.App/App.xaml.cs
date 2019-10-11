@@ -36,7 +36,7 @@ namespace Fonte.App
             }
 #endif
 
-            Frame rootFrame = Window.Current.Content as Frame;
+            var rootFrame = Window.Current.Content as Frame;
 
             if (rootFrame == null)
             {

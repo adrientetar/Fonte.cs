@@ -30,9 +30,23 @@ namespace Fonte.App
 
     public sealed partial class CanvasPage : Page
     {
+        private StorageFile _file;
+
         const string JsonFormatId = "Fonte.App.Json";
 
-        private StorageFile _file;
+        public StorageFile File
+        {
+            get => _file;
+            private set
+            {
+                if (value != _file)
+                {
+                    ReadFontAsync(value);
+
+                    _file = value;
+                }
+            }
+        }
 
         public static DependencyProperty FontProperty = DependencyProperty.Register(
             "Font", typeof(Data.Font), typeof(CanvasPage), new PropertyMetadata(null, OnFontChanged));
@@ -40,27 +54,21 @@ namespace Fonte.App
         public Data.Font Font
         {
             get => (Data.Font)GetValue(FontProperty);
-            set { SetValue(FontProperty, value); }
+            private set
+            {
+                SetValue(FontProperty, value);
+                OnDataRefreshing();
+            }
         }
 
         public CanvasPage()
         {
             InitializeComponent();
 
-            // Maybe have a standard glyphset?
-            Font = new Data.Font(glyphs: new List<Data.Glyph>()
-                {
-                    new Data.Glyph("a", new List<string>() { "0061" }, layers: new List<Data.Layer>()
-                    {
-                        new Data.Layer("Regular")
-                    })
-                }
-            );
-
-            OnDataRefreshing();
+            Font = GetNewFont();
         }
 
-        public async Task OpenAsync()
+        public async Task OpenFontAsync()
         {
             var picker = new FileOpenPicker
             {
@@ -70,17 +78,11 @@ namespace Fonte.App
 
             if (await picker.PickSingleFileAsync() is StorageFile file)
             {
-
-                var json = await FileIO.ReadTextAsync(file);
-
-                Font = JsonConvert.DeserializeObject<Data.Font>(json);
-
-                _file = file;
-                OnDataRefreshing();
+                File = file;
             }
         }
 
-        public async Task<bool> SaveAsync()
+        public async Task<bool> SaveFontAsync()
         {
             var file = _file;
             if (file is null)
@@ -96,7 +98,7 @@ namespace Fonte.App
             }
             if (file is StorageFile)
             {
-                var json = JsonConvert.SerializeObject(Font);
+                var json = JsonBroker.SerializeFont(Font);
 
                 await FileIO.WriteTextAsync(file, json);
                 _file = file;
@@ -127,7 +129,7 @@ namespace Fonte.App
                 result = await dialog.ShowAsync();
             }
 
-            if (result.HasFlag(ContentDialogResult.Primary) && await SaveAsync())
+            if (result.HasFlag(ContentDialogResult.Primary) && await SaveFontAsync())
             {
                 return true;
             }
@@ -148,6 +150,13 @@ namespace Fonte.App
             };
             pkg.SetData(JsonFormatId, json);
             Clipboard.SetContent(pkg);
+        }
+
+        async void ReadFontAsync(StorageFile file)
+        {
+            var json = await FileIO.ReadTextAsync(file);
+
+            Font = JsonConvert.DeserializeObject<Data.Font>(json);
         }
 
         void OnPageLoaded(object sender, RoutedEventArgs args)
@@ -312,13 +321,14 @@ namespace Fonte.App
             var glyphList = Font.Glyphs
                                 .Where(g => g.Name != glyph.Name)
                                 .ToList();
+
             if (glyphList.Count > 0)
             {
                 args.Handled = true;
 
                 var glyphDialog = new GlyphDialog(glyphList);
-                await glyphDialog.ShowAsync();
 
+                await glyphDialog.ShowAsync();
                 if (glyphDialog.Glyph is Data.Glyph newGlyph)
                 {
                     Sidebar.Layer = newGlyph.Layers[0];
@@ -405,13 +415,13 @@ namespace Fonte.App
         {
             if (await CanDiscardAsync())
             {
-                await OpenAsync();
+                await OpenFontAsync();
             }
         }
 
         async void OnSaveItemClicked(object sender, RoutedEventArgs args)
         {
-            await SaveAsync();
+            await SaveFontAsync();
         }
 
         /**/
@@ -438,6 +448,29 @@ namespace Fonte.App
             Canvas.Tool = (ICanvasDelegate)Toolbar.SelectedItem;
 
             Canvas.Focus(FocusState.Programmatic);
+        }
+
+        /**/
+
+        const string BaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
+
+        static Data.Font GetNewFont()
+        {
+            var glyphs = new List<Data.Glyph>();
+
+            foreach (var ch in BaseLetters)
+            {
+                var str = ch.ToString();
+                var name = ch == ' ' ? "space" : str;
+                var unicode = char.ConvertToUtf32(str, 0).ToString("X4");
+
+                glyphs.Add(new Data.Glyph(name, new List<string>() { unicode }, layers: new List<Data.Layer>()
+                {
+                    new Data.Layer("Regular")
+                }));
+            }
+
+            return new Data.Font(glyphs: glyphs);
         }
     }
 }
