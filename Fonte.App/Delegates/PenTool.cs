@@ -362,9 +362,11 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
+        /**/
+
+        protected override void CompleteMove(DesignCanvas canvas)
         {
-            base.OnPointerReleased(canvas, args);
+            base.CompleteMove(canvas);
 
             if (_undoGroup != null)
             {
@@ -378,8 +380,6 @@ namespace Fonte.App.Delegates
             _shouldMoveOnCurve = false;
             _stashedOffCurve = null;
         }
-
-        /**/
 
         protected new CoreCursor GetItemCursor(object item)
         {

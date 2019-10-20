@@ -20,6 +20,7 @@ namespace Fonte.App
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.DataTransfer;
     using Windows.Storage;
+    using Windows.Storage.AccessCache;
     using Windows.Storage.Pickers;
     using Windows.System;
     using Windows.UI.Core;
@@ -42,6 +43,7 @@ namespace Fonte.App
                 if (value != _file)
                 {
                     ReadFontAsync(value);
+                    StorageApplicationPermissions.MostRecentlyUsedList.Add(value, value.Name);
 
                     _file = value;
                 }

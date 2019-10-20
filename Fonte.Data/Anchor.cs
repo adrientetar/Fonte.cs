@@ -18,7 +18,6 @@ namespace Fonte.Data
 
         internal bool _isSelected;
 
-        // XXX serialize to writesingle ; check that it's needed
         [JsonProperty("x")]
         public float X
         {
@@ -32,7 +31,6 @@ namespace Fonte.Data
             }
         }
 
-        // XXX serialize to writesingle
         [JsonProperty("y")]
         public float Y
         {

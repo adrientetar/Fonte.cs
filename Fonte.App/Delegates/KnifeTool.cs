@@ -130,27 +130,36 @@ namespace Fonte.App.Delegates
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, args);
-
-            if (_origin != null)
+            if (_points != null)
             {
-                if (_points != null)
-                {
-                    var layer = canvas.Layer;
+                var layer = canvas.Layer;
 
-                    layer.ClearSelection();
-                    Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2(),
-                                       breakPaths: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
+                layer.ClearSelection();
+                Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2(),
+                                    breakPaths: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
 
-                    ((App)Application.Current).InvalidateData();
-                }
+                ((App)Application.Current).InvalidateData();
+            }
+
+            base.OnPointerReleased(canvas, args);
+        }
+
+        protected override void CompleteMove(DesignCanvas canvas)
+        {
+            base.CompleteMove(canvas);
+
+            if (_undoGroup != null)
+            {
                 _undoGroup.Dispose();
                 _undoGroup = null;
             }
-            _origin = null;
-            _points = null;
+            if (_points != null)
+            {
+                _points = null;
 
-            canvas.Invalidate();
+                canvas.Invalidate();
+            }
+            _origin = null;
         }
 
         #region IToolBarEntry implementation

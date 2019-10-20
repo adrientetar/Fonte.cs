@@ -195,8 +195,8 @@ namespace Fonte.Data
             {
                 writer.Formatting = Formatting.None;
 
-                WriteSingle(writer, point.X);
-                WriteSingle(writer, point.Y);
+                writer.WriteValue(point.X);
+                writer.WriteValue(point.Y);
                 if (point.Type != PointType.None) {
                     serializer.Serialize(writer, point.Type);
                     if (point.IsSmooth) {
@@ -212,18 +212,6 @@ namespace Fonte.Data
             {
                 writer.WriteEndArray();
                 writer.Formatting = formatting;
-            }
-        }
-
-        private void WriteSingle(JsonWriter writer, float number)
-        {
-            if (number == Math.Truncate(number))
-            {
-                writer.WriteValue((int)number);
-            }
-            else
-            {
-                writer.WriteValue(number);
             }
         }
     }

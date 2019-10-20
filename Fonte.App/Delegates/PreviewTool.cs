@@ -29,8 +29,6 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas);
 
-            _previousPoint = null;
-
             canvas.Invalidate();
         }
 
@@ -84,9 +82,9 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
+        protected override void CompleteMove(DesignCanvas canvas)
         {
-            base.OnPointerReleased(canvas, args);
+            base.CompleteMove(canvas);
 
             _previousPoint = null;
 

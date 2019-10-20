@@ -57,12 +57,16 @@ namespace Fonte.Data.Utilities
         /**
          * Adapted from Andre LaMothe, "Tricks of the Windows Game Programming Gurus".
          */
-        public static (Vector2, float)? IntersectLines(Vector2 p0, Vector2 p1, IList<Vector2> line, bool testLineInfinite = false)
+        public static (Vector2, float)? IntersectLines(Vector2 p0, Vector2 p1, IList<Vector2> line)
         {
             Debug.Assert(line.Count == 2);
             var p2 = line[0];
             var p3 = line[1];
 
+            return IntersectLines(p0, p1, p2, p3);
+        }
+        public static (Vector2, float)? IntersectLines(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, float slo = 0, float shi = 1, float tlo = 0, float thi = 1)
+        {
             var p01 = p1 - p0;
             var p23 = p3 - p2;
             var determinant = p23.X * p01.Y - p01.X * p23.Y;
@@ -71,8 +75,7 @@ namespace Fonte.Data.Utilities
             {
                 var s = ( p23.X * (p2.Y - p0.Y) - p23.Y * (p2.X - p0.X)) / determinant;
                 var t = ( p01.X * (p2.Y - p0.Y) - p01.Y * (p2.X - p0.X)) / determinant;
-                if ((testLineInfinite || 0 <= s && s <= 1) &&
-                    0 <= t && t <= 1)
+                if (slo <= s && s <= shi && tlo <= t && t <= thi)
                 {
                     return (p2 + p23 * t, t);
                 }

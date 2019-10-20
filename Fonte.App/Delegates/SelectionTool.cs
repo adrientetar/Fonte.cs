@@ -88,13 +88,6 @@ namespace Fonte.App.Delegates
             return base.FindResource(canvas, resourceKey);
         }
 
-        public override void OnDisabled(DesignCanvas canvas)
-        {
-            base.OnDisabled(canvas);
-
-            canvas.Invalidate();
-        }
-
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (_oldPaths != null)
@@ -450,33 +443,27 @@ namespace Fonte.App.Delegates
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, args);
-
             if (CurrentAction == ActionType.DraggingItem)
             {
                 if (_tappedItem is Data.Point point && _snapResult?.NearPoint is Data.Point otherPoint)
                 {
                     Outline.TryJoinPath(canvas.Layer, point, otherPoint);
                 }
-                _timer?.Cancel();
-                _timer = null;
             }
             else if (CurrentAction == ActionType.SelectingPoly)
             {
-                using (var poly = CanvasGeometry.CreatePolygon(CanvasDevice.GetSharedDevice(), _points.ToArray()))
+                using var poly = CanvasGeometry.CreatePolygon(CanvasDevice.GetSharedDevice(), _points.ToArray());
+
+                foreach (var path in canvas.Layer.Paths)
                 {
-                    foreach (var path in canvas.Layer.Paths)
+                    foreach (var point in path.Points)
                     {
-                        foreach (var point in path.Points)
+                        if (poly.FillContainsPoint(point.ToVector2()))
                         {
-                            if (poly.FillContainsPoint(point.ToVector2()))
-                            {
-                                point.IsSelected = !point.IsSelected;
-                            }
+                            point.IsSelected = !point.IsSelected;
                         }
                     }
                 }
-                _points = null;
             }
             else if (CurrentAction == ActionType.SelectingRect)
             {
@@ -498,21 +485,7 @@ namespace Fonte.App.Delegates
                 return;
             }
 
-            if (_undoGroup != null)
-            {
-                _undoGroup.Dispose();
-                _undoGroup = null;
-            }
-            _screenOrigin = default;
-            _snapResult = null;
-            _origin = EmptyPoint;
-            _canDrag = false;
-            _focusPoint = EmptyPoint;
-            _tappedItem = _tappedLocation = null;
-            _oldPaths = null;
-            ((App)Application.Current).InvalidateData();
-
-            Debug.Assert(CurrentAction == ActionType.None);
+            base.OnPointerReleased(canvas, args);
         }
 
         public override void OnDoubleTapped(DesignCanvas canvas, DoubleTappedRoutedEventArgs args)
@@ -544,6 +517,37 @@ namespace Fonte.App.Delegates
         }
 
         /**/
+
+        protected override void CompleteMove(DesignCanvas canvas)
+        {
+            base.CompleteMove(canvas);
+
+            if (CurrentAction != ActionType.None)
+            {
+                if (_timer != null)
+                {
+                    _timer?.Cancel();
+                    _timer = null;
+                }
+                if (_undoGroup != null)
+                {
+                    _undoGroup.Dispose();
+                    _undoGroup = null;
+                }
+                _points = null;
+                _screenOrigin = default;
+                _snapResult = null;
+                _origin = EmptyPoint;
+                _canDrag = false;
+                _focusPoint = EmptyPoint;
+                _tappedItem = _tappedLocation = null;
+                _oldPaths = null;
+
+                ((App)Application.Current).InvalidateData();
+            }
+
+            Debug.Assert(CurrentAction == ActionType.None);
+        }
 
         protected new CoreCursor GetItemCursor(object item)
         {

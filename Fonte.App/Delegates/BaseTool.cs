@@ -47,10 +47,13 @@ namespace Fonte.App.Delegates
 
         public virtual void OnActivated(DesignCanvas canvas)
         {
+            canvas.InvalidateCursor();
         }
 
         public virtual void OnDisabled(DesignCanvas canvas)
         {
+            CompleteMove(canvas);
+
             Cursor = DefaultCursor;
         }
 
@@ -201,13 +204,7 @@ namespace Fonte.App.Delegates
 
         public virtual void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            if (_previousPoint.HasValue)
-            {
-                _previousPoint = null;
-
-                Cursor = DefaultCursor;
-                canvas.InvalidateCursor();
-            }
+            CompleteMove(canvas);
 
             args.Handled = true;
         }
@@ -310,6 +307,17 @@ namespace Fonte.App.Delegates
         static XamlUICommand SetStartPointCommand { get; } = MakeUICommand("Set As Start Point", new SetStartPointCommand());
 
         /**/
+
+        protected virtual void CompleteMove(DesignCanvas canvas)
+        {
+            if (_previousPoint.HasValue)
+            {
+                _previousPoint = null;
+
+                Cursor = DefaultCursor;
+                canvas.InvalidateCursor();
+            }
+        }
 
         protected CoreCursor GetItemCursor(object item)
         {

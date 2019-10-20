@@ -57,7 +57,8 @@ namespace Fonte.App.Controls
 
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
         private ICanvasDelegate _tool = new BaseTool();
-        private ICanvasDelegate _toolOverride;
+        private bool _previewToolOverride;
+        private bool _selectionToolOverride;
         private CoreCursor _previousCursor;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
@@ -71,31 +72,16 @@ namespace Fonte.App.Controls
 
         public ICanvasDelegate Tool
         {
-            get => _toolOverride ?? _tool;
+            get => _previewToolOverride ? PreviewTool :
+                   _selectionToolOverride ? SelectionTool :
+                   _tool;
             set
             {
                 if (value != _tool)
                 {
-                    _tool?.OnDisabled(this);
+                    _tool.OnDisabled(this);
                     _tool = value;
                     _tool.OnActivated(this);
-
-                    InvalidateCursor();
-                }
-            }
-        }
-
-        ICanvasDelegate ToolOverride
-        {
-            get => _toolOverride;
-            set
-            {
-                if (value != _toolOverride)
-                {
-                    _toolOverride = value;
-
-                    Invalidate();
-                    InvalidateCursor();
                 }
             }
         }
@@ -158,7 +144,7 @@ namespace Fonte.App.Controls
 
             if (IsEnabled)
             {
-                CenterOnMetrics();
+                CenterOnMetrics(animated: false);
             }
             Invalidate();
         }
@@ -284,11 +270,11 @@ namespace Fonte.App.Controls
             {
                 if (args.Key == VirtualKey.Space)
                 {
-                    ToolOverride = PreviewTool;
+                    SetToolOverride(() => _previewToolOverride = true);
                 }
-                else if (args.Key == VirtualKey.Control && ToolOverride == null)
+                else if (args.Key == VirtualKey.Control)
                 {
-                    ToolOverride = SelectionTool;
+                    SetToolOverride(() => _selectionToolOverride = true);
                 }
             }
         }
@@ -299,11 +285,11 @@ namespace Fonte.App.Controls
 
             if (args.Key == VirtualKey.Space)
             {
-                if (_toolOverride == PreviewTool) ToolOverride = null;
+                SetToolOverride(() => _previewToolOverride = false);
             }
             else if (args.Key == VirtualKey.Control)
             {
-                if (_toolOverride == SelectionTool) ToolOverride = null;
+                SetToolOverride(() => _selectionToolOverride = false);
             }
         }
 
@@ -371,6 +357,19 @@ namespace Fonte.App.Controls
                 return result;
             }
             throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
+        }
+
+        void SetToolOverride(Action stateChange)
+        {
+            var prevTool = Tool;
+            stateChange.Invoke();
+
+            var tool = Tool;
+            if (tool != prevTool)
+            {
+                prevTool.OnDisabled(this);
+                tool.OnActivated(this);
+            }
         }
 
         public void CenterOnMetrics(bool animated = true)

@@ -74,14 +74,6 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnDisabled(DesignCanvas canvas)
-        {
-            base.OnDisabled(canvas);
-
-            _origin = null;
-            canvas.Invalidate();
-        }
-
         public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
             if (_origin.HasValue && _anchor != _origin.Value)
@@ -133,6 +125,7 @@ namespace Fonte.App.Delegates
                 _undoGroup.Dispose();
                 _undoGroup = null;
                 _origin = null;
+                ((App)Application.Current).InvalidateData();
             }
             else
             {
@@ -141,7 +134,7 @@ namespace Fonte.App.Delegates
             }
 
             args.Handled = true;
-            ((App)Application.Current).InvalidateData();
+            canvas.Invalidate();
         }
 
         public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
@@ -172,7 +165,7 @@ namespace Fonte.App.Delegates
             }
 
             args.Handled = true;
-            ((App)Application.Current).InvalidateData();
+            canvas.Invalidate();
         }
 
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
@@ -206,14 +199,12 @@ namespace Fonte.App.Delegates
                 }
                 _anchor = pos;
 
-                ((App)Application.Current).InvalidateData();
+                canvas.Invalidate();
             }
         }
 
         public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
-            base.OnPointerReleased(canvas, args);
-
             if (_origin.HasValue && _anchor != _origin.Value)
             {
                 var rect = Rectangle;
@@ -266,11 +257,24 @@ namespace Fonte.App.Delegates
                 canvas.Layer.Paths.Add(path);
                 path.IsSelected = true;
 
-                _undoGroup.Dispose();
-                _undoGroup = null;
                 ((App)Application.Current).InvalidateData();
             }
-            _origin = null;
+
+            base.OnPointerReleased(canvas, args);
+        }
+
+        protected override void CompleteMove(DesignCanvas canvas)
+        {
+            base.CompleteMove(canvas);
+
+            if (_origin.HasValue)
+            {
+                _undoGroup.Dispose();
+                _undoGroup = null;
+                _origin = null;
+
+                canvas.Invalidate();
+            }
         }
 
         #region IToolBarEntry implementation

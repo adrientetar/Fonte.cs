@@ -189,14 +189,17 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnPointerReleased(DesignCanvas canvas, PointerRoutedEventArgs args)
+        protected override void CompleteMove(DesignCanvas canvas)
         {
-            base.OnPointerReleased(canvas, args);
+            base.CompleteMove(canvas);
 
+            if (_points != null)
+            {
+                _points = null;
+
+                canvas.Invalidate();
+            }
             _origin = null;
-            _points = null;
-
-            canvas.Invalidate();
         }
 
         IList<Vector2> GetPointsWithEndpoints(Data.Layer layer, bool addIntersections = true)
