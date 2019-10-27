@@ -4,6 +4,7 @@
 
 namespace Fonte.App
 {
+    using Fonte.App.Controls;
     using Fonte.App.Dialogs;
     using Fonte.App.Interfaces;
     using Fonte.App.Serialization;
@@ -19,31 +20,36 @@ namespace Fonte.App
     using System.Threading.Tasks;
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.DataTransfer;
+    using Windows.Foundation;
     using Windows.Storage;
     using Windows.Storage.AccessCache;
     using Windows.Storage.Pickers;
     using Windows.System;
     using Windows.UI.Core;
     using Windows.UI.Core.Preview;
+    using Windows.UI.WindowManagement;
+    using Windows.UI.WindowManagement.Preview;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
+    using Windows.UI.Xaml.Hosting;
     using Windows.UI.Xaml.Input;
 
     public sealed partial class CanvasPage : Page
     {
         private StorageFile _file;
+        private AppWindow _previewWindow;
 
         const string JsonFormatId = "Fonte.App.Json";
 
         public StorageFile File
         {
             get => _file;
-            private set
+            set
             {
                 if (value != _file)
                 {
                     ReadFontAsync(value);
-                    StorageApplicationPermissions.MostRecentlyUsedList.Add(value, value.Name);
+                    StorageApplicationPermissions.MostRecentlyUsedList.Add(value, string.Empty, RecentStorageItemVisibility.AppAndSystem);
 
                     _file = value;
                 }
@@ -59,7 +65,7 @@ namespace Fonte.App
             private set
             {
                 SetValue(FontProperty, value);
-                OnDataRefreshing();
+                UpdateTitle();
             }
         }
 
@@ -106,7 +112,7 @@ namespace Fonte.App
                 _file = file;
 
                 Font.IsModified = false;
-                OnDataRefreshing();
+                UpdateTitle();
 
                 return true;
             }
@@ -165,7 +171,7 @@ namespace Fonte.App
         {
             if (!DesignMode.DesignMode2Enabled)
             {
-                ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+                ((App)Application.Current).DataChanged += OnDataChanged;
             }
 
             Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
@@ -177,7 +183,7 @@ namespace Fonte.App
         {
             if (!DesignMode.DesignMode2Enabled)
             {
-                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+                ((App)Application.Current).DataChanged -= OnDataChanged;
             }
 
             Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
@@ -197,16 +203,9 @@ namespace Fonte.App
             deferral.Complete();
         }
 
-        void OnDataRefreshing()
+        void OnDataChanged(object sender, EventArgs args)
         {
-            if (Font.IsModified)
-            {
-                TitleBar.UserTitle = $"*{Font.FamilyName}";
-            }
-            else
-            {
-                TitleBar.UserTitle = Font.FamilyName;
-            }
+            UpdateTitle();
         }
 
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs args)
@@ -411,6 +410,28 @@ namespace Fonte.App
             args.Handled = true;
         }
 
+        async void OnShowPreviewWindowInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            args.Handled = true;
+
+            if (_previewWindow == null)
+            {
+                var frame = new Frame();
+                frame.Navigate(typeof(PreviewPage));
+                ((PreviewPage)frame.Content).Font = Font;
+
+                _previewWindow = await AppWindow.TryCreateAsync();
+                _previewWindow.Closed += delegate { _previewWindow = null; frame.Content = null; };
+
+                WindowManagementPreview.SetPreferredMinSize(_previewWindow, new Size(500, 120));
+                _previewWindow.RequestSize(new Size(1200, 500));
+                ElementCompositionPreview.SetAppWindowContent(_previewWindow, frame);
+
+                await _previewWindow.TryShowAsync();
+            }
+            // TODO: else raise?
+        }
+
         /**/
 
         async void OnOpenItemClicked(object sender, RoutedEventArgs args)
@@ -445,9 +466,9 @@ namespace Fonte.App
             ((CanvasPage)sender).OnFontChanged();
         }
 
-        void OnToolbarItemChanged(object sender, EventArgs args)
+        void OnToolbarItemChanged(Toolbar sender, object args)
         {
-            Canvas.Tool = (ICanvasDelegate)Toolbar.SelectedItem;
+            Canvas.Tool = (ICanvasDelegate)sender.SelectedItem;
 
             Canvas.Focus(FocusState.Programmatic);
         }
@@ -464,7 +485,7 @@ namespace Fonte.App
             {
                 var str = ch.ToString();
                 var name = ch == ' ' ? "space" : str;
-                var unicode = char.ConvertToUtf32(str, 0).ToString("X4");
+                var unicode = Conversion.ToUnicode(str);
 
                 glyphs.Add(new Data.Glyph(name, new List<string>() { unicode }, layers: new List<Data.Layer>()
                 {
@@ -473,6 +494,18 @@ namespace Fonte.App
             }
 
             return new Data.Font(glyphs: glyphs);
+        }
+
+        void UpdateTitle()
+        {
+            if (Font.IsModified)
+            {
+                TitleBar.UserTitle = $"*{Font.FamilyName}";
+            }
+            else
+            {
+                TitleBar.UserTitle = Font.FamilyName;
+            }
         }
     }
 }

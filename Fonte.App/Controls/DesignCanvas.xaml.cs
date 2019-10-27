@@ -113,7 +113,7 @@ namespace Fonte.App.Controls
 
             if (!DesignMode.DesignMode2Enabled)
             {
-                ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+                ((App)Application.Current).DataChanged += OnDataChanged;
             }
         }
 
@@ -121,7 +121,7 @@ namespace Fonte.App.Controls
         {
             if (!DesignMode.DesignMode2Enabled)
             {
-                ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+                ((App)Application.Current).DataChanged -= OnDataChanged;
             }
 
             Canvas.RemoveFromVisualTree();
@@ -133,7 +133,7 @@ namespace Fonte.App.Controls
             OnLayerChanged();
         }
 
-        void OnDataRefreshing()
+        void OnDataChanged(object sender, EventArgs args)
         {
             Invalidate();
         }
@@ -190,6 +190,7 @@ namespace Fonte.App.Controls
 
                 _previousCursor = null;
             }
+            SetToolOverride(() => { _previewToolOverride = false; _selectionToolOverride = false; });
         }
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)

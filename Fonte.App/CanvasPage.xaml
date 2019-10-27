@@ -23,6 +23,7 @@
         <KeyboardAccelerator Modifiers="Control" Key="V" Invoked="OnPasteInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="Number0" Invoked="OnResetZoomInvoked"/>
         <KeyboardAccelerator Modifiers="Control" Key="P" Invoked="OnShowSidebarInvoked"/>
+        <KeyboardAccelerator Modifiers="Control,Menu" Key="P" Invoked="OnShowPreviewWindowInvoked"/>
         <KeyboardAccelerator Key="End" Invoked="OnNextGlyphInvoked"/>
         <KeyboardAccelerator Key="Home" Invoked="OnPreviousGlyphInvoked"/>
     </Page.KeyboardAccelerators>

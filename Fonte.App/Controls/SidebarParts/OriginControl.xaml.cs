@@ -11,7 +11,7 @@ namespace Fonte.App.Controls.SidebarParts
 
     public partial class OriginControl : UserControl
     {
-        public event Action SelectedIndexChanged;
+        public event EventHandler SelectedIndexChanged;
 
         public static DependencyProperty SelectedIndexProperty = DependencyProperty.Register(
             "SelectedIndex", typeof(int), typeof(OriginControl),
@@ -56,7 +56,7 @@ namespace Fonte.App.Controls.SidebarParts
             if (value < 0 || value > 8)
                 throw new ArgumentOutOfRangeException($"{value}");
 
-            ((OriginControl)sender).SelectedIndexChanged?.Invoke();
+            ((OriginControl)sender).SelectedIndexChanged?.Invoke(sender, EventArgs.Empty);
         }
     }
 }

@@ -275,6 +275,14 @@ namespace Fonte.App.Delegates
 
             flyout.Items.Add(new MenuFlyoutItem()
             {
+                Command = AlignSelectionCommand,
+                CommandParameter = canvas.Layer
+            });
+
+            flyout.Items.Add(new MenuFlyoutSeparator());
+
+            flyout.Items.Add(new MenuFlyoutItem()
+            {
                 Command = AddComponentCommand,
                 CommandParameter = canvas.Layer
             });
@@ -297,8 +305,9 @@ namespace Fonte.App.Delegates
 
         // TODO: maybe take this static library to a separate file?
         static XamlUICommand AddAnchorCommand { get; } = MakeUICommand("Add Anchor", new AddAnchorCommand());
-        static XamlUICommand AddComponentCommand { get; } = MakeUICommand("Add Component", new AddComponentCommand());
+        static XamlUICommand AddComponentCommand { get; } = MakeUICommand("Add Component…", new AddComponentCommand());
         static XamlUICommand AddGuidelineCommand { get; } = MakeUICommand("Add Guideline", new AddGuidelineCommand());
+        static XamlUICommand AlignSelectionCommand { get; } = MakeUICommand("Align Selection", new AlignSelectionCommand());
         static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand("Decompose", new DecomposeComponentCommand());
         static XamlUICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand("Make Guideline Global", new MakeGuidelineGlobalCommand());
         static XamlUICommand MakeGuidelineLocalCommand { get; } = MakeUICommand("Make Guideline Local", new MakeGuidelineLocalCommand());
@@ -370,23 +379,14 @@ namespace Fonte.App.Delegates
         protected static MoveMode GetMoveMode()
         {
             var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+            var windows = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows);
 
-            MoveMode mode;
-            if (shift.HasFlag(CoreVirtualKeyStates.Down) &&
-                alt.HasFlag(CoreVirtualKeyStates.Down))
+            return (windows.HasFlag(CoreVirtualKeyStates.Down), alt.HasFlag(CoreVirtualKeyStates.Down)) switch
             {
-                mode = MoveMode.InterpolateCurve;
-            }
-            else if (alt.HasFlag(CoreVirtualKeyStates.Down))
-            {
-                mode = MoveMode.StaticHandles;
-            }
-            else
-            {
-                mode = MoveMode.Normal;
-            }
-            return mode;
+                (true, true) => MoveMode.InterpolateCurve,
+                (_, true) => MoveMode.StaticHandles,
+                _ => MoveMode.Normal
+            };
         }
 
         protected static XamlUICommand MakeUICommand(string label, ICommand command, KeyboardAccelerator accelerator = null)

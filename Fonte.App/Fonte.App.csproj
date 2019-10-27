@@ -105,10 +105,17 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\PreviewCanvas.xaml.cs">
+      <DependentUpon>PreviewCanvas.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="PreviewPage.xaml.cs">
+      <DependentUpon>PreviewPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CanvasPage.xaml.cs">
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Commands\AlignPathsCommand.cs" />
+    <Compile Include="Commands\AlignSelectionCommand.cs" />
     <Compile Include="Commands\BinaryBooleanOpCommand.cs" />
     <Compile Include="Commands\UnitePathsCommand.cs" />
     <Compile Include="Commands\SetStartPointCommand.cs" />
@@ -201,6 +208,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Page Include="Controls\PreviewCanvas.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PreviewPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="CanvasPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -32,6 +32,16 @@ namespace Fonte.Data.Utilities
             return 180 * angle / MathF.PI;
         }
 
+        public static string FromUnicode(string uni)
+        {
+            return char.ConvertFromUtf32(Convert.ToInt32(uni, 16));
+        }
+
+        public static string ToUnicode(string str)
+        {
+            return char.ConvertToUtf32(str, 0).ToString("X4");
+        }
+
         public static float FromVector(Vector2 vec)
         {
             return MathF.Atan2(vec.Y, vec.X);

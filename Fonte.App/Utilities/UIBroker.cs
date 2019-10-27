@@ -343,7 +343,7 @@ namespace Fonte.App.Utilities
                     }
                 }
 
-            var tol_2 = 9 + rescale * (6 + rescale);
+            var tol = 4 * rescale;
             if (testSegments)
                 foreach (var path in layer.Paths.AsEnumerable().Reverse())
                 {
@@ -351,7 +351,7 @@ namespace Fonte.App.Utilities
                     {
                         var proj = segment.ProjectPoint(p);
 
-                        if (proj.HasValue && (proj.Value.Item1 - p).LengthSquared() <= tol_2)
+                        if (proj.HasValue && (proj.Value.Item1 - p).Length() <= tol)
                         {
                             return segment;
                         }
@@ -363,7 +363,7 @@ namespace Fonte.App.Utilities
                     Conversion.FromDegrees(selGuideline.Angle));
                 var proj = BezierMath.ProjectPointOnLine(p, selGuideline.ToVector2(), direction);
 
-                if ((proj - p).LengthSquared() <= tol_2)
+                if ((proj - p).Length() <= tol)
                 {
                     return new GuidelineRule(selGuideline);
                 }
@@ -455,6 +455,7 @@ namespace Fonte.App.Utilities
                     point = next;
                 }
             }
+            // TODO: exclusion zone for mouse down pos
 
             return null;
         }

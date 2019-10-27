@@ -24,11 +24,11 @@ namespace Fonte.App.Serialization
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            var doubleValue = (double)value;
+            var doubleValue = value as float? ?? (double)value;
 
             if (doubleValue == Math.Truncate(doubleValue))
             {
-                writer.WriteRawValue(JsonConvert.ToString((int)value));
+                writer.WriteRawValue(JsonConvert.ToString((int)doubleValue));
             }
             else
             {

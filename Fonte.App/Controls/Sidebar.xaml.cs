@@ -98,9 +98,9 @@ namespace Fonte.App.Controls
             if (DesignMode.DesignMode2Enabled)
                 return;
 
-            ((App)Application.Current).DataRefreshing += OnDataRefreshing;
+            ((App)Application.Current).DataChanged += OnDataChanged;
 
-            Origin.SelectedIndexChanged += OnDataRefreshing;
+            Origin.SelectedIndexChanged += OnDataChanged;
         }
 
         void OnControlUnloaded(object sender, RoutedEventArgs args)
@@ -108,12 +108,12 @@ namespace Fonte.App.Controls
             if (DesignMode.DesignMode2Enabled)
                 return;
 
-            Origin.SelectedIndexChanged -= OnDataRefreshing;
+            Origin.SelectedIndexChanged -= OnDataChanged;
 
-            ((App)Application.Current).DataRefreshing -= OnDataRefreshing;
+            ((App)Application.Current).DataChanged -= OnDataChanged;
         }
 
-        void OnDataRefreshing()
+        void OnDataChanged(object sender, EventArgs args)
         {
             var layer = Layer;
             if (_shouldIgnoreNextRefresh || (layer != null && layer.IsEditing))
@@ -169,7 +169,7 @@ namespace Fonte.App.Controls
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            ((Sidebar)sender).OnDataRefreshing();
+            ((Sidebar)sender).OnDataChanged(sender, EventArgs.Empty);
         }
 
         /**/
@@ -211,7 +211,7 @@ namespace Fonte.App.Controls
             }
             else
             {
-                OnDataRefreshing();
+                OnDataChanged(this, EventArgs.Empty);
             }
         }
 
@@ -227,7 +227,7 @@ namespace Fonte.App.Controls
             }
             else
             {
-                OnDataRefreshing();
+                OnDataChanged(this, EventArgs.Empty);
             }
         }
 
@@ -249,7 +249,7 @@ namespace Fonte.App.Controls
             }
             else
             {
-                OnDataRefreshing();
+                OnDataChanged(this, EventArgs.Empty);
             }
         }
 
@@ -271,7 +271,7 @@ namespace Fonte.App.Controls
             }
             else
             {
-                OnDataRefreshing();
+                OnDataChanged(this, EventArgs.Empty);
             }
         }
 

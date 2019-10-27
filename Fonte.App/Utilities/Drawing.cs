@@ -526,7 +526,7 @@ namespace Fonte.App.Utilities
         {
             if (layer.Parent is Data.Glyph glyph && !string.IsNullOrEmpty(glyph.Unicode))
             {
-                var ch = char.ConvertFromUtf32(Convert.ToInt32(glyph.Unicode, 16));
+                var ch = Conversion.FromUnicode(glyph.Unicode);
                 var color = Color.FromArgb(102, 192, 192, 192);
                 var height = layer.Parent?.Parent.UnitsPerEm ?? 1000;
 

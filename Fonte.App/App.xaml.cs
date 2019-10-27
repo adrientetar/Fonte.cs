@@ -5,26 +5,40 @@
 namespace Fonte.App
 {
     using System;
+    using System.Linq;
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.Activation;
+    using Windows.Storage;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Navigation;
+    using UnhandledExceptionEventArgs = Windows.UI.Xaml.UnhandledExceptionEventArgs;
 
     sealed partial class App : Application
     {
-        public event Action DataRefreshing;
+        public event EventHandler DataChanged;
 
         public App()
         {
             InitializeComponent();
 
             Suspending += OnSuspending;
+            UnhandledException += OnUnhandledException;
         }
 
         public void InvalidateData()
         {
-            DataRefreshing?.Invoke();
+            DataChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected override void OnFileActivated(FileActivatedEventArgs args)
+        {
+            base.OnFileActivated(args);
+
+            if (args.Files.Count == 1)
+            {
+                Launch(args.Files.First());
+            }
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
@@ -35,32 +49,9 @@ namespace Fonte.App
                 DebugSettings.EnableFrameRateCounter = true;
             }
 #endif
-
-            var rootFrame = Window.Current.Content as Frame;
-
-            if (rootFrame == null)
-            {
-                rootFrame = new Frame();
-
-                rootFrame.NavigationFailed += OnNavigationFailed;
-
-                if (args.PreviousExecutionState == ApplicationExecutionState.Terminated)
-                {
-                    // TODO: load application state
-                }
-
-                Window.Current.Content = rootFrame;
-            }
-
-            if (args.PrelaunchActivated == false)
-            {
-                if (rootFrame.Content == null)
-                {
-                    rootFrame.Navigate(typeof(CanvasPage), args.Arguments);
-                }
-
-                Window.Current.Activate();
-            }
+            Launch(args.Arguments,
+                   loadApplicationState: args.PreviousExecutionState == ApplicationExecutionState.Terminated,
+                   prelaunchActivated: args.PrelaunchActivated);
         }
 
         void OnNavigationFailed(object sender, NavigationFailedEventArgs args)
@@ -73,6 +64,49 @@ namespace Fonte.App
             var deferral = args.SuspendingOperation.GetDeferral();
             // TODO: save application state
             deferral.Complete();
+        }
+
+        async void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            // TODO: pop a dialog, ask to do this
+            if (Window.Current.Content is Frame frame && frame?.Content is CanvasPage page)
+            {
+                await page.SaveFontAsync();
+            }
+        }
+
+        void Launch(object parameter, bool loadApplicationState = false, bool prelaunchActivated = false)
+        {
+            var rootFrame = Window.Current.Content as Frame;
+
+            if (rootFrame == null)
+            {
+                rootFrame = new Frame();
+
+                rootFrame.NavigationFailed += OnNavigationFailed;
+
+                if (loadApplicationState)
+                {
+                    // TODO: load application state
+                }
+
+                Window.Current.Content = rootFrame;
+            }
+
+            if (!prelaunchActivated)
+            {
+                if (rootFrame.Content == null)
+                {
+                    rootFrame.Navigate(typeof(CanvasPage), parameter as string);
+
+                    if (parameter is StorageFile file)
+                    {
+                        ((CanvasPage)rootFrame.Content).File = file;
+                    }
+                }
+
+                Window.Current.Activate();
+            }
         }
     }
 }

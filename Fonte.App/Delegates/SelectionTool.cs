@@ -27,6 +27,13 @@ namespace Fonte.App.Delegates
 
     public class SelectionTool : BaseTool
     {
+        enum StretchConstraint
+        {
+            Enable = 0,
+            Disable,
+            ForceDisable
+        };
+
         private Point _origin = EmptyPoint;
         private Point _anchor;
         private Point _screenOrigin;
@@ -34,8 +41,9 @@ namespace Fonte.App.Delegates
         private List<Vector2> _points;
         private bool _canDrag = false;
         private object _tappedItem;
-        private float? _tappedLocation;
         private (CanvasGeometry, CanvasGeometry)? _oldPaths;
+        private float? _stretchParameter;
+        private StretchConstraint _stretchConstraint;
         private SnapResult _snapResult;
         private ThreadPoolTimer _timer;
         private IChangeGroup _undoGroup;
@@ -50,16 +58,16 @@ namespace Fonte.App.Delegates
             DraggingItem,
             SelectingPoly,
             SelectingRect,
-            ShapingCurve
+            StretchingCurve
         };
 
         ActionType CurrentAction
         {
             get
             {
-                if (_tappedLocation != null)
+                if (_stretchParameter != null)
                 {
-                    return ActionType.ShapingCurve;
+                    return ActionType.StretchingCurve;
                 }
                 else if (_undoGroup != null)
                 {
@@ -123,11 +131,13 @@ namespace Fonte.App.Delegates
             {
                 ds.FillRectangle(new Rect(_origin, _anchor), Color.FromArgb(51, 0, 120, 215));
             }
-            else if (action == ActionType.ShapingCurve)
+            else if (action == ActionType.StretchingCurve)
             {
                 if (_focusPoint != EmptyPoint)
                 {
-                    ds.FillCircle(_focusPoint.ToVector2(), 4 * rescale, Color.FromArgb(225, 172, 100, 68));
+                    ds.FillCircle(_focusPoint.ToVector2(), 4 * rescale, _stretchConstraint == StretchConstraint.Enable ?
+                                                                        Color.FromArgb(225, 221, 31, 31) :
+                                                                        Color.FromArgb(225, 150, 178, 228));
                 }
             }
         }
@@ -163,6 +173,42 @@ namespace Fonte.App.Delegates
             }
         }
 
+        public override void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
+        {
+            if (args.Key == VirtualKey.Shift && _stretchParameter.HasValue)
+            {
+                if (_stretchConstraint == StretchConstraint.Enable)
+                {
+                    _stretchConstraint = StretchConstraint.Disable;
+                }
+            }
+            else
+            {
+                base.OnKeyDown(canvas, args);
+                return;
+            }
+
+            args.Handled = true;
+        }
+
+        public override void OnKeyUp(DesignCanvas canvas, KeyRoutedEventArgs args)
+        {
+            if (args.Key == VirtualKey.Shift && _stretchParameter.HasValue)
+            {
+                if (_stretchConstraint == StretchConstraint.Disable)
+                {
+                    _stretchConstraint = StretchConstraint.Enable;
+                }
+            }
+            else
+            {
+                base.OnKeyUp(canvas, args);
+                return;
+            }
+
+            args.Handled = true;
+        }
+
         public override void OnPointerPressed(DesignCanvas canvas, PointerRoutedEventArgs args)
         {
             base.OnPointerPressed(canvas, args);
@@ -190,12 +236,13 @@ namespace Fonte.App.Delegates
 
                         _origin = canvasPos;
                         // TODO: avoid reprojecting?
-                        _tappedLocation = segment.ProjectPoint(canvasPos.ToVector2())?.Item2;
+                        _stretchParameter = segment.ProjectPoint(canvasPos.ToVector2())?.Item2;
+                        if (segment.OnCurve.Type == Data.PointType.Line) _stretchConstraint = StretchConstraint.ForceDisable;
                         _tappedItem = segment.ConvertTo(Data.PointType.Curve);
 
                         _undoGroup = layer.CreateUndoGroup();
 
-                        Debug.Assert(CurrentAction == ActionType.ShapingCurve);
+                        Debug.Assert(CurrentAction == ActionType.StretchingCurve);
                     }
                     else if (_tappedItem is ISelectable isel)
                     {
@@ -344,7 +391,7 @@ namespace Fonte.App.Delegates
                         guideline.Angle = .1f * Outline.RoundToGrid(10f * deg);
                     }
                 }
-                else if (_tappedItem is Data.Segment segment && _tappedLocation.HasValue)
+                else if (_tappedItem is Data.Segment segment && _stretchParameter.HasValue)
                 {
                     if (!_canDrag)
                     {
@@ -354,20 +401,26 @@ namespace Fonte.App.Delegates
                     }
 
                     var curve = segment.PointsInclusive;
-                    Outline.NudgeCurve(curve, (float)(pos.X - _origin.X),
-                                              (float)(pos.Y - _origin.Y));
+                    Outline.StretchCurve(canvas.Layer, curve, (float)(pos.X - _origin.X),
+                                                              (float)(pos.Y - _origin.Y), _stretchConstraint == StretchConstraint.Enable);
 
                     _focusPoint = Utilities.BezierMath.Q(curve.Select(p => p.ToVector2())
-                                                              .ToArray(), _tappedLocation.Value)
+                                                              .ToArray(), _stretchParameter.Value)
                                                       .ToPoint();
                 }
                 else if (_tappedItem is ISelectable isel)
                 {
+                    if (!_canDrag)
+                    {
+                        _canDrag = isel.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
+
+                        if (!_canDrag) return;
+                    }
+
                     var layer = canvas.Layer;
 
                     if (_tappedItem is ILocatable iloc)
                     {
-                        // No need for the _canDrag guard here because we're snapping to _tappedItem.
                         var snapResult = canvas.SnapPoint(pos, iloc, GetClampTarget(layer, iloc as Data.Point));
                         if (snapResult.Position != _snapResult?.Position)
                         {
@@ -393,13 +446,6 @@ namespace Fonte.App.Delegates
                     }
                     else
                     {
-                        if (!_canDrag)
-                        {
-                            _canDrag = isel.IsSelected && CanStartDragging(ptPoint.Position, _screenOrigin, 1);
-
-                            if (!_canDrag) return;
-                        }
-
                         if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                         {
                             pos = ClampToOrigin(pos, _origin);
@@ -480,10 +526,6 @@ namespace Fonte.App.Delegates
                     }
                 }
             }
-            else if (CurrentAction == ActionType.None)
-            {
-                return;
-            }
 
             base.OnPointerReleased(canvas, args);
         }
@@ -540,8 +582,10 @@ namespace Fonte.App.Delegates
                 _origin = EmptyPoint;
                 _canDrag = false;
                 _focusPoint = EmptyPoint;
-                _tappedItem = _tappedLocation = null;
+                _tappedItem = null;
                 _oldPaths = null;
+                _stretchParameter = null;
+                _stretchConstraint = default;
 
                 ((App)Application.Current).InvalidateData();
             }

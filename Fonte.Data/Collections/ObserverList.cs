@@ -7,7 +7,6 @@ namespace Fonte.Data.Collections
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.Collections.Specialized;
 
     public class ObserverList<T> : IList<T>
     {

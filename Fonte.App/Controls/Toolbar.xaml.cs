@@ -10,6 +10,7 @@ namespace Fonte.App.Controls
 
     using System;
     using System.Collections.ObjectModel;
+    using Windows.Foundation;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
 
@@ -17,7 +18,7 @@ namespace Fonte.App.Controls
     {
         private int _selectedIndex;
 
-        public event EventHandler CurrentItemChanged;
+        public event TypedEventHandler<Toolbar, EventArgs> CurrentItemChanged;
 
         public ObservableCollection<IToolbarItem> Items
         { get; }
@@ -35,8 +36,9 @@ namespace Fonte.App.Controls
                     throw new ArgumentException($"Invalid index {value} given items count {Items.Count}");
                 }
                 _selectedIndex = value;
+
                 CheckActiveButton();
-                CurrentItemChanged?.Invoke(this, new EventArgs());
+                CurrentItemChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 

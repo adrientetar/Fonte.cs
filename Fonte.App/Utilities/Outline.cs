@@ -272,25 +272,36 @@ namespace Fonte.App.Utilities
             }
         }
 
-        public static void NudgeCurve(IList<Data.Point> curve, float dx, float dy)
+        public static void StretchCurve(Data.Layer layer, IList<Data.Point> curve, float dx, float dy, bool maintainDirection = false)
         {
             Debug.Assert(curve.Count == 4);
 
             var leftVector = curve[1].ToVector2();
             var rightVector = curve[2].ToVector2();
+            using var group = layer.CreateUndoGroup();
 
-            curve[1].X = RoundToGrid(curve[1].X + dx);
-            curve[1].Y = RoundToGrid(curve[1].Y + dy);
-            if (curve[0].IsSmooth)
+            curve[1].X = curve[1].X + dx;
+            curve[1].Y = curve[1].Y + dy;
+            if (maintainDirection || curve[0].IsSmooth)
             {
                 VectorProjection(curve[1], curve[0].ToVector2(), leftVector);
             }
+            else
+            {
+                curve[1].X = RoundToGrid(curve[1].X);
+                curve[1].Y = RoundToGrid(curve[1].Y);
+            }
 
-            curve[2].X = RoundToGrid(curve[2].X + dx);
-            curve[2].Y = RoundToGrid(curve[2].Y + dy);
-            if (curve[3].IsSmooth)
+            curve[2].X = curve[2].X + dx;
+            curve[2].Y = curve[2].Y + dy;
+            if (maintainDirection || curve[3].IsSmooth)
             {
                 VectorProjection(curve[2], curve[3].ToVector2(), rightVector);
+            }
+            else
+            {
+                curve[2].X = RoundToGrid(curve[2].X);
+                curve[2].Y = RoundToGrid(curve[2].Y);
             }
         }
 
@@ -415,7 +426,7 @@ namespace Fonte.App.Utilities
 
         static bool AnyOffCurveSelected(Data.Segment segment)
         {
-            return Enumerable.Any(segment.OffCurves, offCurve => offCurve.IsSelected);
+            return Enumerable.Any(segment.OffCurves, point => point.IsSelected);
         }
 
         static void BreakPathsSelection(Data.Layer layer)
