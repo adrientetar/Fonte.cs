@@ -24,6 +24,13 @@ namespace Fonte.Data.Utilities
             return MathF.Atan2(det, dot);
         }
 
+        public static float ManhattanDistance(Vector2 u, Vector2 v)
+        {
+            var vector = v - u;
+
+            return MathF.Abs(vector.X) + MathF.Abs(vector.Y);
+        }
+
         public static float Modulo(float x, float m)
         {
             Debug.Assert(m >= 0);

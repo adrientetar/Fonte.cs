@@ -261,8 +261,9 @@ namespace Fonte.App
 
         void OnSelectAllInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
+            var layer = Canvas.Layer;
             var pathsSelected = true;
-            foreach (var path in Canvas.Layer.Paths)
+            foreach (var path in layer.Paths)
             {
                 if (!path.IsSelected)
                 {
@@ -272,11 +273,11 @@ namespace Fonte.App
             }
             if (pathsSelected)
             {
-                foreach (var anchor in Canvas.Layer.Anchors)
+                foreach (var anchor in layer.Anchors)
                 {
                     anchor.IsSelected = true;
                 }
-                foreach (var component in Canvas.Layer.Components)
+                foreach (var component in layer.Components)
                 {
                     component.IsSelected = true;
                 }
@@ -426,10 +427,9 @@ namespace Fonte.App
                 WindowManagementPreview.SetPreferredMinSize(_previewWindow, new Size(500, 120));
                 _previewWindow.RequestSize(new Size(1200, 500));
                 ElementCompositionPreview.SetAppWindowContent(_previewWindow, frame);
-
-                await _previewWindow.TryShowAsync();
             }
-            // TODO: else raise?
+
+            await _previewWindow.TryShowAsync();
         }
 
         /**/

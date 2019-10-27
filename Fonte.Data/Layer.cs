@@ -283,32 +283,173 @@ namespace Fonte.Data
         { get; set; }
 
         [JsonIgnore]
-        public Margins Margins
+        public float? LeftMargin
         {
             get
             {
                 var bounds = Bounds;
+
                 if (!bounds.IsEmpty)
                 {
-                    var bottom = bounds.Bottom;
+                    return bounds.Left;
+                }
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var leftMargin = LeftMargin.Value;
+
+                    if (value.Value != leftMargin)
+                    {
+                        var delta = value.Value - leftMargin;
+                        using var group = CreateUndoGroup();
+
+                        Transform(Matrix3x2.CreateTranslation(delta, 0));
+                        Width += delta;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public float? RightMargin
+        {
+            get
+            {
+                var bounds = Bounds;
+
+                if (!bounds.IsEmpty)
+                {
+                    return Width - bounds.Right;
+                }
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var rightMargin = RightMargin.Value;
+
+                    if (value.Value != rightMargin)
+                    {
+                        Width = bounds.Right + value.Value;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public float? TopMargin
+        {
+            get
+            {
+                var bounds = Bounds;
+
+                if (!bounds.IsEmpty)
+                {
                     var top = bounds.Top;
                     if (YOrigin is float yOrigin)
                     {
-                        bottom -= yOrigin - Height;
                         top += yOrigin;
                     }
                     else
                     {
                         top += Height;
                     }
-                    return new Margins(
-                            bounds.Left,
-                            top,
-                            Width - bounds.Right,
-                            bottom
-                        );
+                    return top;
                 }
-                return Margins.Empty;
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var topMargin = TopMargin.Value;
+
+                    if (value.Value != topMargin)
+                    {
+                        using var group = CreateUndoGroup();
+
+                        YOrigin = bounds.Top + value.Value;
+                        Height += value.Value - topMargin;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
+            }
+        }
+
+        [JsonIgnore]
+        public float? BottomMargin
+        {
+            get
+            {
+                var bounds = Bounds;
+
+                if (!bounds.IsEmpty)
+                {
+                    var bottom = bounds.Bottom;
+                    if (YOrigin is float yOrigin)
+                    {
+                        bottom -= yOrigin - Height;
+                    }
+                    return bottom;
+                }
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var bottomMargin = BottomMargin.Value;
+
+                    if (value.Value != bottomMargin)
+                    {
+                        using var group = CreateUndoGroup();
+
+                        if (YOrigin is null)
+                        {
+                            YOrigin = Height;
+                        }
+                        Height += value.Value - bottomMargin;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
             }
         }
 

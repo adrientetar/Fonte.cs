@@ -351,7 +351,7 @@ namespace Fonte.App.Utilities
                     {
                         var proj = segment.ProjectPoint(p);
 
-                        if (proj.HasValue && (proj.Value.Item1 - p).Length() <= tol)
+                        if (proj.HasValue && Ops.ManhattanDistance(p, proj.Value.Item1) <= tol)
                         {
                             return segment;
                         }
@@ -363,7 +363,7 @@ namespace Fonte.App.Utilities
                     Conversion.FromDegrees(selGuideline.Angle));
                 var proj = BezierMath.ProjectPointOnLine(p, selGuideline.ToVector2(), direction);
 
-                if ((proj - p).Length() <= tol)
+                if (Ops.ManhattanDistance(p, proj) <= tol)
                 {
                     return new GuidelineRule(selGuideline);
                 }

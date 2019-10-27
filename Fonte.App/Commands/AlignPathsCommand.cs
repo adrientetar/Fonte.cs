@@ -5,6 +5,7 @@
 namespace Fonte.App.Commands
 {
     using Fonte.Data.Geometry;
+    using Fonte.Data.Utilities;
 
     using System;
     using System.Collections.Generic;
@@ -89,7 +90,7 @@ namespace Fonte.App.Commands
                 {
                     var delta = transformFunc(path, targetBounds);
 
-                    if (delta.Length() != 0)
+                    if (delta != Vector2.Zero)
                     {
                         path.Transform(Matrix3x2.CreateTranslation(delta));
                     }

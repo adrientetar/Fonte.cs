@@ -4,6 +4,8 @@
 
 namespace Fonte.App.Utilities
 {
+    using Fonte.Data.Utilities;
+
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -146,23 +148,18 @@ namespace Fonte.App.Utilities
             return curve;
         }
 
-        static float ManhattanLength(Vector2 value)
-        {
-            return Vector2.Dot(value, Vector2.One);
-        }
-
         static float NewtonRaphson(IList<Vector2> curve, Vector2 point, float u)
         {
             var d = Q(curve, u) - point;
             var qp = QPrime(curve, u);
 
-            var denominator = ManhattanLength(qp * qp + d * QPrimePrime(curve, u));
+            var denominator = Vector2.Dot(qp, qp) + Vector2.Dot(d, QPrimePrime(curve, u));
             if (Math.Abs(denominator) < 1e-6)
             {
                 return u;
             }
 
-            var numerator = ManhattanLength(d * qp);
+            var numerator = Vector2.Dot(d, qp);
             return u - numerator / denominator;
         }
 

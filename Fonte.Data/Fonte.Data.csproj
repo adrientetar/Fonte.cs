@@ -155,7 +155,6 @@
     <Compile Include="Interfaces\ILayerElement.cs" />
     <Compile Include="Interfaces\ILocatable.cs" />
     <Compile Include="Master.cs" />
-    <Compile Include="Geometry\Margins.cs" />
     <Compile Include="Geometry\Rect.cs" />
     <Compile Include="Font.cs" />
     <Compile Include="Guideline.cs" />

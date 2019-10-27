@@ -62,7 +62,7 @@
                     </MenuFlyout>
                 </toolbarparts:IconButton.Flyout>
             </toolbarparts:IconButton>
-            <controls:Toolbar x:Name="Toolbar" HorizontalAlignment="Center" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1"/>
+            <controls:Toolbar HorizontalAlignment="Center" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1"/>
         </Grid>
         <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind Sidebar.Layer, Mode=TwoWay}" Grid.Row="1"/>
         <controls:Sidebar x:Name="Sidebar" Grid.Column="1" Grid.Row="1"/>
