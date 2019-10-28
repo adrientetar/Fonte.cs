@@ -5,7 +5,6 @@
 namespace Fonte.App.Commands
 {
     using Fonte.Data.Geometry;
-    using Fonte.Data.Utilities;
 
     using System;
     using System.Collections.Generic;

@@ -232,6 +232,53 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
+        public float? BottomMargin
+        {
+            get
+            {
+                var bounds = Bounds;
+
+                if (!bounds.IsEmpty)
+                {
+                    var bottom = bounds.Bottom;
+                    if (YOrigin is float yOrigin)
+                    {
+                        bottom -= yOrigin - Height;
+                    }
+                    return bottom;
+                }
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var bottomMargin = BottomMargin.Value;
+
+                    if (value.Value != bottomMargin)
+                    {
+                        using var group = CreateUndoGroup();
+
+                        if (YOrigin is null)
+                        {
+                            YOrigin = Height;
+                        }
+                        Height += value.Value - bottomMargin;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
+            }
+        }
+
+        [JsonIgnore]
         public Rect Bounds
         {
             get
@@ -323,6 +370,38 @@ namespace Fonte.Data
         }
 
         [JsonIgnore]
+        public Master Master
+        {
+            get
+            {
+                var font = Parent?.Parent;
+
+                if (font != null && font.TryGetMaster(MasterName, out Master master))
+                {
+                    return master;
+                }
+                return null;
+            }
+        }
+
+        [JsonIgnore]
+        public CanvasGeometry OpenCanvasPath
+        {
+            get
+            {
+                if (_openCanvasPath == null)
+                {
+                    _openCanvasPath = CollectPaths(path => path.IsOpen);
+                }
+                return _openCanvasPath;
+            }
+        }
+
+        [JsonIgnore]
+        public Glyph Parent
+        { get; internal set; }
+
+        [JsonIgnore]
         public float? RightMargin
         {
             get
@@ -357,133 +436,6 @@ namespace Fonte.Data
                 }
             }
         }
-
-        [JsonIgnore]
-        public float? TopMargin
-        {
-            get
-            {
-                var bounds = Bounds;
-
-                if (!bounds.IsEmpty)
-                {
-                    var top = bounds.Top;
-                    if (YOrigin is float yOrigin)
-                    {
-                        top += yOrigin;
-                    }
-                    else
-                    {
-                        top += Height;
-                    }
-                    return top;
-                }
-                return null;
-            }
-            set
-            {
-                var bounds = Bounds;
-
-                if (value.HasValue)
-                {
-                    if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
-                    var topMargin = TopMargin.Value;
-
-                    if (value.Value != topMargin)
-                    {
-                        using var group = CreateUndoGroup();
-
-                        YOrigin = bounds.Top + value.Value;
-                        Height += value.Value - topMargin;
-                    }
-                }
-                else
-                {
-                    if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
-                }
-            }
-        }
-
-        [JsonIgnore]
-        public float? BottomMargin
-        {
-            get
-            {
-                var bounds = Bounds;
-
-                if (!bounds.IsEmpty)
-                {
-                    var bottom = bounds.Bottom;
-                    if (YOrigin is float yOrigin)
-                    {
-                        bottom -= yOrigin - Height;
-                    }
-                    return bottom;
-                }
-                return null;
-            }
-            set
-            {
-                var bounds = Bounds;
-
-                if (value.HasValue)
-                {
-                    if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
-                    var bottomMargin = BottomMargin.Value;
-
-                    if (value.Value != bottomMargin)
-                    {
-                        using var group = CreateUndoGroup();
-
-                        if (YOrigin is null)
-                        {
-                            YOrigin = Height;
-                        }
-                        Height += value.Value - bottomMargin;
-                    }
-                }
-                else
-                {
-                    if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
-                }
-            }
-        }
-
-        [JsonIgnore]
-        public Master Master
-        {
-            get
-            {
-                var font = Parent?.Parent;
-
-                if (font != null && font.TryGetMaster(MasterName, out Master master))
-                {
-                    return master;
-                }
-                return null;
-            }
-        }
-
-        [JsonIgnore]
-        public CanvasGeometry OpenCanvasPath
-        {
-            get
-            {
-                if (_openCanvasPath == null)
-                {
-                    _openCanvasPath = CollectPaths(path => path.IsOpen);
-                }
-                return _openCanvasPath;
-            }
-        }
-
-        [JsonIgnore]
-        public Glyph Parent
-        { get; internal set; }
 
         [JsonIgnore]
         public IReadOnlyList<Path> SelectedPaths
@@ -564,6 +516,54 @@ namespace Fonte.Data
                     }
                 }
                 return _selectionBounds;
+            }
+        }
+
+        [JsonIgnore]
+        public float? TopMargin
+        {
+            get
+            {
+                var bounds = Bounds;
+
+                if (!bounds.IsEmpty)
+                {
+                    var top = bounds.Top;
+                    if (YOrigin is float yOrigin)
+                    {
+                        top += yOrigin;
+                    }
+                    else
+                    {
+                        top += Height;
+                    }
+                    return top;
+                }
+                return null;
+            }
+            set
+            {
+                var bounds = Bounds;
+
+                if (value.HasValue)
+                {
+                    if (bounds.IsEmpty)
+                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                    var topMargin = TopMargin.Value;
+
+                    if (value.Value != topMargin)
+                    {
+                        using var group = CreateUndoGroup();
+
+                        YOrigin = bounds.Top + value.Value;
+                        Height += value.Value - topMargin;
+                    }
+                }
+                else
+                {
+                    if (!bounds.IsEmpty)
+                        throw new InvalidOperationException($"Cannot set {value} margin");
+                }
             }
         }
 

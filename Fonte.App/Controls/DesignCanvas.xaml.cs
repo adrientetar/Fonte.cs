@@ -425,11 +425,6 @@ namespace Fonte.App.Controls
                                     testSegments: testSegments);
         }
 
-        public SnapResult SnapPoint(Point pos, ILocatable snapPoint, Point? clampPoint = null)
-        {
-            return UIBroker.SnapPoint(Layer, pos, 1f / ScaleFactor, snapPoint, clampPoint);
-        }
-
         public void Invalidate()
         {
             Canvas.Invalidate();

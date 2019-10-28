@@ -13,10 +13,13 @@ namespace Fonte.App.Delegates
 
     using System;
     using System.Linq;
+    using System.Numerics;
     using System.Windows.Input;
     using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
+    using Windows.System.Threading;
+    using Windows.UI;
     using Windows.UI.Core;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
@@ -25,6 +28,8 @@ namespace Fonte.App.Delegates
     public class BaseTool : ICanvasDelegate, IToolbarItem
     {
         private Point? _previousPoint;
+        private SnapResult _snapResult;
+        private ThreadPoolTimer _timer;
 
         public CoreCursor Cursor { get; protected set; }
 
@@ -63,6 +68,35 @@ namespace Fonte.App.Delegates
 
         public virtual void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
+            if (_snapResult != null)
+            {
+                var color = (Color)FindResource(canvas, DesignCanvas.SnapLineColorKey);
+                var halfSize = 2.5f * rescale;
+                var refPos = _snapResult.Position;
+
+                if (_snapResult.IsHighlightPosition)
+                {
+                    ds.DrawCircle(refPos, 5.5f * rescale, color, strokeWidth: rescale);
+                }
+                else
+                {
+                    foreach (var (p1, p2) in _snapResult.GetSnapLines())
+                    {
+                        ds.DrawLine(p1, p2, color, strokeWidth: rescale);
+
+                        if (p1 != refPos)
+                        {
+                            ds.DrawLine(p1.X - halfSize, p1.Y - halfSize, p1.X + halfSize, p1.Y + halfSize, color, strokeWidth: rescale);
+                            ds.DrawLine(p1.X - halfSize, p1.Y + halfSize, p1.X + halfSize, p1.Y - halfSize, color, strokeWidth: rescale);
+                        }
+                        if (p2 != refPos)
+                        {
+                            ds.DrawLine(p2.X - halfSize, p2.Y - halfSize, p2.X + halfSize, p2.Y + halfSize, color, strokeWidth: rescale);
+                            ds.DrawLine(p2.X - halfSize, p2.Y + halfSize, p2.X + halfSize, p2.Y - halfSize, color, strokeWidth: rescale);
+                        }
+                    }
+                }
+            }
         }
 
         public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
@@ -111,10 +145,15 @@ namespace Fonte.App.Delegates
                     Outline.MoveSelection(layer, dx, dy, GetMoveMode());
 
                     var selection = layer.Selection;
-                    if (selection.Count == 1 && selection.First() is Data.Point point)
+                    if (selection.Count == 1 && selection.First() is Data.Point point && Outline.TryJoinPath(layer, point))
                     {
-                        // TODO: add some kind of visual feedback with a timer?
-                        Outline.TryJoinPath(layer, point);
+                        DisplaySnapResult(
+                            canvas, UIBroker.GetSnapHighlight(point));
+                    }
+                    else if (selection.OfType<Data.Point>().LastOrDefault() is Data.Point focusPoint)
+                    {
+                        DisplaySnapResult(
+                            canvas, UIBroker.GetSnapLines(layer, focusPoint.ToVector2().ToPoint()));
                     }
                 }
             }
@@ -326,6 +365,39 @@ namespace Fonte.App.Delegates
                 Cursor = DefaultCursor;
                 canvas.InvalidateCursor();
             }
+            if (_timer != null)
+            {
+                _timer?.Cancel();
+                _timer = null;
+            }
+            _snapResult = null;
+        }
+
+        protected Point DisplaySnapResult(DesignCanvas canvas, SnapResult snapResult, double msec = 600)
+        {
+            if (snapResult.Position != _snapResult?.Position)
+            {
+                _timer?.Cancel();
+
+                _snapResult = snapResult;
+                _timer = ThreadPoolTimer.CreateTimer(async timer =>
+                {
+                    await canvas.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
+                    {
+                        var snapResult = _snapResult;
+                        if (snapResult != null)
+                        {
+                            snapResult.Hide();
+
+                            canvas.Invalidate();
+                        }
+                    });
+                }, TimeSpan.FromMilliseconds(msec));
+
+                canvas.Invalidate();
+            }
+
+            return snapResult.Position.ToPoint();
         }
 
         protected CoreCursor GetItemCursor(object item)

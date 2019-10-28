@@ -42,10 +42,9 @@ namespace Fonte.App.Delegates
         private bool _canDrag = false;
         private object _tappedItem;
         private (CanvasGeometry, CanvasGeometry)? _oldPaths;
+        private Data.Point _joinPoint;
         private float? _stretchParameter;
         private StretchConstraint _stretchConstraint;
-        private SnapResult _snapResult;
-        private ThreadPoolTimer _timer;
         private IChangeGroup _undoGroup;
 
         static readonly Point EmptyPoint = new Point(double.PositiveInfinity, double.NegativeInfinity);
@@ -98,6 +97,8 @@ namespace Fonte.App.Delegates
 
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
+            base.OnDraw(canvas, ds, rescale);
+
             if (_oldPaths != null)
             {
                 var color = Color.FromArgb(255, 210, 210, 210);
@@ -138,37 +139,6 @@ namespace Fonte.App.Delegates
                     ds.FillCircle(_focusPoint.ToVector2(), 4 * rescale, _stretchConstraint == StretchConstraint.Enable ?
                                                                         Color.FromArgb(225, 221, 31, 31) :
                                                                         Color.FromArgb(225, 150, 178, 228));
-                }
-            }
-        }
-
-        public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
-        {
-            if (_snapResult != null)
-            {
-                var color = (Color)FindResource(canvas, DesignCanvas.SnapLineColorKey);
-                var halfSize = 2.5f * rescale;
-
-                if (_snapResult.NearPoint is Data.Point point)
-                {
-                    ds.DrawCircle(point.ToVector2(), 5.5f * rescale, color, strokeWidth: rescale);
-                }
-
-                var refPos = _snapResult.Position;
-                foreach (var (p1, p2) in _snapResult.GetSnapLines())
-                {
-                    ds.DrawLine(p1, p2, color, strokeWidth: rescale);
-
-                    if (p1 != refPos)
-                    {
-                        ds.DrawLine(p1.X - halfSize, p1.Y - halfSize, p1.X + halfSize, p1.Y + halfSize, color, strokeWidth: rescale);
-                        ds.DrawLine(p1.X - halfSize, p1.Y + halfSize, p1.X + halfSize, p1.Y - halfSize, color, strokeWidth: rescale);
-                    }
-                    if (p2 != refPos)
-                    {
-                        ds.DrawLine(p2.X - halfSize, p2.Y - halfSize, p2.X + halfSize, p2.Y + halfSize, color, strokeWidth: rescale);
-                        ds.DrawLine(p2.X - halfSize, p2.Y + halfSize, p2.X + halfSize, p2.Y - halfSize, color, strokeWidth: rescale);
-                    }
                 }
             }
         }
@@ -421,28 +391,21 @@ namespace Fonte.App.Delegates
 
                     if (_tappedItem is ILocatable iloc)
                     {
-                        var snapResult = canvas.SnapPoint(pos, iloc, GetClampTarget(layer, iloc as Data.Point));
-                        if (snapResult.Position != _snapResult?.Position)
+                        Data.Point joinPoint;
+                        if (GetClampPoint(layer, iloc as Data.Point) is Point clampPoint)
                         {
-                            _timer?.Cancel();
-
-                            _snapResult = snapResult;
-                            _timer = ThreadPoolTimer.CreateTimer(async timer =>
-                            {
-                                await canvas.Dispatcher.RunAsync(CoreDispatcherPriority.High, () =>
-                                {
-                                    var snapResult = _snapResult;
-                                    if (snapResult != null)
-                                    {
-                                        snapResult.Hide();
-
-                                        canvas.Invalidate();
-                                    }
-                                });
-                            }, TimeSpan.FromMilliseconds(600));
+                            joinPoint = null;
+                            pos = DisplaySnapResult(
+                                canvas, UIBroker.SnapPointClamp(layer, pos, 1f / canvas.ScaleFactor, iloc, clampPoint));
+                        }
+                        else
+                        {
+                            var (snapResult, point) = UIBroker.SnapPoint(layer, pos, 1f / canvas.ScaleFactor, iloc);
+                            joinPoint = point;
+                            pos = DisplaySnapResult(canvas, snapResult);
                         }
 
-                        pos = _snapResult.Position.ToPoint();
+                        _joinPoint = joinPoint;
                     }
                     else
                     {
@@ -491,7 +454,7 @@ namespace Fonte.App.Delegates
         {
             if (CurrentAction == ActionType.DraggingItem)
             {
-                if (_tappedItem is Data.Point point && _snapResult?.NearPoint is Data.Point otherPoint)
+                if (_tappedItem is Data.Point point && _joinPoint is Data.Point otherPoint)
                 {
                     Outline.TryJoinPath(canvas.Layer, point, otherPoint);
                 }
@@ -566,11 +529,6 @@ namespace Fonte.App.Delegates
 
             if (CurrentAction != ActionType.None)
             {
-                if (_timer != null)
-                {
-                    _timer?.Cancel();
-                    _timer = null;
-                }
                 if (_undoGroup != null)
                 {
                     _undoGroup.Dispose();
@@ -578,12 +536,12 @@ namespace Fonte.App.Delegates
                 }
                 _points = null;
                 _screenOrigin = default;
-                _snapResult = null;
                 _origin = EmptyPoint;
                 _canDrag = false;
                 _focusPoint = EmptyPoint;
                 _tappedItem = null;
                 _oldPaths = null;
+                _joinPoint = null;
                 _stretchParameter = null;
                 _stretchConstraint = default;
 
@@ -603,7 +561,7 @@ namespace Fonte.App.Delegates
             return base.GetItemCursor(item);
         }
 
-        Point? GetClampTarget(Data.Layer layer, Data.Point point)
+        Point? GetClampPoint(Data.Layer layer, Data.Point point)
         {
             var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
             if (shift.HasFlag(CoreVirtualKeyStates.Down))

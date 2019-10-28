@@ -4,8 +4,6 @@
 
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Utilities;
-
     using System;
     using System.Collections.Generic;
     using System.Linq;

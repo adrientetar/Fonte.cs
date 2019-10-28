@@ -10,7 +10,6 @@ namespace Fonte.App.Utilities
 
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
     using Point = Windows.Foundation.Point;
@@ -18,45 +17,41 @@ namespace Fonte.App.Utilities
     public class SnapResult
     {
         public Vector2 Position { get; }
-        public Data.Point NearPoint { get; }
-        public (float, float) XSnapLine { get; }
-        public (float, float) YSnapLine { get; }
+        public bool IsHighlightPosition { get; private set; }
+        public (float, float) XSnapLine { get; private set; }
+        public (float, float) YSnapLine { get; private set; }
 
-        public bool IsVisible { get; private set; } = true;
-
-        public SnapResult(Vector2 pos, Data.Point nearPoint, (float, float) xSnapLine, (float, float) ySnapLine)
+        public SnapResult(Vector2 pos, bool isHighlightPosition, (float, float) xSnapLine, (float, float) ySnapLine)
         {
             Position = pos;
-            NearPoint = nearPoint;
+            IsHighlightPosition = isHighlightPosition;
             XSnapLine = xSnapLine;
             YSnapLine = ySnapLine;
         }
 
         public void Hide()
         {
-            IsVisible = false;
+            IsHighlightPosition = false;
+            XSnapLine = YSnapLine = (float.NaN, float.NaN);
         }
 
         public IEnumerable<(Vector2, Vector2)> GetSnapLines()
         {
-            if (IsVisible)
+            if (!float.IsNaN(XSnapLine.Item1))
             {
-                if (!float.IsNaN(XSnapLine.Item1))
-                {
-                    var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : Position.Y;
-                    yield return (
-                        new Vector2(Position.X, XSnapLine.Item1),
-                        new Vector2(Position.X, i2)
-                    );
-                }
-                if (!float.IsNaN(YSnapLine.Item1))
-                {
-                    var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : Position.X;
-                    yield return (
-                        new Vector2(YSnapLine.Item1, Position.Y),
-                        new Vector2(i2, Position.Y)
-                    );
-                }
+                var i2 = !float.IsNaN(XSnapLine.Item2) ? XSnapLine.Item2 : Position.Y;
+                yield return (
+                    new Vector2(Position.X, XSnapLine.Item1),
+                    new Vector2(Position.X, i2)
+                );
+            }
+            if (!float.IsNaN(YSnapLine.Item1))
+            {
+                var i2 = !float.IsNaN(YSnapLine.Item2) ? YSnapLine.Item2 : Position.X;
+                yield return (
+                    new Vector2(YSnapLine.Item1, Position.Y),
+                    new Vector2(i2, Position.Y)
+                );
             }
         }
     }
@@ -380,59 +375,88 @@ namespace Fonte.App.Utilities
                 ));
         }
 
-        public static SnapResult SnapPoint(Data.Layer layer, Point pos, float rescale, ILocatable snapPoint, Point? clampPoint = null)
+        public static SnapResult GetSnapHighlight(Data.Point snapPoint)
+        {
+            var empty = (float.NaN, float.NaN);
+
+            return new SnapResult(snapPoint.ToVector2(), true, empty, empty);
+        }
+
+        public static SnapResult GetSnapLines(Data.Layer layer, Point pos)
+        {
+            Vector2 snapPos;
+
+            snapPos.X = SnapPointX(layer, pos, 0f, out (float, float) xSnapLine);
+            snapPos.Y = SnapPointY(layer, pos, 0f, out (float, float) ySnapLine);
+
+            return new SnapResult(
+                snapPos,
+                false,
+                xSnapLine,
+                ySnapLine
+            );
+        }
+
+        public static SnapResult SnapPointClamp(Data.Layer layer, Point pos, float rescale, ILocatable refElement, Point clampPoint)
+        {
+            Vector2 snapPos;
+            (float, float) xSnapLine;
+            (float, float) ySnapLine;
+
+            var dx = pos.X - clampPoint.X;
+            var dy = pos.Y - clampPoint.Y;
+
+            // The clamped axis is ignored for snapping purposes.
+            var epsilon = 5 * rescale;
+            if (Math.Abs(dy) >= Math.Abs(dx))
+            {
+                xSnapLine = ((float)clampPoint.Y, (float)pos.Y);
+                snapPos.X = (float)clampPoint.X;
+                snapPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, refElement);
+            }
+            else
+            {
+                ySnapLine = ((float)clampPoint.X, (float)pos.X);
+                snapPos.Y = (float)clampPoint.Y;
+                snapPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, refElement);
+            }
+
+            return new SnapResult(
+                snapPos,
+                false,
+                xSnapLine,
+                ySnapLine
+            );
+        }
+
+        public static (SnapResult, Data.Point) SnapPoint(Data.Layer layer, Point pos, float rescale, ILocatable snapPoint)
         {
             Vector2 actualPos;
             Data.Point nearPoint = null;
             (float, float) xSnapLine;
             (float, float) ySnapLine;
 
-            // We clamp to the snapTarget pos if specified. The clamped axis is ignored for snapping purposes.
-            if (clampPoint.HasValue)
+            var epsilon = 5 * rescale;
+            if (SnapPointXY(layer, pos, epsilon) is Data.Point point)
             {
-                var dx = pos.X - clampPoint.Value.X;
-                var dy = pos.Y - clampPoint.Value.Y;
-
-                if (Math.Abs(dy) >= Math.Abs(dx))
-                {
-                    xSnapLine = ((float)clampPoint.Value.Y, (float)pos.Y);
-                    actualPos.X = (float)clampPoint.Value.X;
-                    actualPos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
-                }
-                else
-                {
-                    ySnapLine = ((float)clampPoint.Value.X, (float)pos.X);
-                    actualPos.Y = (float)clampPoint.Value.Y;
-                    actualPos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
-                }
+                actualPos = point.ToVector2();
+                nearPoint = point;
+                xSnapLine = ySnapLine = (float.NaN, float.NaN);
             }
             else
             {
-                if (SnapPointXY(layer, pos, rescale) is Data.Point point)
-                {
-                    actualPos = point.ToVector2();
-                    nearPoint = point;
-                    xSnapLine = ySnapLine = (float.NaN, float.NaN);
-                }
-                else
-                {
-                    actualPos.X = SnapPointX(layer, pos, rescale, out xSnapLine, snapPoint);
-                    actualPos.Y = SnapPointY(layer, pos, rescale, out ySnapLine, snapPoint);
-                }
+                actualPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, snapPoint);
+                actualPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, snapPoint);
             }
 
-            return new SnapResult(
-                actualPos,
-                nearPoint,
-                xSnapLine,
-                ySnapLine
-            );
+            return (new SnapResult(actualPos,
+                                   nearPoint != null,
+                                   xSnapLine,
+                                   ySnapLine), nearPoint);
         }
 
-        static Data.Point SnapPointXY(Data.Layer layer, Point pos, float rescale)
+        static Data.Point SnapPointXY(Data.Layer layer, Point pos, float epsilon)
         {
-            var halfSize = 5 * rescale;
-
             foreach (var path in layer.Paths)
             {
                 var prev = path.Points.Count >= 3 ? path.Points[path.Points.Count - 2] : path.Points.First();
@@ -444,8 +468,8 @@ namespace Fonte.App.Utilities
                         var dx = point.X - pos.X;
                         var dy = point.Y - pos.Y;
 
-                        if (-halfSize <= dx && dx <= halfSize &&
-                            -halfSize <= dy && dy <= halfSize)
+                        if (-epsilon <= dx && dx <= epsilon &&
+                            -epsilon <= dy && dy <= epsilon)
                         {
                             return point;
                         }
@@ -460,10 +484,8 @@ namespace Fonte.App.Utilities
             return null;
         }
 
-        static float SnapPointX(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
+        static float SnapPointX(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object snapPoint = null)
         {
-            var halfSize = 5 * rescale;
-
             // TODO: choose not the first, but the best snap target?
             foreach (var path in layer.Paths)
             {
@@ -475,7 +497,7 @@ namespace Fonte.App.Utilities
                     {
                         var dx = point.X - pos.X;
 
-                        if (-halfSize <= dx && dx <= halfSize)
+                        if (-epsilon <= dx && dx <= epsilon)
                         {
                             // Bias towards oncurve
                             if (point.Type == Data.PointType.None
@@ -503,15 +525,13 @@ namespace Fonte.App.Utilities
             return (float)pos.X;
         }
 
-        static float SnapPointY(Data.Layer layer, Point pos, float rescale, out (float, float) snapLine, object snapPoint)
+        static float SnapPointY(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object snapPoint = null)
         {
-            var halfSize = 5 * rescale;
-
             foreach (var vmetric in GetVerticalMetrics(layer))
             {
                 var dy = vmetric - pos.Y;
 
-                if (-halfSize <= dy && dy <= halfSize)
+                if (-epsilon <= dy && dy <= epsilon)
                 {
                     snapLine = (0, layer.Width);
                     return vmetric;
@@ -527,7 +547,7 @@ namespace Fonte.App.Utilities
                     {
                         var dy = point.Y - pos.Y;
 
-                        if (-halfSize <= dy && dy <= halfSize)
+                        if (-epsilon <= dy && dy <= epsilon)
                         {
                             // Bias towards oncurve
                             if (point.Type == Data.PointType.None

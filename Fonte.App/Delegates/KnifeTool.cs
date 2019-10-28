@@ -31,6 +31,8 @@ namespace Fonte.App.Delegates
 
         public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
+            base.OnDraw(canvas, ds, rescale);
+
             if (_points != null)
             {
                 var color = Color.FromArgb(120, 38, 38, 38);

@@ -57,6 +57,8 @@ namespace Fonte.App.Delegates
 
         public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
+            base.OnDrawCompleted(canvas, ds, rescale);
+
             if (_points != null)
             {
                 var backplateColor = Color.FromArgb(210, 60, 121, 100);

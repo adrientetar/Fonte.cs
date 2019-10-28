@@ -76,6 +76,8 @@ namespace Fonte.App.Delegates
 
         public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
         {
+            base.OnDrawCompleted(canvas, ds, rescale);
+
             if (_origin.HasValue && _anchor != _origin.Value)
             {
                 var color = (Color)FindResource(canvas, DesignCanvas.StrokeColorKey);
