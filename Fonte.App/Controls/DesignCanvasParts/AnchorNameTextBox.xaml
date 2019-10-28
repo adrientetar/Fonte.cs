@@ -1,4 +1,8 @@
-﻿<TextBox
+﻿<!--
+// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
+// See https://spdx.org/licenses/MPL-2.0.html for license information.
+  -->
+<TextBox
     x:Class="Fonte.App.Controls.DesignCanvasParts.AnchorNameTextBox"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
