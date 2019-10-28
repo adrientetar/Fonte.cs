@@ -108,10 +108,10 @@
     <Compile Include="Controls\PreviewCanvas.xaml.cs">
       <DependentUpon>PreviewCanvas.xaml</DependentUpon>
     </Compile>
-    <Compile Include="PreviewPage.xaml.cs">
+    <Compile Include="Pages\PreviewPage.xaml.cs">
       <DependentUpon>PreviewPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CanvasPage.xaml.cs">
+    <Compile Include="Pages\CanvasPage.xaml.cs">
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Commands\AlignPathsCommand.cs" />
@@ -212,11 +212,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="PreviewPage.xaml">
+    <Page Include="Pages\PreviewPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="CanvasPage.xaml">
+    <Page Include="Pages\CanvasPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
