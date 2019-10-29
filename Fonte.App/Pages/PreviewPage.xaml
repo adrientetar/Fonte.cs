@@ -19,7 +19,7 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <TextBox x:Name="TextBox" TextChanged="OnTextChanged"/>
+        <TextBox x:Name="TextBox" IsSpellCheckEnabled="False" TextChanged="OnTextChanged"/>
         <controls:PreviewCanvas x:Name="Canvas" Grid.Row="1"/>
     </Grid>
 </Page>

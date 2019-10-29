@@ -29,7 +29,7 @@ namespace Fonte.App.Utilities
             var point = points[index];
             if (point.Type == PointType.None)
             {
-                throw new InvalidOperationException($"Index {index} isn't at segment boundary");
+                throw new ArgumentException($"Index '{index}' isn't at segment boundary.", nameof(index));
             }
             point.IsSmooth = false;
 
@@ -110,7 +110,7 @@ namespace Fonte.App.Utilities
             if (path == otherPath)
             {
                 if (atStart == atOtherStart)
-                    throw new InvalidOperationException("Invalid same-point join");
+                    throw new InvalidOperationException("Invalid same-point join.");
 
                 path.Close();
                 if (mergeJoin)
@@ -495,7 +495,7 @@ namespace Fonte.App.Utilities
 
         static void DeletePathsSelection(Data.Layer layer)
         {
-            if (!TryReconstructCurve(layer))
+            if (!TryMergeCurves(layer))
             {
                 var outPaths = new List<Data.Path>();
                 foreach (var path in layer.Paths)
@@ -557,7 +557,7 @@ namespace Fonte.App.Utilities
             return Vector2.Normalize(atStart ? points[1] - points[0] : points[points.Count - 2] - points[points.Count - 1]);
         }
 
-        static bool TryReconstructCurve(Data.Layer layer)
+        static bool TryMergeCurves(Data.Layer layer)
         {
             var selection = layer.Selection;
             if (selection.Count == 1 &&

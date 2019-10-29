@@ -13,7 +13,7 @@ namespace Fonte.App.Serialization
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException($"{typeof(ElidingDecimalConverter)} is write-only");
+            throw new NotImplementedException($"{typeof(ElidingDecimalConverter)} is write-only.");
         }
 
         public override bool CanConvert(Type objectType)

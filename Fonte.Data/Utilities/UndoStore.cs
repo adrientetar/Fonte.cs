@@ -46,9 +46,9 @@ namespace Fonte.Data.Utilities
         public void Clear()
         {
             if (HasOpenGroup)
-                throw new InvalidOperationException($"Cannot clear stack with an open {nameof(ChangeGroup)}");
+                throw new InvalidOperationException($"Cannot clear stack with open undo group.");
             if (!IsEnabled)
-                throw new InvalidOperationException($"Cannot clear stack while undo store is disabled");
+                throw new InvalidOperationException($"Cannot clear stack while undo store is disabled.");
 
             _undoStack.Clear();
             _undoCounter = 0;
@@ -80,9 +80,9 @@ namespace Fonte.Data.Utilities
         public void Redo()
         {
             if (_redoCounter <= 0)
-                throw new InvalidOperationException("Cannot redo at this time");
+                throw new InvalidOperationException("Redo stack is empty.");
             if (_undoGroupIndex > 0)
-                throw new InvalidOperationException("Cannot redo while in undo group (" + _undoGroupIndex + ")");
+                throw new InvalidOperationException($"Cannot redo while in undo group ('{_undoGroupIndex}').");
 
             try
             {
@@ -113,9 +113,9 @@ namespace Fonte.Data.Utilities
         public void Undo()
         {
             if (_undoCounter <= 0)
-                throw new InvalidOperationException("Cannot undo at this time");
+                throw new InvalidOperationException("Undo stack is empty.");
             if (_undoGroupIndex > 0)
-                throw new InvalidOperationException("Cannot undo while in undo group (" + _undoGroupIndex + ")");
+                throw new InvalidOperationException($"Cannot undo while in undo group ('{_undoGroupIndex}').");
 
             try
             {
@@ -146,9 +146,8 @@ namespace Fonte.Data.Utilities
         public void OnUndoGroupDisposed(int index)
         {
             if (index != _undoGroupIndex)
-                throw new InvalidOperationException(string.Format(
-                        "Disposed undo group {0} is not the topmost one {1}",
-                        index, _undoGroupIndex));
+                throw new InvalidOperationException(
+                    $"Disposed undo group '{index}' is not the topmost one '{_undoGroupIndex}'.");
             --_undoGroupIndex;
 
             if (_undoGroupIndex == 0)

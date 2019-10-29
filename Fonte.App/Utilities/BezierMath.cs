@@ -13,7 +13,7 @@ namespace Fonte.App.Utilities
         public static Vector2[] FitCubic(List<Vector2> points, float err)
         {
             if (points.Count < 2)
-                throw new ArgumentException("At least two points are required for curve fitting");
+                throw new ArgumentException("At least two points are required for curve fitting.", nameof(points));
 
             var leftTangent = Vector2.Normalize(points[1] - points[0]);
             var rightTangent = Vector2.Normalize(points[points.Count - 2] - points[points.Count - 1]);
@@ -26,7 +26,7 @@ namespace Fonte.App.Utilities
         public static Vector2[] FitCubic(List<Vector2> points, Vector2 leftTangent, Vector2 rightTangent, float err)
         {
             if (points.Count < 2)
-                throw new ArgumentException("At least two points are required for curve fitting");
+                throw new ArgumentException("At least two points are required for curve fitting.", nameof(points));
             else if (points.Count == 2)
             {
                 var dist = (points[1] - points[0]).Length() / 3;

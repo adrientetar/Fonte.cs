@@ -55,7 +55,7 @@ namespace Fonte.App
 
         void OnNavigationFailed(object sender, NavigationFailedEventArgs args)
         {
-            throw new Exception($"Failed to load Page {args.SourcePageType.FullName}");
+            throw new Exception($"Failed to load Page {args.SourcePageType.FullName}.");
         }
 
         void OnSuspending(object sender, SuspendingEventArgs args)

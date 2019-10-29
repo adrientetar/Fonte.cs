@@ -356,7 +356,7 @@ namespace Fonte.App.Controls
             {
                 return result;
             }
-            throw new InvalidOperationException($"Matrix {matrix} isn't invertible");
+            throw new InvalidOperationException($"Matrix '{matrix}' isn't invertible.");
         }
 
         void SetToolOverride(Action stateChange)
@@ -393,7 +393,7 @@ namespace Fonte.App.Controls
         public void EditAnchorName(Data.Anchor anchor)
         {
             if (anchor.Parent == null || anchor.Parent != Layer)
-                throw new InvalidOperationException($"{anchor} is not a member of {Layer}");
+                throw new ArgumentException($"'{anchor}' is not a member of '{Layer}'.", nameof(anchor));
 
             var pos = FromCanvasPosition(anchor.ToVector2().ToPoint());
             pos.X += 10;

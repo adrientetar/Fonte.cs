@@ -120,7 +120,7 @@ namespace Fonte.Data
             if (Layer is Layer layer)
             {
                 if (layer == Parent)
-                    throw new InvalidOperationException($"Component of glyph '{Parent.Name}' is recursive");
+                    throw new InvalidOperationException($"Component of glyph '{Parent.Name}' is recursive.");
 
                 builder.AddGeometry(predicate.Invoke(layer));
             }

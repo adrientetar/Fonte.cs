@@ -35,7 +35,7 @@ namespace Fonte.Data
             set
             {
                 if (value)
-                    throw new InvalidOperationException($"Cannot set {nameof(IsModified)} to true");
+                    throw new InvalidOperationException($"Cannot set {nameof(IsModified)} to true.");
 
                 _undoStore.Clear();
             }

@@ -255,7 +255,7 @@ namespace Fonte.Data
                 if (value.HasValue)
                 {
                     if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                        throw new InvalidOperationException("Cannot set margin on empty layer.");
                     var bottomMargin = BottomMargin.Value;
 
                     if (value.Value != bottomMargin)
@@ -272,7 +272,7 @@ namespace Fonte.Data
                 else
                 {
                     if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
+                        throw new InvalidOperationException($"Cannot set null margin.");
                 }
             }
         }
@@ -348,7 +348,7 @@ namespace Fonte.Data
                 if (value.HasValue)
                 {
                     if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                        throw new InvalidOperationException("Cannot set margin on empty layer.");
                     var leftMargin = LeftMargin.Value;
 
                     if (value.Value != leftMargin)
@@ -363,7 +363,7 @@ namespace Fonte.Data
                 else
                 {
                     if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
+                        throw new InvalidOperationException($"Cannot set null margin.");
                 }
             }
         }
@@ -420,7 +420,7 @@ namespace Fonte.Data
                 if (value.HasValue)
                 {
                     if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                        throw new InvalidOperationException("Cannot set margin on empty layer.");
                     var rightMargin = RightMargin.Value;
 
                     if (value.Value != rightMargin)
@@ -431,7 +431,7 @@ namespace Fonte.Data
                 else
                 {
                     if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
+                        throw new InvalidOperationException($"Cannot set null margin.");
                 }
             }
         }
@@ -547,7 +547,7 @@ namespace Fonte.Data
                 if (value.HasValue)
                 {
                     if (bounds.IsEmpty)
-                        throw new InvalidOperationException("Cannot set margin on empty layer");
+                        throw new InvalidOperationException("Cannot set margin on empty layer.");
                     var topMargin = TopMargin.Value;
 
                     if (value.Value != topMargin)
@@ -561,7 +561,7 @@ namespace Fonte.Data
                 else
                 {
                     if (!bounds.IsEmpty)
-                        throw new InvalidOperationException($"Cannot set {value} margin");
+                        throw new InvalidOperationException($"Cannot set null margin.");
                 }
             }
         }

@@ -67,7 +67,7 @@ namespace Fonte.Data
             set
             {
                 if (value)
-                    throw new InvalidOperationException($"Cannot set {nameof(IsModified)} to true");
+                    throw new ArgumentException($"Cannot set {nameof(IsModified)} to true.");
 
                 foreach (var glyph in Glyphs)
                 {

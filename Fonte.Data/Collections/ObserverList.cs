@@ -117,7 +117,7 @@ namespace Fonte.Data.Collections
 
         public void InsertRange(int index, List<T> list)
         {
-            if (list == null) throw new ArgumentNullException("collection");
+            if (list == null) throw new ArgumentNullException(nameof(list));
 
             //List.InsertRange(index, list);
 
@@ -147,21 +147,21 @@ namespace Fonte.Data.Collections
 
         public T First()
         {
-            if (Count == 0) throw new InvalidOperationException("List is empty");
+            if (Count == 0) throw new InvalidOperationException("List is empty.");
 
             return this[0];
         }
 
         public T Last()
         {
-            if (Count == 0) throw new InvalidOperationException("List is empty");
+            if (Count == 0) throw new InvalidOperationException("List is empty.");
 
             return this[Count - 1];
         }
 
         public T Pop()
         {
-            if (Count == 0) throw new InvalidOperationException("List is empty");
+            if (Count == 0) throw new InvalidOperationException("List is empty.");
 
             return PopAt(Count - 1);
         }

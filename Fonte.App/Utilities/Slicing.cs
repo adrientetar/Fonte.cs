@@ -234,7 +234,7 @@ namespace Fonte.App.Utilities
             {
                 Data.PointType.Curve => path.Points[index >= 3 ? index - 3 : index - 3 + path.Points.Count],
                 Data.PointType.Line => Sequence.PreviousItem(path.Points, index),
-                var type => throw new InvalidOperationException($"Unattended segment type {type}")
+                var type => throw new ArgumentException($"Unexpected point type '{type}'.", nameof(point))
             };
         }
 

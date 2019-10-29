@@ -62,8 +62,7 @@ namespace System.Collections.ObjectModel
         {
             if (key == null) throw new ArgumentNullException(nameof(key));
 
-            TValue value;
-            Dictionary.TryGetValue(key, out value);
+            Dictionary.TryGetValue(key, out TValue value);
             var removed = Dictionary.Remove(key);
             if (removed)
                 OnCollectionChanged(NotifyCollectionChangedAction.Remove, new KeyValuePair<TKey, TValue>(key, value));
@@ -178,10 +177,9 @@ namespace System.Collections.ObjectModel
 
         void Insert(TKey key, TValue value, bool add)
         {
-            if (key == null) throw new ArgumentNullException("key");
+            if (key == null) throw new ArgumentNullException(nameof(key));
 
-            TValue item;
-            if (Dictionary.TryGetValue(key, out item))
+            if (Dictionary.TryGetValue(key, out TValue item))
             {
                 if (add) throw new ArgumentException("An item with the same key has already been added.");
                 if (Equals(item, value)) return;

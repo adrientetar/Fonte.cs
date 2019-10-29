@@ -257,8 +257,6 @@ namespace Fonte.App.Delegates
                 }
                 canvas.Layer.Paths.Add(path);
                 path.IsSelected = true;
-
-                ((App)Application.Current).InvalidateData();
             }
 
             base.OnPointerReleased(canvas, args);
@@ -268,14 +266,14 @@ namespace Fonte.App.Delegates
         {
             base.CompleteMove(canvas);
 
-            if (_origin.HasValue)
+            if (_undoGroup != null)
             {
                 _undoGroup.Dispose();
                 _undoGroup = null;
-                _origin = null;
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
+            _origin = null;
         }
 
         #region IToolBarEntry implementation

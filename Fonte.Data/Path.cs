@@ -122,7 +122,7 @@ namespace Fonte.Data
                                 stack[stackIndex++] = point.ToVector2();
                                 break;
                             default:
-                                throw new InvalidOperationException($"{point.Type} isn't a valid segment type here");
+                                throw new InvalidOperationException($"Illegal point type '{point.Type}'.");
                         }
                     }
 
@@ -184,7 +184,7 @@ namespace Fonte.Data
             _points = points ?? new List<Point>();
             _extraData = extraData;
 
-            foreach (Point point in Points)
+            foreach (var point in Points)
             {
                 //point.Selected = false;
                 point.Parent = this;
@@ -240,7 +240,6 @@ namespace Fonte.Data
                         (point.Type, type) = (type, point.Type);
                     }
                 }
-                // TODO: add a replace action? Could be introduced as a setter on the owner property
                 points.Clear();
                 points.AddRange(result);
             }
@@ -249,7 +248,7 @@ namespace Fonte.Data
         public void StartAt(int index)
         {
             if (IsOpen)
-                throw new InvalidOperationException("Cannot set start point in open path");
+                throw new InvalidOperationException("Cannot set start point in open path.");
 
             if (Points.Count - index + 1 != 0)
             {
@@ -258,7 +257,7 @@ namespace Fonte.Data
                 var end = Points.GetRange(0, index + 1);
                 if (end.Count > 0 && end[end.Count - 1].Type == PointType.None)
                 {
-                    throw new InvalidOperationException($"Index {index} isn't at segment boundary");
+                    throw new ArgumentException($"Index '{index}' isn't at segment boundary.", nameof(index));
                 }
                 Points.RemoveRange(0, index + 1);
                 Points.AddRange(end);
@@ -424,7 +423,7 @@ namespace Fonte.Data
                 {
                     if (_index != 0)
                         throw new InvalidOperationException(
-                            string.Format("Segment for conversion to {0} needs to be at index 0 ({1})", type, _index));
+                            $"Segment for conversion to '{type}' needs to be at index 0 ('{_index}').");
 
                     onCurve.IsSmooth = false;
                     onCurve.Type = PointType.Move;
@@ -435,7 +434,7 @@ namespace Fonte.Data
             }
 
             throw new InvalidOperationException(
-                string.Format("Cannot convert from {0} to {1}", onCurve.Type, type));
+                $"Cannot convert from '{onCurve.Type}' to '{type}'.");
         }
 
         public void Remove(bool nodeBias = false)
@@ -527,7 +526,7 @@ namespace Fonte.Data
             }
             else
             {
-                throw new NotImplementedException($"Cannot split {onCurve.Type} segment");
+                throw new NotImplementedException($"Cannot split '{onCurve.Type}' segment.");
             }
 
             return new Segment(_path, _index + _count, _count);

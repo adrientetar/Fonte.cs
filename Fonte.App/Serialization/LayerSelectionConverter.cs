@@ -14,7 +14,7 @@ namespace Fonte.App.Serialization
 
         public override Data.Layer ReadJson(JsonReader reader, Type objectType, Data.Layer existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            throw new NotImplementedException($"{typeof(LayerSelectionConverter)} is write-only");
+            throw new NotImplementedException($"{typeof(LayerSelectionConverter)} is write-only.");
         }
 
         public override void WriteJson(JsonWriter writer, Data.Layer layer, JsonSerializer serializer)

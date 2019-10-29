@@ -138,8 +138,6 @@ namespace Fonte.App.Delegates
                 layer.ClearSelection();
                 Slicing.SlicePaths(layer, _origin.Value.ToVector2(), _anchor.ToVector2(),
                                     breakPaths: !args.KeyModifiers.HasFlag(VirtualKeyModifiers.Menu));
-
-                ((App)Application.Current).InvalidateData();
             }
 
             base.OnPointerReleased(canvas, args);
@@ -152,15 +150,11 @@ namespace Fonte.App.Delegates
             if (_undoGroup != null)
             {
                 _undoGroup.Dispose();
-                _undoGroup = null;
-            }
-            if (_points != null)
-            {
-                _points = null;
 
-                canvas.Invalidate();
+                ((App)Application.Current).InvalidateData();
             }
             _origin = null;
+            _points = null;
         }
 
         #region IToolBarEntry implementation

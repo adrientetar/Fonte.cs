@@ -92,7 +92,7 @@ namespace Fonte.Data.Changes
         {
             if (_disposed)
             {
-                throw new InvalidOperationException($"Cannot add item to disposed {nameof(ChangeGroup)}");
+                throw new ObjectDisposedException($"Cannot add item to disposed {nameof(ChangeGroup)}.");
             }
 
             _inner.Add(item);
@@ -104,7 +104,7 @@ namespace Fonte.Data.Changes
         {
             if (_disposed)
             {
-                throw new InvalidOperationException($"Cannot clone disposed {nameof(ChangeGroup)}");
+                throw new ObjectDisposedException($"Cannot clone disposed {nameof(ChangeGroup)}.");
             }
 
             return new ChangeGroup(_inner, index);

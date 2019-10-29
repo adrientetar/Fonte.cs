@@ -9,7 +9,6 @@ namespace Fonte.App.Delegates
     using Fonte.Data.Interfaces;
 
     using System;
-    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
     using Windows.Foundation;
@@ -25,6 +24,7 @@ namespace Fonte.App.Delegates
         private Point _screenOrigin;
         private bool _shouldMoveOnCurve;
         private ValueTuple<Data.Point, bool>? _stashedOffCurve;
+        private Data.Point _point;
         private IChangeGroup _undoGroup;
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Pen;
@@ -172,13 +172,18 @@ namespace Fonte.App.Delegates
                             layer.ClearSelection();
                         }
                         var otherSegment = segment.SplitAt(t);
-                        segment.OnCurve.IsSelected = true;
 
                         foreach (var point in Enumerable.Concat(segment.Points, otherSegment.OffCurves))
                         {
                             point.X = Outline.RoundToGrid(point.X);
                             point.Y = Outline.RoundToGrid(point.Y);
                         }
+
+                        _point = segment.OnCurve;
+                        _point.IsSelected = true;
+
+                        _undoGroup.Dispose();
+                        _undoGroup = layer.CreateUndoGroup();
                     }
                 }
                 else
@@ -236,7 +241,18 @@ namespace Fonte.App.Delegates
 
             var ptPoint = args.GetCurrentPoint(canvas);
             var isLeftButtonPressed = ptPoint.Properties.IsLeftButtonPressed;
-            if (_path != null && isLeftButtonPressed)
+            if (isLeftButtonPressed && _point != null)
+            {
+                var pos = canvas.FromClientPosition(ptPoint.Position);
+
+                _undoGroup.Reset();
+
+                Outline.MoveSelection(canvas.Layer, (float)pos.X - _point.X,
+                                                    (float)pos.Y - _point.Y, GetMoveMode());
+
+                ((App)Application.Current).InvalidateData();
+            }
+            else if (isLeftButtonPressed && _path != null)
             {
                 var pos = canvas.FromClientPosition(ptPoint.Position);
                 var selPoint = GetMovingPoint(_path);
@@ -378,6 +394,7 @@ namespace Fonte.App.Delegates
             _screenOrigin = default;
             _shouldMoveOnCurve = false;
             _stashedOffCurve = null;
+            _point = null;
         }
 
         protected new CoreCursor GetItemCursor(object item)

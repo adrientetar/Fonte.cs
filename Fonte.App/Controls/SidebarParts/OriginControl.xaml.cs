@@ -53,7 +53,7 @@ namespace Fonte.App.Controls.SidebarParts
             var value = (int)args.NewValue;
 
             if (value < 0 || value > 8)
-                throw new ArgumentOutOfRangeException($"{value}");
+                throw new ArgumentOutOfRangeException(nameof(value), $"Value must be between 0 and 8 inclusive ('{value}').");
 
             ((OriginControl)sender).SelectedIndexChanged?.Invoke(sender, EventArgs.Empty);
         }

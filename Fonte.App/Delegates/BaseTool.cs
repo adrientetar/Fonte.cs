@@ -101,13 +101,12 @@ namespace Fonte.App.Delegates
         public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
             var control = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
 
-            if (!alt.HasFlag(CoreVirtualKeyStates.Down) && (
-                    args.Key == VirtualKey.Left ||
-                    args.Key == VirtualKey.Up ||
-                    args.Key == VirtualKey.Right ||
-                    args.Key == VirtualKey.Down))
+            // TODO: batch and use the undoGroup reset thing on close enough keyboard moves
+            if (args.Key == VirtualKey.Left ||
+                args.Key == VirtualKey.Up ||
+                args.Key == VirtualKey.Right ||
+                args.Key == VirtualKey.Down)
             {
                 int dx = 0, dy = 0;
                 if (args.Key == VirtualKey.Left)
@@ -159,6 +158,8 @@ namespace Fonte.App.Delegates
             else if (args.Key == VirtualKey.Back ||
                      args.Key == VirtualKey.Delete)
             {
+                var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+
                 Outline.DeleteSelection(canvas.Layer, breakPaths: alt.HasFlag(CoreVirtualKeyStates.Down));
             }
             else if (args.Key == VirtualKey.Enter)

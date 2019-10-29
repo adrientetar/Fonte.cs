@@ -21,12 +21,12 @@ namespace Fonte.Data.Converters
         {
             var contract = serializer.ContractResolver.ResolveContract(objectType) as JsonObjectContract;
             if (contract == null)
-                throw new JsonSerializationException(string.Format("Invalid type {0}.", objectType.FullName));
+                throw new JsonSerializationException($"Invalid type {objectType.FullName}.");
 
             if (reader.MoveToContentAndAssert().TokenType == JsonToken.Null)
                 return null;
             if (reader.TokenType != JsonToken.StartArray)
-                throw new JsonSerializationException(string.Format("Token {0} was not {1}.", reader.TokenType, nameof(JsonToken.StartArray)));
+                throw new JsonSerializationException($"Token {reader.TokenType} was not {nameof(JsonToken.StartArray)}.");
 
             existingValue = existingValue ?? contract.DefaultCreator();
 
@@ -64,7 +64,7 @@ namespace Fonte.Data.Converters
             var objectType = value.GetType();
             var contract = serializer.ContractResolver.ResolveContract(objectType) as JsonObjectContract;
             if (contract == null)
-                throw new JsonSerializationException(string.Format("Invalid type {0}.", objectType.FullName));
+                throw new JsonSerializationException($"Invalid type {objectType.FullName}.");
 
             writer.WriteStartArray();
             foreach (var property in SerializableProperties(contract))

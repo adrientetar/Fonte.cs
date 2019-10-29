@@ -34,7 +34,7 @@ namespace Fonte.App.Controls.DesignCanvasParts
         void FinishEditing()
         {
             if (_anchor == null)
-                throw new InvalidOperationException("anchor is null");
+                throw new InvalidOperationException($"{nameof(_anchor)} is null");
 
             _anchor.Name = Text;
             ((App)Application.Current).InvalidateData();

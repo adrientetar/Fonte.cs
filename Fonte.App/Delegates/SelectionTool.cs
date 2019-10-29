@@ -585,22 +585,22 @@ namespace Fonte.App.Delegates
             return null;
         }
 
-        Point GetOriginPoint(ISelectable item, Point pos)
+        Point GetOriginPoint(ISelectable element, Point pos)
         {
-            if (item is Data.Component)
+            if (element is Data.Component)
             {
                 return pos;
             }
-            else if (item is Data.Segment segment)
+            else if (element is Data.Segment segment)
             {
                 // TODO: avoid reprojecting?
                 return segment.ProjectPoint(pos.ToVector2()).Value.Item1.ToPoint();
             }
-            else if (item is ILocatable iloc)
+            else if (element is ILocatable iloc)
             {
                 return iloc.ToVector2().ToPoint();
             }
-            throw new ArgumentException($"{item} is not allowed here.");
+            throw new ArgumentException($"Unexpected element '{element}'.");
         }
 
         #region IToolBarEntry implementation
