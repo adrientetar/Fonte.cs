@@ -26,21 +26,11 @@
             <RowDefinition Height="420"/>
         </Grid.RowDefinitions>
 
-        <AutoSuggestBox PlaceholderText="Search…"
-                        TextChanged="OnAutoSuggestBoxTextChanged"
-                        PreviewKeyDown="OnAutoSuggestBoxKeyDown"/>
+        <TextBox PlaceholderText="Search…"
+                 TextChanged="OnTextBoxTextChanged"
+                 PreviewKeyDown="OnTextBoxKeyDown"/>
 
-        <ListView x:Name="List" ItemsSource="{x:Bind CurrentGlyphs}" Grid.Row="1">
-            <ListView.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <VirtualizingStackPanel>
-                        <VirtualizingStackPanel.ChildrenTransitions>
-                            <TransitionCollection/>
-                        </VirtualizingStackPanel.ChildrenTransitions>
-                    </VirtualizingStackPanel>
-                </ItemsPanelTemplate>
-            </ListView.ItemsPanel>
-
+        <ListView x:Name="List" ItemsSource="{x:Bind CurrentGlyphs, Mode=OneWay}" Grid.Row="1">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:Glyph">
                     <Grid>

@@ -5,16 +5,17 @@ namespace Fonte.App.Dialogs
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
     using System.Linq;
     using System.Threading.Tasks;
     using Windows.System;
+    using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
     using Windows.UI.Xaml.Input;
 
     public partial class GlyphDialog : ContentDialog
     {
         public ContentDialogResult Result { get; set; }
+
         public new async Task<ContentDialogResult> ShowAsync()
         {
             var baseResult = await base.ShowAsync();
@@ -27,7 +28,14 @@ namespace Fonte.App.Dialogs
 
         /**/
 
-        public ObservableCollection<Data.Glyph> CurrentGlyphs { get; }
+        public static readonly DependencyProperty CurrentGlyphsProperty =
+            DependencyProperty.Register("CurrentGlyphs", typeof(IList<Data.Glyph>), typeof(GlyphDialog), null);
+
+        public IList<Data.Glyph> CurrentGlyphs
+        {
+            get { return (IList<Data.Glyph>)GetValue(CurrentGlyphsProperty); }
+            set { SetValue(CurrentGlyphsProperty, value); }
+        }
 
         public Data.Glyph Glyph { get; private set; }
 
@@ -37,33 +45,22 @@ namespace Fonte.App.Dialogs
         {
             Glyphs = glyphs;
 
-            CurrentGlyphs = new ObservableCollection<Data.Glyph>(glyphs);
+            CurrentGlyphs = glyphs;
 
             InitializeComponent();
         }
 
-        void OnAutoSuggestBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-        {
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-            {
-                var text = sender.Text;
-
-                CurrentGlyphs.Clear();
-                foreach (var g in Glyphs.Where(glyph => glyph.Name.StartsWith(text))) { CurrentGlyphs.Add(g); }
-
-                if (List.Items.Count > 0)
-                {
-                    List.SelectedIndex = 0;
-                }
-            }
-        }
-
         void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            Glyph = (Data.Glyph)List.SelectedItem;
+            Glyph = List.SelectedIndex switch
+            {
+                var ix when ix < 0 => CurrentGlyphs.FirstOrDefault(),
+                var ix when ix < CurrentGlyphs.Count => CurrentGlyphs[ix],
+                _ => null
+            };
         }
 
-        void OnAutoSuggestBoxKeyDown(object sender, KeyRoutedEventArgs args)
+        void OnTextBoxKeyDown(object sender, KeyRoutedEventArgs args)
         {
             if (args.Key == VirtualKey.Enter)
             {
@@ -99,6 +96,19 @@ namespace Fonte.App.Dialogs
             }
 
             args.Handled = true;
+        }
+
+        void OnTextBoxTextChanged(object sender, TextChangedEventArgs args)
+        {
+            var text = ((TextBox)sender).Text;
+
+            CurrentGlyphs = Glyphs.Where(glyph => glyph.Name.StartsWith(text))
+                                  .ToArray();
+
+            if (List.Items.Count > 0)
+            {
+                List.SelectedIndex = 0;
+            }
         }
     }
 }
