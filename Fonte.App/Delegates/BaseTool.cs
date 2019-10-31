@@ -39,7 +39,7 @@ namespace Fonte.App.Delegates
             Cursor = DefaultCursor;
         }
 
-        public virtual object FindResource(DesignCanvas canvas, object resourceKey)
+        public virtual object FindResource(DesignCanvas canvas, string resourceKey)
         {
             return canvas.Resources[resourceKey];
         }
@@ -438,14 +438,21 @@ namespace Fonte.App.Delegates
 
         protected static Point ClampToOrigin(Point pos, Point origin)
         {
+            ClampToOrigin(pos, origin, out Point result);
+            return result;
+        }
+        protected static UIBroker.Axis ClampToOrigin(Point pos, Point origin, out Point result)
+        {
             var dx = pos.X - origin.X;
             var dy = pos.Y - origin.Y;
 
             if (Math.Abs(dy) >= Math.Abs(dx))
             {
-                return new Point(origin.X, pos.Y);
+                result = new Point(origin.X, pos.Y);
+                return UIBroker.Axis.Y;
             }
-            return new Point(pos.X, origin.Y);
+            result = new Point(pos.X, origin.Y);
+            return UIBroker.Axis.X;
         }
 
         protected static MoveMode GetMoveMode()

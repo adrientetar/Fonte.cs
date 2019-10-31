@@ -31,20 +31,20 @@ namespace Fonte.App.Delegates
             canvas.Invalidate();
         }
 
-        public override object FindResource(DesignCanvas canvas, object resourceKey)
+        public override object FindResource(DesignCanvas canvas, string resourceKey)
         {
-            var key = (string)resourceKey;
-            if (key == DesignCanvas.DrawAnchorsKey ||
-                key == DesignCanvas.DrawGuidelinesKey ||
-                key == DesignCanvas.DrawMetricsKey ||
-                key == DesignCanvas.DrawPointsKey ||
-                key == DesignCanvas.DrawSelectionKey ||
-                key == DesignCanvas.DrawStrokeKey)
+            if (resourceKey == DesignCanvas.DrawAnchorsKey ||
+                resourceKey == DesignCanvas.DrawGuidelinesKey ||
+                resourceKey == DesignCanvas.DrawLayersKey ||
+                resourceKey == DesignCanvas.DrawMetricsKey ||
+                resourceKey == DesignCanvas.DrawPointsKey ||
+                resourceKey == DesignCanvas.DrawSelectionKey ||
+                resourceKey == DesignCanvas.DrawStrokeKey)
             {
                 return false;
             }
-            else if (key == DesignCanvas.ComponentColorKey ||
-                     key == DesignCanvas.FillColorKey)
+            else if (resourceKey == DesignCanvas.ComponentColorKey ||
+                     resourceKey == DesignCanvas.FillColorKey)
             {
                 return Colors.Black;
             }

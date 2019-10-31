@@ -55,7 +55,7 @@ namespace Fonte.App.Utilities
         }
     }
 
-    static class UIBroker
+    public static class UIBroker
     {
         public struct BBoxHandle
         {
@@ -247,7 +247,13 @@ namespace Fonte.App.Utilities
             return null;
         }
 
-        static IEnumerable<int> GetVerticalMetrics(Data.Master master)
+        static IEnumerable<float> GetHMetrics(Data.Layer layer)
+        {
+            yield return 0;
+            yield return layer.Width;
+        }
+
+        static IEnumerable<float> GetVMetrics(Data.Master master)
         {
             yield return master.Ascender;
             yield return master.CapHeight;
@@ -255,13 +261,13 @@ namespace Fonte.App.Utilities
             yield return 0;
             yield return master.Descender;
         }
-        static IEnumerable<int> GetVerticalMetrics(Data.Layer layer)
+        static IEnumerable<float> GetVMetrics(Data.Layer layer)
         {
             if (layer.Master is Data.Master master)
             {
-                return GetVerticalMetrics(master);
+                return GetVMetrics(master);
             }
-            return Enumerable.Empty<int>();  // TODO: or a fallback?
+            return Enumerable.Empty<float>();  // TODO: or a fallback?
         }
 
         public static object HitTest(Data.Layer layer, Point pos, float rescale, ILayerElement ignoreElement = null,
@@ -396,7 +402,7 @@ namespace Fonte.App.Utilities
             );
         }
 
-        public static SnapResult SnapPointClamp(Data.Layer layer, Point pos, float rescale, ILocatable refElement, Point clampPoint)
+        public static SnapResult SnapPointClamp(Data.Layer layer, Point pos, float rescale, Point clampPoint, ILocatable refElement = null)
         {
             Vector2 snapPos;
             (float, float) xSnapLine;
@@ -411,13 +417,13 @@ namespace Fonte.App.Utilities
             {
                 xSnapLine = ((float)clampPoint.Y, (float)pos.Y);
                 snapPos.X = (float)clampPoint.X;
-                snapPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, refElement);
+                snapPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, refElement: refElement);
             }
             else
             {
                 ySnapLine = ((float)clampPoint.X, (float)pos.X);
                 snapPos.Y = (float)clampPoint.Y;
-                snapPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, refElement);
+                snapPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, refElement: refElement);
             }
 
             return new SnapResult(
@@ -428,7 +434,7 @@ namespace Fonte.App.Utilities
             );
         }
 
-        public static (SnapResult, Data.Point) SnapPoint(Data.Layer layer, Point pos, float rescale, ILocatable snapPoint)
+        public static (SnapResult, Data.Point) SnapPoint(Data.Layer layer, Point pos, float rescale, ILocatable refElement = null)
         {
             Vector2 actualPos;
             Data.Point nearPoint = null;
@@ -436,7 +442,7 @@ namespace Fonte.App.Utilities
             (float, float) ySnapLine;
 
             var epsilon = 5 * rescale;
-            if (SnapPointXY(layer, pos, epsilon) is Data.Point point)
+            if (SnapPointXY(layer, pos, epsilon, epsilon) is Data.Point point)
             {
                 actualPos = point.ToVector2();
                 nearPoint = point;
@@ -444,8 +450,8 @@ namespace Fonte.App.Utilities
             }
             else
             {
-                actualPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, snapPoint);
-                actualPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, snapPoint);
+                actualPos.X = SnapPointX(layer, pos, epsilon, out xSnapLine, refElement: refElement);
+                actualPos.Y = SnapPointY(layer, pos, epsilon, out ySnapLine, refElement: refElement);
             }
 
             return (new SnapResult(actualPos,
@@ -454,7 +460,54 @@ namespace Fonte.App.Utilities
                                    ySnapLine), nearPoint);
         }
 
-        static Data.Point SnapPointXY(Data.Layer layer, Point pos, float epsilon)
+        [Flags]
+        public enum Axis
+        {
+            X = 1 << 0,
+            Y = 1 << 1,
+            XY = X | Y
+        };
+
+        public static Vector2 SnapPointDirect(Data.Layer layer, Point pos, float rescale, Axis snapAxis = Axis.XY)
+        {
+            var epsilon = 5 * rescale;
+            var (epsilonX, epsilonY) = snapAxis switch
+            {
+                Axis.X => (epsilon, 0),
+                Axis.Y => (0, epsilon),
+                _ => (epsilon, epsilon)
+            };
+
+            if (SnapPointXY(layer, pos, epsilonX, epsilonY) is Data.Point point)
+            {
+                return point.ToVector2();
+            }
+
+            if (snapAxis.HasFlag(Axis.X))
+                foreach (var hmetric in GetHMetrics(layer))
+                {
+                    var dx = hmetric - pos.X;
+
+                    if (-epsilon <= dx && dx <= epsilon)
+                    {
+                        return new Vector2(hmetric, (float)pos.Y);
+                    }
+                }
+            if (snapAxis.HasFlag(Axis.Y))
+                foreach (var vmetric in GetVMetrics(layer))
+                {
+                    var dy = vmetric - pos.Y;
+
+                    if (-epsilon <= dy && dy <= epsilon)
+                    {
+                        return new Vector2((float)pos.X, vmetric);
+                    }
+                }
+
+            return pos.ToVector2();
+        }
+
+        static Data.Point SnapPointXY(Data.Layer layer, Point pos, float epsilonX, float epsilonY)
         {
             foreach (var path in layer.Paths)
             {
@@ -467,8 +520,8 @@ namespace Fonte.App.Utilities
                         var dx = point.X - pos.X;
                         var dy = point.Y - pos.Y;
 
-                        if (-epsilon <= dx && dx <= epsilon &&
-                            -epsilon <= dy && dy <= epsilon)
+                        if (-epsilonX <= dx && dx <= epsilonX &&
+                            -epsilonY <= dy && dy <= epsilonY)
                         {
                             return point;
                         }
@@ -483,7 +536,7 @@ namespace Fonte.App.Utilities
             return null;
         }
 
-        static float SnapPointX(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object snapPoint = null)
+        static float SnapPointX(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object refElement = null)
         {
             // TODO: choose not the first, but the best snap target?
             foreach (var path in layer.Paths)
@@ -492,7 +545,7 @@ namespace Fonte.App.Utilities
                 var point = path.Points.Count >= 3 ? path.Points[path.Points.Count - 1] : prev;
                 foreach (var next in path.Points)
                 {
-                    if (!IsMoveTarget(point, prev, next) || ReferenceEquals(point, snapPoint))
+                    if (!IsMoveTarget(point, prev, next) || ReferenceEquals(point, refElement))
                     {
                         var dx = point.X - pos.X;
 
@@ -524,25 +577,15 @@ namespace Fonte.App.Utilities
             return (float)pos.X;
         }
 
-        static float SnapPointY(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object snapPoint = null)
+        static float SnapPointY(Data.Layer layer, Point pos, float epsilon, out (float, float) snapLine, object refElement = null)
         {
-            foreach (var vmetric in GetVerticalMetrics(layer))
-            {
-                var dy = vmetric - pos.Y;
-
-                if (-epsilon <= dy && dy <= epsilon)
-                {
-                    snapLine = (0, layer.Width);
-                    return vmetric;
-                }
-            }
             foreach (var path in layer.Paths)
             {
                 var prev = path.Points.Count >= 3 ? path.Points[path.Points.Count - 2] : path.Points.First();
                 var point = path.Points.Count >= 3 ? path.Points[path.Points.Count - 1] : prev;
                 foreach (var next in path.Points)
                 {
-                    if (!IsMoveTarget(point, prev, next) || ReferenceEquals(point, snapPoint))
+                    if (!IsMoveTarget(point, prev, next) || ReferenceEquals(point, refElement))
                     {
                         var dy = point.Y - pos.Y;
 
@@ -567,6 +610,16 @@ namespace Fonte.App.Utilities
 
                     prev = point;
                     point = next;
+                }
+            }
+            foreach (var vmetric in GetVMetrics(layer))
+            {
+                var dy = vmetric - pos.Y;
+
+                if (-epsilon <= dy && dy <= epsilon)
+                {
+                    snapLine = (0, layer.Width);
+                    return vmetric;
                 }
             }
 

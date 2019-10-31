@@ -13,7 +13,7 @@ namespace Fonte.App.Interfaces
     {
         CoreCursor Cursor { get; }
 
-        object FindResource(DesignCanvas canvas, object resourceKey);
+        object FindResource(DesignCanvas canvas, string resourceKey);
         bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs args);
         void OnActivated(DesignCanvas canvas);
         void OnDisabled(DesignCanvas canvas);

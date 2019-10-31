@@ -32,7 +32,7 @@ namespace Fonte.App.Controls
             {
                 if (value < 0 || value >= Items.Count)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), value, $"Invalid index '{value}'");
+                    throw new ArgumentOutOfRangeException(nameof(value), value, $"Invalid index '{value}'.");
                 }
                 _selectedIndex = value;
 

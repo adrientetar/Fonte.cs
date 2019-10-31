@@ -3,6 +3,7 @@
 
 namespace Fonte.App.Controls
 {
+    using System;
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.Core;
     using Windows.UI;
@@ -28,14 +29,14 @@ namespace Fonte.App.Controls
         public string Title
         {
             get => (string)GetValue(TitleProperty);
-            set { SetValue(TitleProperty, value); }
+            private set { SetValue(TitleProperty, value); }
         }
 
         public TitleBar()
         {
             InitializeComponent();
 
-            OnUserTitleChanged(null);
+            OnUserTitleChanged(string.Empty);
         }
 
         void OnControlLoaded(object sender, RoutedEventArgs args)
@@ -115,14 +116,14 @@ namespace Fonte.App.Controls
 
         void OnUserTitleChanged(string userTitle)
         {
-            if (string.IsNullOrEmpty(userTitle))
+            if (userTitle == null) throw new ArgumentNullException(nameof(userTitle));
+
+            ApplicationView.GetForCurrentView().Title = userTitle;
+            Title = string.IsNullOrEmpty(userTitle) switch
             {
-                Title = Package.Current.DisplayName;
-            }
-            else
-            {
-                Title = $"{userTitle} – {Package.Current.DisplayName}";
-            }
+                false => $"{userTitle} – {Package.Current.DisplayName}",
+                true => Package.Current.DisplayName
+            };
         }
 
         static void OnUserTitleChanged(object sender, DependencyPropertyChangedEventArgs args)

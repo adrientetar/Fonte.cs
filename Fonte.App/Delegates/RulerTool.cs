@@ -29,10 +29,9 @@ namespace Fonte.App.Delegates
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Ruler;
 
-        public override object FindResource(DesignCanvas canvas, object resourceKey)
+        public override object FindResource(DesignCanvas canvas, string resourceKey)
         {
-            var key = (string)resourceKey;
-            if (key == DesignCanvas.DrawCoordinatesKey)
+            if (resourceKey == DesignCanvas.DrawCoordinatesKey)
             {
                 return true;
             }
@@ -159,7 +158,10 @@ namespace Fonte.App.Delegates
             var ptPoint = args.GetCurrentPoint(canvas);
             if (ptPoint.Properties.IsLeftButtonPressed)
             {
-                _origin = _anchor = canvas.FromClientPosition(ptPoint.Position);
+                var pos = canvas.FromClientPosition(ptPoint.Position);
+
+                _origin = _anchor = UIBroker.SnapPointDirect(canvas.Layer, pos, 1f / canvas.ScaleFactor)
+                                            .ToPoint();
 
                 canvas.Invalidate();
             }
@@ -172,10 +174,14 @@ namespace Fonte.App.Delegates
             if (_origin.HasValue)
             {
                 var pos = canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position);
+
+                var snapAxis = UIBroker.Axis.XY;
                 if (args.KeyModifiers.HasFlag(VirtualKeyModifiers.Shift))
                 {
-                    pos = ClampToOrigin(pos, _origin.Value);
+                    snapAxis = ClampToOrigin(pos, _origin.Value, out pos);
                 }
+                pos = UIBroker.SnapPointDirect(canvas.Layer, pos, 1f / canvas.ScaleFactor, snapAxis)
+                              .ToPoint();
 
                 if (_shouldMoveOrigin)
                 {

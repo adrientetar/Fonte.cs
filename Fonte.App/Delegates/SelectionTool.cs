@@ -83,10 +83,9 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override object FindResource(DesignCanvas canvas, object resourceKey)
+        public override object FindResource(DesignCanvas canvas, string resourceKey)
         {
-            var key = (string)resourceKey;
-            if (key == DesignCanvas.DrawSelectionBoundsKey)
+            if (resourceKey == DesignCanvas.DrawSelectionBoundsKey)
             {
                 return true;
             }
@@ -395,7 +394,7 @@ namespace Fonte.App.Delegates
                         {
                             joinPoint = null;
                             pos = DisplaySnapResult(
-                                canvas, UIBroker.SnapPointClamp(layer, pos, 1f / canvas.ScaleFactor, iloc, clampPoint));
+                                canvas, UIBroker.SnapPointClamp(layer, pos, 1f / canvas.ScaleFactor, clampPoint, refElement: iloc));
                         }
                         else
                         {

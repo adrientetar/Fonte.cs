@@ -67,6 +67,7 @@
                                          KeyDown="OnKeyDown"
                                          KeyUp="OnKeyUp"
                                          DoubleTapped="OnDoubleTapped"
+                                         LostFocus="OnLostFocus"
                                          RightTapped="OnRightTapped"
                                          PointerEntered="OnPointerEntered"
                                          PointerExited="OnPointerExited"

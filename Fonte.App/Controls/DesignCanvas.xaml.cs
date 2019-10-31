@@ -189,7 +189,6 @@ namespace Fonte.App.Controls
 
                 _previousCursor = null;
             }
-            SetToolOverride(() => { _previewToolOverride = false; _selectionToolOverride = false; });
         }
 
         void OnRegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args)
@@ -291,6 +290,11 @@ namespace Fonte.App.Controls
             {
                 SetToolOverride(() => _selectionToolOverride = false);
             }
+        }
+
+        void OnLostFocus(object sender, RoutedEventArgs e)
+        {
+            SetToolOverride(() => { _previewToolOverride = false; _selectionToolOverride = false; });
         }
 
         void OnPointerPressed(object sender, PointerRoutedEventArgs args)
