@@ -38,9 +38,20 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png"
                           uap5:Optional="true"/>
       </uap:VisualElements>
+        <Extensions>
+            <uap:Extension Category="windows.fileTypeAssociation">
+                <uap:FileTypeAssociation Name="tfont">
+                    <!--uap:Logo>images\icon.png</uap:Logo-->
+                    <uap:SupportedFileTypes>
+                        <uap:FileType>.tfont</uap:FileType>
+                    </uap:SupportedFileTypes>
+                </uap:FileTypeAssociation>
+            </uap:Extension>
+        </Extensions>
     </Application>
   </Applications>
   <Capabilities>
+    <Capability Name="internetClient"/>
     <rescap:Capability Name="confirmAppClose"/>
   </Capabilities>
 </Package>

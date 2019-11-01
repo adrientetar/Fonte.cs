@@ -33,7 +33,9 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas);
 
-            if (TryRemoveTrailingOffCurve(canvas.Layer))
+            // XXX: nasty hack for canvas, basically I don't want to TryRemoveTrailingOffCurve when soft-switching
+            // potential proper solution include adding a Reason argument to OnDisabled (kinda like UWP SetFocus)
+            if (canvas.Tool == this && TryRemoveTrailingOffCurve(canvas.Layer))
             {
                 ((App)Application.Current).InvalidateData();
             }

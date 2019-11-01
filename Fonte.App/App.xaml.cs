@@ -3,6 +3,10 @@
 
 namespace Fonte.App
 {
+    using Fonte.App.Utilities;
+    using Microsoft.AppCenter;
+    using Microsoft.AppCenter.Crashes;
+
     using System;
     using System.Linq;
     using Windows.ApplicationModel;
@@ -20,6 +24,8 @@ namespace Fonte.App
         public App()
         {
             InitializeComponent();
+
+            AppCenter.Start(Constants.AppId, typeof(Crashes));
 
             Suspending += OnSuspending;
             UnhandledException += OnUnhandledException;
