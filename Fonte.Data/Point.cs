@@ -185,7 +185,6 @@ namespace Fonte.Data
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            // https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_DefaultValueHandling.htm
             var point = (Point)value;
 
             var formatting = writer.Formatting;
@@ -194,12 +193,15 @@ namespace Fonte.Data
             {
                 writer.Formatting = Formatting.None;
 
-                writer.WriteValue(point.X);
-                writer.WriteValue(point.Y);
-                if (point.Type != PointType.None) {
+                serializer.Serialize(writer, point.X);
+                serializer.Serialize(writer, point.Y);
+                if (point.Type != PointType.None)
+                {
                     serializer.Serialize(writer, point.Type);
-                    if (point.IsSmooth) {
-                        writer.WriteValue(point.IsSmooth);
+
+                    if (point.IsSmooth)
+                    {
+                        serializer.Serialize(writer, point.IsSmooth);
                     }
                 }
                 if (point.ExtraData != null && point.ExtraData.Count > 0)

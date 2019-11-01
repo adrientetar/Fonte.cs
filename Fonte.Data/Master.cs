@@ -63,10 +63,10 @@ namespace Fonte.Data
         }
 
         [JsonProperty("hStems")]
-        public List<int> HStems { get; }
+        public List<float> HStems { get; }
 
         [JsonProperty("vStems")]
-        public List<int> VStems { get; }
+        public List<float> VStems { get; }
 
         [JsonProperty("ascender")]
         public int Ascender { get; set; }
@@ -92,16 +92,16 @@ namespace Fonte.Data
         public bool Visible { get; set; }
 
         [JsonConstructor]
-        public Master(string name = default, Dictionary<string, int> location = default, List<AlignmentZone> alignmentZones = null,
-                      List<Guideline> guidelines = default, List<int> hStems = default, List<int> vStems = default,
+        public Master(string name = default, Dictionary<string, int> location = null, List<AlignmentZone> alignmentZones = null,
+                      List<Guideline> guidelines = null, List<float> hStems = null, List<float> vStems = null,
                       int ascender = 800, int capHeight = 700, int descender = -200, float italicAngle = 0f, int xHeight = 500)
         {
             Name = name ?? string.Empty;
             Location = location ?? new Dictionary<string, int>();
             AlignmentZones = alignmentZones ?? new List<AlignmentZone>();
             _guidelines = guidelines ?? new List<Guideline>();
-            HStems = hStems ?? new List<int>();
-            VStems = vStems ?? new List<int>();
+            HStems = hStems ?? new List<float>();
+            VStems = vStems ?? new List<float>();
 
             Ascender = ascender;
             CapHeight = capHeight;
