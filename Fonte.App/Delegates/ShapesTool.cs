@@ -4,6 +4,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas;
@@ -73,14 +74,18 @@ namespace Fonte.App.Delegates
             }
         }
 
-        public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public override void OnDrawCompleted(DesignCanvas canvas, DrawEventArgs args)
         {
-            base.OnDrawCompleted(canvas, ds, rescale);
+            base.OnDrawCompleted(canvas, args);
 
             if (_origin.HasValue && _anchor != _origin.Value)
             {
+                var ds = args.DrawingSession;
+                var rescale = args.InverseScale;
+
                 var color = (Color)FindResource(canvas, DesignCanvas.StrokeColorKey);
                 var rect = Rectangle;
+
                 if (_drawRectangle)
                 {
                     ds.DrawRectangle(rect, color, strokeWidth: rescale);

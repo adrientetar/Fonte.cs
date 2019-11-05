@@ -4,6 +4,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Utilities;
     using Microsoft.Graphics.Canvas;
@@ -39,26 +40,29 @@ namespace Fonte.App.Delegates
             return base.FindResource(canvas, resourceKey);
         }
 
-        public override void OnActivated(DesignCanvas canvas)
+        public override void OnActivated(DesignCanvas canvas, ActivationEventArgs args)
         {
-            base.OnActivated(canvas);
+            base.OnActivated(canvas, args);
 
             canvas.Invalidate();
         }
 
-        public override void OnDisabled(DesignCanvas canvas)
+        public override void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
         {
-            base.OnDisabled(canvas);
+            base.OnDisabled(canvas, args);
 
             canvas.Invalidate();
         }
 
-        public override void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public override void OnDrawCompleted(DesignCanvas canvas, DrawEventArgs args)
         {
-            base.OnDrawCompleted(canvas, ds, rescale);
+            base.OnDrawCompleted(canvas, args);
 
             if (_points != null)
             {
+                var ds = args.DrawingSession;
+                var rescale = args.InverseScale;
+
                 var backplateColor = Color.FromArgb(210, 60, 121, 100);
                 var color = Color.FromArgb(170, 60, 121, 100);
                 var radius = 3.5f * rescale;

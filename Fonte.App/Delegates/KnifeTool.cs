@@ -4,9 +4,9 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
-    using Microsoft.Graphics.Canvas;
 
     using System.Numerics;
     using Windows.Foundation;
@@ -28,12 +28,15 @@ namespace Fonte.App.Delegates
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Knife;
 
-        public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public override void OnDraw(DesignCanvas canvas, DrawEventArgs args)
         {
-            base.OnDraw(canvas, ds, rescale);
+            base.OnDraw(canvas, args);
 
             if (_points != null)
             {
+                var ds = args.DrawingSession;
+                var rescale = args.InverseScale;
+
                 var color = Color.FromArgb(120, 38, 38, 38);
                 var radius = 3.5f * rescale;
 

@@ -4,6 +4,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Collections;
     using Fonte.Data.Interfaces;
@@ -29,13 +30,11 @@ namespace Fonte.App.Delegates
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Pen;
 
-        public override void OnDisabled(DesignCanvas canvas)
+        public override void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
         {
-            base.OnDisabled(canvas);
+            base.OnDisabled(canvas, args);
 
-            // XXX: nasty hack for canvas, basically I don't want to TryRemoveTrailingOffCurve when soft-switching
-            // potential proper solution include adding a Reason argument to OnDisabled (kinda like UWP SetFocus)
-            if (canvas.Tool == this && TryRemoveTrailingOffCurve(canvas.Layer))
+            if (args.ActivationKind == ActivationKind.Switch && TryRemoveTrailingOffCurve(canvas.Layer))
             {
                 ((App)Application.Current).InvalidateData();
             }

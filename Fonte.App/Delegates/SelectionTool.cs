@@ -4,6 +4,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
     using Fonte.Data.Utilities;
@@ -93,9 +94,12 @@ namespace Fonte.App.Delegates
             return base.FindResource(canvas, resourceKey);
         }
 
-        public override void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public override void OnDraw(DesignCanvas canvas, DrawEventArgs args)
         {
-            base.OnDraw(canvas, ds, rescale);
+            base.OnDraw(canvas, args);
+
+            var ds = args.DrawingSession;
+            var rescale = args.InverseScale;
 
             if (_oldPaths != null)
             {

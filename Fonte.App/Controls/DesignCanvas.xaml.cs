@@ -54,6 +54,9 @@ namespace Fonte.App.Controls
         private readonly ICanvasDelegate PreviewTool = new PreviewTool();
         private readonly ICanvasDelegate SelectionTool = new SelectionTool();
 
+        private static readonly ActivationEventArgs ActivationEventArgs = new ActivationEventArgs(ActivationKind.Switch);
+        private static readonly ActivationEventArgs TemporaryActivationEventArgs = new ActivationEventArgs(ActivationKind.TemporarySwitch);
+
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
         private ICanvasDelegate _tool = new BaseTool();
         private bool _previewToolOverride;
@@ -78,9 +81,9 @@ namespace Fonte.App.Controls
             {
                 if (value != _tool)
                 {
-                    _tool.OnDisabled(this);
+                    _tool.OnDisabled(this, ActivationEventArgs);
                     _tool = value;
-                    _tool.OnActivated(this);
+                    _tool.OnActivated(this, ActivationEventArgs);
                 }
             }
         }
@@ -206,6 +209,7 @@ namespace Fonte.App.Controls
                     var pointSize = PointSize;
                     var rescale = 1f / sender.DpiScale;
 
+                    var drawArgs = new DrawEventArgs(ds, rescale);
                     var drawDetails = pointSize >= MinPointSizeForDetails;
                     var drawFill = (bool)FindResource(DrawFillKey);
 
@@ -226,7 +230,7 @@ namespace Fonte.App.Controls
                     }
                     if (drawFill) Drawing.DrawFill(layer, ds, rescale, (Color)FindResource(FillColorKey));
 
-                    Tool.OnDraw(this, ds, rescale);
+                    Tool.OnDraw(this, drawArgs);
 
                     if ((bool)FindResource(DrawLayersKey)) Drawing.DrawLayers(layer, ds, rescale, (Color)FindResource(LayersColorKey));
                     if (pointSize >= MinPointSizeForGuidelines && (bool)FindResource(DrawGuidelinesKey)) Drawing.DrawGuidelines(
@@ -256,7 +260,7 @@ namespace Fonte.App.Controls
                     if (drawDetails && (bool)Tool.FindResource(this, DrawAnchorsKey)) Drawing.DrawAnchors(
                         layer, ds, rescale, (Color)Tool.FindResource(this, AnchorColorKey));
 
-                    Tool.OnDrawCompleted(this, ds, rescale);
+                    Tool.OnDrawCompleted(this, drawArgs);
                 }
             }
         }
@@ -301,26 +305,17 @@ namespace Fonte.App.Controls
         {
             ((UIElement)sender).CapturePointer(args.Pointer);
 
-            if (Tool.HandlePointerEvent(this, args))
-            {
-                Tool.OnPointerPressed(this, args);
-            }
+            Tool.OnPointerPressed(this, args);
         }
 
         void OnPointerMoved(object sender, PointerRoutedEventArgs args)
         {
-            if (Tool.HandlePointerEvent(this, args))
-            {
-                Tool.OnPointerMoved(this, args);
-            }
+            Tool.OnPointerMoved(this, args);
         }
 
         void OnPointerReleased(object sender, PointerRoutedEventArgs args)
         {
-            if (Tool.HandlePointerEvent(this, args))
-            {
-                Tool.OnPointerReleased(this, args);
-            }
+            Tool.OnPointerReleased(this, args);
 
             ((UIElement)sender).ReleasePointerCapture(args.Pointer);
         }
@@ -371,8 +366,8 @@ namespace Fonte.App.Controls
             var tool = Tool;
             if (tool != prevTool)
             {
-                prevTool.OnDisabled(this);
-                tool.OnActivated(this);
+                prevTool.OnDisabled(this, TemporaryActivationEventArgs);
+                tool.OnActivated(this, TemporaryActivationEventArgs);
             }
         }
 
@@ -439,6 +434,11 @@ namespace Fonte.App.Controls
             {
                 Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
             }
+        }
+
+        public bool SetFocus(FocusState value)
+        {
+            return Canvas.Focus(value);
         }
 
         public void ScrollTo(double x, double y, bool animated = false)

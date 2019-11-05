@@ -44,31 +44,29 @@ namespace Fonte.App.Delegates
             return canvas.Resources[resourceKey];
         }
 
-        public virtual bool HandlePointerEvent(DesignCanvas canvas, PointerRoutedEventArgs args)
-        {
-            return args.Pointer.PointerDeviceType == PointerDeviceType.Mouse;
-        }
-
-        public virtual void OnActivated(DesignCanvas canvas)
+        public virtual void OnActivated(DesignCanvas canvas, ActivationEventArgs args)
         {
             canvas.InvalidateCursor();
         }
 
-        public virtual void OnDisabled(DesignCanvas canvas)
+        public virtual void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
         {
             CompleteMove(canvas);
 
             Cursor = DefaultCursor;
         }
 
-        public virtual void OnDraw(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public virtual void OnDraw(DesignCanvas canvas, DrawEventArgs args)
         {
         }
 
-        public virtual void OnDrawCompleted(DesignCanvas canvas, CanvasDrawingSession ds, float rescale)
+        public virtual void OnDrawCompleted(DesignCanvas canvas, DrawEventArgs args)
         {
             if (_snapResult != null)
             {
+                var ds = args.DrawingSession;
+                var rescale = args.InverseScale;
+
                 var color = (Color)FindResource(canvas, DesignCanvas.SnapLineColorKey);
                 var halfSize = 2.5f * rescale;
                 var refPos = _snapResult.Position;

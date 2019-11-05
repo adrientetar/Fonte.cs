@@ -4,6 +4,7 @@
 namespace Fonte.App.Delegates
 {
     using Fonte.App.Controls;
+    using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
 
     using Windows.Foundation;
@@ -17,16 +18,16 @@ namespace Fonte.App.Delegates
 
         protected override CoreCursor DefaultCursor { get; } = Cursors.Hand;
 
-        public override void OnActivated(DesignCanvas canvas)
+        public override void OnActivated(DesignCanvas canvas, ActivationEventArgs args)
         {
-            base.OnActivated(canvas);
+            base.OnActivated(canvas, args);
 
             canvas.Invalidate();
         }
 
-        public override void OnDisabled(DesignCanvas canvas)
+        public override void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
         {
-            base.OnDisabled(canvas);
+            base.OnDisabled(canvas, args);
 
             canvas.Invalidate();
         }
