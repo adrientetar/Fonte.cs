@@ -8,13 +8,13 @@ namespace Fonte.Data.Utilities
 
     public static class Sequence
     {
-        public static IEnumerable<T> IterAt<T>(IList<T> list, int index)
+        public static IEnumerable<T> IterAt<T>(IList<T> list, int index, bool inclusive = false)
         {
             for (int ix = index; ix < list.Count; ++ix)
             {
                 yield return list[ix];
             }
-            for (int ix = 0; ix < index; ++ix)
+            for (int ix = 0; ix < (inclusive ? index + 1 : index); ++ix)
             {
                 yield return list[ix];
             }

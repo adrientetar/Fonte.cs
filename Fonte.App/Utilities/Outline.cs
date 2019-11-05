@@ -612,6 +612,7 @@ namespace Fonte.App.Utilities
                     var onCurve = firstSegment.OnCurve;
                     onCurve.X = secondSegment.OnCurve.X;
                     onCurve.Y = secondSegment.OnCurve.Y;
+                    curveSegment.OnCurve.IsSmooth = otherSegment.OnCurve.IsSmooth;
                     otherSegment.Remove();
                     return true;
                 }

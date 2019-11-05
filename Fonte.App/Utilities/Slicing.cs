@@ -7,6 +7,7 @@ namespace Fonte.App.Utilities
 
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
 
@@ -28,7 +29,7 @@ namespace Fonte.App.Utilities
                                              .Select(pair => pair.ix)
                                              .First();
 
-                    return Sequence.IterAt(segments, index);
+                    return Sequence.IterAt(segments, index, inclusive: true);
                 }
             }
 
@@ -259,29 +260,31 @@ namespace Fonte.App.Utilities
             }
         }
 
-        static Data.Path WalkPath(Data.Point endPoint, Dictionary<Data.Point, SplitIterator> jumpsDict, Data.Path path = null, Data.Point targetPoint = null)
+        static Data.Path WalkPath(Data.Point startPoint, Dictionary<Data.Point, SplitIterator> jumpsDict,
+                                  Data.Path outPath = null, Data.Point jumpFromPoint = null)
         {
-            if (path == null)
-                path = new Data.Path();
-            if (targetPoint == null)
-                targetPoint = endPoint;
+            if (outPath == null)
+                outPath = new Data.Path();
+            if (jumpFromPoint == null)
+                jumpFromPoint = startPoint;
 
-            var remSegments = jumpsDict[targetPoint].Segments;
-            jumpsDict.Remove(targetPoint);
+            var remSegments = jumpsDict[jumpFromPoint].Segments;
+            jumpsDict.Remove(jumpFromPoint);
 
             var jumpToSegment = remSegments.First();
             {
                 var point = jumpToSegment.OnCurve.Clone();
                 point.IsSmooth = false;
                 point.Type = Data.PointType.Line;
-                path.Points.Add(point);
+                outPath.Points.Add(point);
             }
 
+            var isTerminalState = false;
             foreach (var segment in remSegments.Skip(1))
             {
                 var onCurve = segment.OnCurve;
                 var isJump = jumpsDict.ContainsKey(onCurve);
-                var isLast = onCurve == endPoint;
+                var isLast = onCurve == startPoint;
 
                 foreach (var point in segment.Points)
                 {
@@ -290,18 +293,24 @@ namespace Fonte.App.Utilities
                     {
                         outPoint.IsSmooth = false;
                     }
-                    path.Points.Add(outPoint);
+                    outPath.Points.Add(outPoint);
                 }
 
+                isTerminalState = true;
                 if (isLast) break;
-                if (isJump)
+                else if (isJump)
                 {
-                    WalkPath(endPoint, jumpsDict, path, onCurve);
+                    WalkPath(startPoint, jumpsDict, outPath, onCurve);
                     break;
                 }
+                else
+                {
+                    isTerminalState = false;
+                }
             }
+            Debug.Assert(isTerminalState);
 
-            return path;
+            return outPath;
         }
     }
 }
