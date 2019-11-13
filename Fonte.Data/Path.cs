@@ -218,7 +218,15 @@ namespace Fonte.Data
                 var type = start.Type;
 
                 List<Point> result;
-                if (type != PointType.Move)
+                if (IsOpen)
+                {
+                    if (points.Last().Type == PointType.None)
+                        throw new InvalidOperationException("Unexpected trailing off-curve.");
+
+                    result = points.GetRange(0, points.Count);
+                    result.Reverse();
+                }
+                else
                 {
                     var pivot = points.Last();
 
@@ -226,11 +234,6 @@ namespace Fonte.Data
                     result.Reverse();
                     result.Add(pivot);
                     type = pivot.Type;
-                }
-                else
-                {
-                    result = points.GetRange(0, points.Count);
-                    result.Reverse();
                 }
 
                 foreach (var point in result)

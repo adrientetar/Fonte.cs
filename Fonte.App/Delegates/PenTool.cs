@@ -34,9 +34,9 @@ namespace Fonte.App.Delegates
         {
             base.OnDisabled(canvas, args);
 
-            if (args.ActivationKind == ActivationKind.Switch && TryRemoveTrailingOffCurve(canvas.Layer))
+            if (args.ActivationKind == ActivationKind.Switch)
             {
-                ((App)Application.Current).InvalidateData();
+                TryRemoveTrailingOffCurve(canvas.Layer);
             }
         }
 
@@ -378,6 +378,15 @@ namespace Fonte.App.Delegates
             }
         }
 
+        public override void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs args)
+        {
+            // TODO: need a consolidation where this is called on any loss of focus
+            // Should OnDisabled just be called when the focus is lost?
+            TryRemoveTrailingOffCurve(canvas.Layer);
+
+            base.OnRightTapped(canvas, args);
+        }
+
         /**/
 
         protected override void CompleteMove(DesignCanvas canvas)
@@ -507,6 +516,8 @@ namespace Fonte.App.Delegates
                         last.IsSelected = selPoint.IsSelected;
                         last.IsSmooth = false;
                     }
+
+                    ((App)Application.Current).InvalidateData();
                     return true;
                 }
             }
