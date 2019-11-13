@@ -245,6 +245,8 @@ namespace Fonte.App
             if (undoStore.CanRedo)
             {
                 undoStore.Redo();
+
+                Canvas.Focus(FocusState.Programmatic);
                 ((App)Application.Current).InvalidateData();
             }
 
@@ -292,6 +294,8 @@ namespace Fonte.App
             if (undoStore.CanUndo)
             {
                 undoStore.Undo();
+
+                Canvas.Focus(FocusState.Programmatic);
                 ((App)Application.Current).InvalidateData();
             }
 

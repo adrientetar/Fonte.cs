@@ -12,7 +12,7 @@ namespace Fonte.App.Interfaces
 
     public enum ActivationKind
     {
-        Switch,
+        Other = 0,
         TemporarySwitch,
     };
 

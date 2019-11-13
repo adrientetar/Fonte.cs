@@ -54,7 +54,7 @@ namespace Fonte.App.Controls
         private readonly ICanvasDelegate PreviewTool = new PreviewTool();
         private readonly ICanvasDelegate SelectionTool = new SelectionTool();
 
-        private static readonly ActivationEventArgs ActivationEventArgs = new ActivationEventArgs(ActivationKind.Switch);
+        private static readonly ActivationEventArgs ActivationEventArgs = new ActivationEventArgs(ActivationKind.Other);
         private static readonly ActivationEventArgs TemporaryActivationEventArgs = new ActivationEventArgs(ActivationKind.TemporarySwitch);
 
         private Matrix3x2 _matrix = Matrix3x2.CreateScale(1, -1);
@@ -65,6 +65,8 @@ namespace Fonte.App.Controls
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
             "Layer", typeof(Data.Layer), typeof(DesignCanvas), new PropertyMetadata(null, OnLayerChanged));
+
+        public bool IsFocused => FocusState != FocusState.Unfocused;
 
         public Data.Layer Layer
         {
@@ -81,9 +83,21 @@ namespace Fonte.App.Controls
             {
                 if (value != _tool)
                 {
-                    _tool.OnDisabled(this, ActivationEventArgs);
-                    _tool = value;
-                    _tool.OnActivated(this, ActivationEventArgs);
+                    // If we're unfocused, it means our current tool is disabled.
+                    // Set in the new tool and we'll activate it when we get focus.
+                    // In the meantime, we only need to refresh the cursor.
+                    if (IsFocused)
+                    {
+                        _tool.OnDisabled(this, ActivationEventArgs);
+                        _tool = value;
+                        _tool.OnActivated(this, ActivationEventArgs);
+                    }
+                    else
+                    {
+                        _tool = value;
+                    }
+
+                    InvalidateCursor();
                 }
             }
         }
@@ -149,6 +163,20 @@ namespace Fonte.App.Controls
                 CenterOnMetrics(animated: false);
             }
             Invalidate();
+        }
+
+        protected override void OnGotFocus(RoutedEventArgs e)
+        {
+            base.OnGotFocus(e);
+
+            _tool.OnActivated(this, ActivationEventArgs);
+        }
+
+        protected override void OnLostFocus(RoutedEventArgs e)
+        {
+            base.OnLostFocus(e);
+
+            _tool.OnDisabled(this, ActivationEventArgs);
         }
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
