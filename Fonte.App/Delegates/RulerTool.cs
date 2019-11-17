@@ -40,20 +40,6 @@ namespace Fonte.App.Delegates
             return base.FindResource(canvas, resourceKey);
         }
 
-        public override void OnActivated(DesignCanvas canvas, ActivationEventArgs args)
-        {
-            base.OnActivated(canvas, args);
-
-            canvas.Invalidate();
-        }
-
-        public override void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
-        {
-            base.OnDisabled(canvas, args);
-
-            canvas.Invalidate();
-        }
-
         public override void OnDrawCompleted(DesignCanvas canvas, DrawEventArgs args)
         {
             base.OnDrawCompleted(canvas, args);

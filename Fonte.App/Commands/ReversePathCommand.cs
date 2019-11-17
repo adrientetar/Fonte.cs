@@ -15,7 +15,7 @@ namespace Fonte.App.Commands
 
         public bool CanExecute(object parameter)
         {
-            return true;
+            return parameter is Data.Path;
         }
 
         public void Execute(object parameter)

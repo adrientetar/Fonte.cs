@@ -15,7 +15,9 @@ namespace Fonte.App.Commands
 
         public bool CanExecute(object parameter)
         {
-            return true;
+            return parameter is Data.Point point &&
+                   point.Parent is Data.Path path &&
+                   !path.IsOpen;
         }
 
         public void Execute(object parameter)

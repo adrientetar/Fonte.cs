@@ -8,13 +8,11 @@ namespace Fonte.App.Delegates
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
     using Fonte.Data.Utilities;
-    using Microsoft.Graphics.Canvas;
 
     using System;
     using System.Linq;
     using System.Numerics;
     using System.Windows.Input;
-    using Windows.Devices.Input;
     using Windows.Foundation;
     using Windows.System;
     using Windows.System.Threading;
@@ -46,7 +44,6 @@ namespace Fonte.App.Delegates
 
         public virtual void OnActivated(DesignCanvas canvas, ActivationEventArgs args)
         {
-            canvas.InvalidateCursor();
         }
 
         public virtual void OnDisabled(DesignCanvas canvas, ActivationEventArgs args)
@@ -253,104 +250,46 @@ namespace Fonte.App.Delegates
         // TODO: might want to do a model where we return the flyout so subclasses can take base class flyout and change things
         public virtual void OnRightTapped(DesignCanvas canvas, RightTappedRoutedEventArgs args)
         {
-            var flyout = new MenuFlyout()
-            {
-                AreOpenCloseAnimationsEnabled = false
-            };
-
             var clientPos = args.GetPosition(canvas);
             var pos = canvas.FromClientPosition(clientPos);
             var tappedItem = canvas.HitTest(pos);
 
+            var builder = new MenuFlyoutBuilder();
             if (tappedItem is Data.Component component)
             {
-                flyout.Items.Add(new MenuFlyoutItem()
-                {
-                    Command = DecomposeComponentCommand,
-                    CommandParameter = component
-                });
+                builder.TryAddItem(Commands.DecomposeComponentCommand, component);
             }
             else if (tappedItem is Data.Guideline guideline)
             {
                 if (guideline.Parent is Data.Layer)
                 {
-                    flyout.Items.Add(new MenuFlyoutItem()
-                    {
-                        Command = MakeGuidelineGlobalCommand,
-                        CommandParameter = guideline
-                    });
+                    builder.TryAddItem(Commands.MakeGuidelineGlobalCommand, guideline);
                 }
                 else
                 {
-                    flyout.Items.Add(new MenuFlyoutItem()
-                    {
-                        Command = MakeGuidelineLocalCommand,
-                        CommandParameter = (guideline, canvas.Layer)
-                    });
+                    builder.TryAddItem(Commands.MakeGuidelineLocalCommand, (guideline, canvas.Layer));
                 }
             }
             else if (tappedItem is Data.Point point)
             {
-                flyout.Items.Add(new MenuFlyoutItem()
-                {
-                    Command = SetStartPointCommand,
-                    CommandParameter = point
-                });
-                flyout.Items.Add(new MenuFlyoutItem()
-                {
-                    Command = ReversePathCommand,
-                    CommandParameter = point.Parent
-                });
+                builder.TryAddItem(Commands.SetStartPointCommand, point);
+                builder.TryAddItem(Commands.ReversePathCommand, point.Parent);
             }
-            flyout.Items.Add(new MenuFlyoutItem()
-            {
-                Command = ReverseAllPathsCommand,
-                CommandParameter = canvas.Layer
-            });
+            builder.TryAddItem(Commands.ReverseAllPathsCommand, canvas.Layer);
 
-            flyout.Items.Add(new MenuFlyoutSeparator());
+            builder.TryAddSeparator();
 
-            flyout.Items.Add(new MenuFlyoutItem()
-            {
-                Command = AlignSelectionCommand,
-                CommandParameter = canvas.Layer
-            });
+            builder.TryAddItem(Commands.AlignSelectionCommand, canvas.Layer);
 
-            flyout.Items.Add(new MenuFlyoutSeparator());
+            builder.TryAddSeparator();
 
-            flyout.Items.Add(new MenuFlyoutItem()
-            {
-                Command = AddComponentCommand,
-                CommandParameter = canvas.Layer
-            });
-            flyout.Items.Add(new MenuFlyoutItem()
-            {
-                Command = AddAnchorCommand,
-                CommandParameter = (canvas, pos)
-            });
-            flyout.Items.Add(new MenuFlyoutItem()
-            {
-                Command = AddGuidelineCommand,
-                CommandParameter = (canvas, pos)
-            });
+            builder.TryAddItem(Commands.AddComponentCommand, canvas.Layer);
+            builder.TryAddItem(Commands.AddAnchorCommand, (canvas, pos));
+            builder.TryAddItem(Commands.AddGuidelineCommand, (canvas, pos));
 
-            flyout.ShowAt(canvas, clientPos);
+            builder.MenuFlyout.ShowAt(canvas, clientPos);
             args.Handled = true;
         }
-
-        /**/
-
-        // TODO: maybe take this static library to a separate file?
-        static XamlUICommand AddAnchorCommand { get; } = MakeUICommand("Add Anchor", new AddAnchorCommand());
-        static XamlUICommand AddComponentCommand { get; } = MakeUICommand("Add Component…", new AddComponentCommand());
-        static XamlUICommand AddGuidelineCommand { get; } = MakeUICommand("Add Guideline", new AddGuidelineCommand());
-        static XamlUICommand AlignSelectionCommand { get; } = MakeUICommand("Align Selection", new AlignSelectionCommand());
-        static XamlUICommand DecomposeComponentCommand { get; } = MakeUICommand("Decompose", new DecomposeComponentCommand());
-        static XamlUICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand("Make Guideline Global", new MakeGuidelineGlobalCommand());
-        static XamlUICommand MakeGuidelineLocalCommand { get; } = MakeUICommand("Make Guideline Local", new MakeGuidelineLocalCommand());
-        static XamlUICommand ReverseAllPathsCommand { get; } = MakeUICommand("Reverse All Paths", new ReverseAllPathsCommand());
-        static XamlUICommand ReversePathCommand { get; } = MakeUICommand("Reverse Path", new ReversePathCommand());
-        static XamlUICommand SetStartPointCommand { get; } = MakeUICommand("Set As Start Point", new SetStartPointCommand());
 
         /**/
 
@@ -464,21 +403,6 @@ namespace Fonte.App.Delegates
                 (_, true) => MoveMode.StaticHandles,
                 _ => MoveMode.Normal
             };
-        }
-
-        protected static XamlUICommand MakeUICommand(string label, ICommand command, KeyboardAccelerator accelerator = null)
-        {
-            var uiCommand = new XamlUICommand()
-            {
-                Command = command,
-                Label = label,
-            };
-            if (accelerator != null)
-            {
-                uiCommand.KeyboardAccelerators.Add(accelerator);
-            }
-
-            return uiCommand;
         }
 
         #region IToolBarEntry implementation

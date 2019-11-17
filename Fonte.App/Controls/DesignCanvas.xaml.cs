@@ -97,6 +97,7 @@ namespace Fonte.App.Controls
                         _tool = value;
                     }
 
+                    Invalidate();
                     InvalidateCursor();
                 }
             }
