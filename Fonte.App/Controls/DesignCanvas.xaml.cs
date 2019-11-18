@@ -397,6 +397,9 @@ namespace Fonte.App.Controls
             {
                 prevTool.OnDisabled(this, TemporaryActivationEventArgs);
                 tool.OnActivated(this, TemporaryActivationEventArgs);
+
+                Invalidate();
+                InvalidateCursor();
             }
         }
 
