@@ -22,6 +22,9 @@ namespace Fonte.App.Controls.SidebarParts
             set { SetValue(SelectedIndexProperty, value); }
         }
 
+        public int HorizontalIndex => SelectedIndex % 3;
+        public int VerticalIndex => 2 - SelectedIndex / 3;
+
         public OriginControl()
         {
             InitializeComponent();
@@ -37,8 +40,8 @@ namespace Fonte.App.Controls.SidebarParts
             if (!bounds.IsEmpty)
             {
                 return new Vector2(
-                    bounds.Left + bounds.Width * .5f * (SelectedIndex % 3),
-                    bounds.Bottom + bounds.Height * .5f * (2 - SelectedIndex / 3));
+                    bounds.Left + bounds.Width * .5f * HorizontalIndex,
+                    bounds.Bottom + bounds.Height * .5f * VerticalIndex);
             }
             return Vector2.Zero;
         }

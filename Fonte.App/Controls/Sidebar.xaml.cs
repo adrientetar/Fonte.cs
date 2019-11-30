@@ -6,21 +6,21 @@ namespace Fonte.App.Controls
     using Fonte.App.Commands;
     using Fonte.App.Utilities;
     using Fonte.Data.Utilities;
+    using Microsoft.UI.Xaml.Controls;
 
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
-    using System.Globalization;
     using System.Linq;
     using System.Numerics;
     using System.Windows.Input;
     using Windows.ApplicationModel;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
 
     public partial class Sidebar : UserControl
     {
+        private bool _isEditing;
         private bool _shouldIgnoreNextRefresh;
 
         public static DependencyProperty LayerProperty = DependencyProperty.Register(
@@ -41,39 +41,75 @@ namespace Fonte.App.Controls
         }
 
         public static DependencyProperty XPositionProperty = DependencyProperty.Register(
-            "XPosition", typeof(string), typeof(Sidebar), null);
+            "XPosition", typeof(double), typeof(Sidebar), null);
 
-        public string XPosition
+        public double XPosition
         {
-            get => (string)GetValue(XPositionProperty);
+            get => (double)GetValue(XPositionProperty);
             set { SetValue(XPositionProperty, value); }
         }
 
         public static DependencyProperty YPositionProperty = DependencyProperty.Register(
-            "YPosition", typeof(string), typeof(Sidebar), null);
+            "YPosition", typeof(double), typeof(Sidebar), null);
 
-        public string YPosition
+        public double YPosition
         {
-            get => (string)GetValue(YPositionProperty);
+            get => (double)GetValue(YPositionProperty);
             set { SetValue(YPositionProperty, value); }
         }
 
         public static DependencyProperty XSizeProperty = DependencyProperty.Register(
-            "XSize", typeof(string), typeof(Sidebar), null);
+            "XSize", typeof(double), typeof(Sidebar), null);
 
-        public string XSize
+        public double XSize
         {
-            get => (string)GetValue(XSizeProperty);
+            get => (double)GetValue(XSizeProperty);
             set { SetValue(XSizeProperty, value); }
         }
 
         public static DependencyProperty YSizeProperty = DependencyProperty.Register(
-            "YSize", typeof(string), typeof(Sidebar), null);
+            "YSize", typeof(double), typeof(Sidebar), null);
 
-        public string YSize
+        public double YSize
         {
-            get => (string)GetValue(YSizeProperty);
+            get => (double)GetValue(YSizeProperty);
             set { SetValue(YSizeProperty, value); }
+        }
+
+        public static DependencyProperty XScaleFactorProperty = DependencyProperty.Register(
+            "XScaleFactor", typeof(double), typeof(Sidebar), new PropertyMetadata(2.0));
+
+        public double XScaleFactor
+        {
+            get => (double)GetValue(XScaleFactorProperty);
+            set { SetValue(XScaleFactorProperty, value); }
+        }
+
+        public static DependencyProperty YScaleFactorProperty = DependencyProperty.Register(
+            "YScaleFactor", typeof(double), typeof(Sidebar), new PropertyMetadata(2.0));
+
+        public double YScaleFactor
+        {
+            get => (double)GetValue(YScaleFactorProperty);
+            set { SetValue(YScaleFactorProperty, value); }
+        }
+
+        public static DependencyProperty RotationDegreeProperty = DependencyProperty.Register(
+            "RotationDegree", typeof(double), typeof(Sidebar), new PropertyMetadata(40.0));
+
+        public double RotationDegree
+        {
+            get => (double)GetValue(RotationDegreeProperty);
+            set { SetValue(RotationDegreeProperty, value); }
+        }
+
+        public static DependencyProperty SkewDegreeProperty = DependencyProperty.Register(
+            "SkewDegree", typeof(double), typeof(Sidebar), new PropertyMetadata(6.0));
+
+        public double SkewDegree
+        {
+            get => (double)GetValue(SkewDegreeProperty);
+            set { SetValue(SkewDegreeProperty, value); }
         }
 
         public ICommand AlignLeftCommand { get; } = new AlignLeftCommand();
@@ -124,19 +160,27 @@ namespace Fonte.App.Controls
                 return;
             }
 
-            if (layer != null && !layer.SelectionBounds.IsEmpty)
+            try
             {
-                var culture = CultureInfo.CurrentUICulture;
-                var origin = Origin.GetOrigin(layer);
+                _isEditing = true;
 
-                XPosition = Math.Round(origin.X, 2).ToString(culture);
-                YPosition = Math.Round(origin.Y, 2).ToString(culture);
-                XSize = Math.Round(layer.SelectionBounds.Width, 2).ToString(culture);
-                YSize = Math.Round(layer.SelectionBounds.Height, 2).ToString(culture);
+                if (layer != null && !layer.SelectionBounds.IsEmpty)
+                {
+                    var origin = Origin.GetOrigin(layer);
+
+                    XPosition = Math.Round(origin.X, 2);
+                    YPosition = Math.Round(origin.Y, 2);
+                    XSize = Math.Round(layer.SelectionBounds.Width, 2);
+                    YSize = Math.Round(layer.SelectionBounds.Height, 2);
+                }
+                else
+                {
+                    XPosition = YPosition = XSize = YSize = double.NaN;
+                }
             }
-            else
+            finally
             {
-                XPosition = YPosition = XSize = YSize = string.Empty;
+                _isEditing = false;
             }
 
             if (layer?.Parent is Data.Glyph glyph)
@@ -201,45 +245,37 @@ namespace Fonte.App.Controls
             ((App)Application.Current).InvalidateData();
         }
 
-        void OnXPositionChanged(object sender, LosingFocusEventArgs args)
+        void OnXPositionChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
-            var textBox = (TextBox)sender;
-            if (float.TryParse(textBox.Text, out float result))
+            if (!_isEditing)
             {
-                var dx = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).X;
+                var refDelta = .5f * (float)XSize * Origin.HorizontalIndex;
+                var dx = Outline.RoundToGrid((float)args.NewValue - refDelta) + refDelta - Origin.GetOrigin(Layer).X;
                 Layer.Transform(Matrix3x2.CreateTranslation(dx, 0), selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
-            else
-            {
-                OnDataChanged(this, EventArgs.Empty);
-            }
         }
 
-        void OnYPositionChanged(object sender, LosingFocusEventArgs args)
+        void OnYPositionChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
-            var textBox = (TextBox)sender;
-            if (float.TryParse(textBox.Text, out float result))
+            if (!_isEditing)
             {
-                var dy = Outline.RoundToGrid(result) - Origin.GetOrigin(Layer).Y;
+                var refDelta = .5f * (float)YSize * Origin.VerticalIndex;
+                var dy = Outline.RoundToGrid((float)args.NewValue - refDelta) + refDelta - Origin.GetOrigin(Layer).Y;
                 Layer.Transform(Matrix3x2.CreateTranslation(0, dy), selectionOnly: true);
 
                 ((App)Application.Current).InvalidateData();
             }
-            else
-            {
-                OnDataChanged(this, EventArgs.Empty);
-            }
         }
 
-        void OnXSizeChanged(object sender, LosingFocusEventArgs args)
+        void OnXSizeChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
             var layer = Layer;
-            var textBox = (TextBox)sender;
-            if (layer.SelectionBounds.Width > 0 && float.TryParse(textBox.Text, out float result))
+
+            if (!_isEditing && layer.SelectionBounds.Width > 0)
             {
-                var wr = result / layer.SelectionBounds.Width;
+                var wr = (float)args.NewValue / layer.SelectionBounds.Width;
                 using (var group = layer.CreateUndoGroup())
                 {
                     Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
@@ -249,19 +285,15 @@ namespace Fonte.App.Controls
 
                 ((App)Application.Current).InvalidateData();
             }
-            else
-            {
-                OnDataChanged(this, EventArgs.Empty);
-            }
         }
 
-        void OnYSizeChanged(object sender, LosingFocusEventArgs args)
+        void OnYSizeChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
             var layer = Layer;
-            var textBox = (TextBox)sender;
-            if (layer.SelectionBounds.Height > 0 && float.TryParse(textBox.Text, out float result))
+
+            if (!_isEditing && layer.SelectionBounds.Height > 0)
             {
-                var hr = Outline.RoundToGrid(result) / layer.SelectionBounds.Height;
+                var hr = Outline.RoundToGrid((float)args.NewValue) / layer.SelectionBounds.Height;
                 using (var group = layer.CreateUndoGroup())
                 {
                     Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
@@ -271,21 +303,15 @@ namespace Fonte.App.Controls
 
                 ((App)Application.Current).InvalidateData();
             }
-            else
-            {
-                OnDataChanged(this, EventArgs.Empty);
-            }
         }
 
         void OnRotationButtonClick(object sender, RoutedEventArgs args)
         {
-            var result = float.Parse(RotationTextBox.Text);
-            // TODO: if incorrect restore oldValue
-            // -- actually the value should be validated/restored on textbox input, not here
+            var angle = RotationDegree;
 
-            if (result != 0f)
+            if (angle != 0.0)
             {
-                var rad = GetControlSign(sender) * Conversion.FromDegrees(result);
+                var rad = GetControlSign(sender) * Conversion.FromDegrees((float)angle);
                 Layer.Transform(Matrix3x2.CreateRotation(rad, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -295,14 +321,17 @@ namespace Fonte.App.Controls
 
         void OnScaleButtonClick(object sender, RoutedEventArgs args)
         {
-            var sign = GetControlSign(sender);
-            var xScale = 1f / (1 - sign * .01f * float.Parse(XScaleTextBox.Text));
-            var yScale = YScaleTextBox.IsEnabled ?
-                         1f / (1 - sign * .01f * float.Parse(YScaleTextBox.Text)) :
-                         xScale;
+            var xScaleFactor = XScaleFactor;
+            var yScaleFactor = YScaleFactor;
 
-            if (xScale != 1f || yScale != 1f)
+            if (xScaleFactor != 0 || yScaleFactor != 0)
             {
+                var sign = GetControlSign(sender);
+                var xScale = 1f / (1 - sign * .01f * (float)xScaleFactor);
+                var yScale = false ? //YScaleTextBox.IsEnabled ?
+                             1f / (1 - sign * .01f * (float)yScaleFactor) :
+                             xScale;
+
                 Layer.Transform(Matrix3x2.CreateScale(xScale, yScale, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 
@@ -312,11 +341,11 @@ namespace Fonte.App.Controls
 
         void OnSkewButtonClick(object sender, RoutedEventArgs args)
         {
-            var result = float.Parse(SkewTextBox.Text);
+            var angle = SkewDegree;
 
-            if (result != 0)
+            if (angle != 0.0)
             {
-                var rad = GetControlSign(sender) * Conversion.FromDegrees(result);
+                var rad = GetControlSign(sender) * Conversion.FromDegrees((float)angle);
                 Layer.Transform(Matrix3x2.CreateSkew(rad, 0, Origin.GetOrigin(Layer)),
                                 selectionOnly: Layer.Selection.Count > 0);
 

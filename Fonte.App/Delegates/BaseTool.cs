@@ -3,7 +3,6 @@
 
 namespace Fonte.App.Delegates
 {
-    using Fonte.App.Commands;
     using Fonte.App.Controls;
     using Fonte.App.Interfaces;
     using Fonte.App.Utilities;
@@ -12,7 +11,6 @@ namespace Fonte.App.Delegates
     using System;
     using System.Linq;
     using System.Numerics;
-    using System.Windows.Input;
     using Windows.Foundation;
     using Windows.System;
     using Windows.System.Threading;

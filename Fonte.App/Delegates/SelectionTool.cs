@@ -18,7 +18,6 @@ namespace Fonte.App.Delegates
     using System.Numerics;
     using Windows.Foundation;
     using Windows.System;
-    using Windows.System.Threading;
     using Windows.UI;
     using Windows.UI.Core;
     using Windows.UI.Xaml;

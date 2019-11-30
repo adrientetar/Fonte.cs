@@ -12,6 +12,7 @@
     xmlns:data="using:Fonte.Data"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
     d:DesignHeight="520"
     Width="210"
@@ -26,8 +27,8 @@
             <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
             <GridLength x:Key="FixedColumnLength">66</GridLength>
 
+            <converters:DoubleToBooleanConverter x:Key="DoubleToBooleanConverter"/>
             <converters:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
-            <converters:StringToBooleanConverter x:Key="StringToBooleanConverter"/>
 
             <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="Transparent"/>
             <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="Transparent"/>
@@ -299,16 +300,16 @@
             </Grid>
 
             <TextBlock Text="Position" Grid.Row="1"/>
-            <TextBox IsEnabled="{x:Bind XPosition, Converter={StaticResource StringToBooleanConverter}, Mode=OneWay}"
-                     Text="{x:Bind XPosition, Mode=OneWay}" LosingFocus="OnXPositionChanged" Grid.Row="1" Grid.Column="1"/>
-            <TextBox IsEnabled="{x:Bind YPosition, Converter={StaticResource StringToBooleanConverter}, Mode=OneWay}"
-                     Text="{x:Bind YPosition, Mode=OneWay}" LosingFocus="OnYPositionChanged" Grid.Row="1" Grid.Column="2"/>
+            <controls:NumberBox IsEnabled="{x:Bind XPosition, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind XPosition, Mode=OneWay}" ValueChanged="OnXPositionChanged" Grid.Row="1" Grid.Column="1"/>
+            <controls:NumberBox IsEnabled="{x:Bind YPosition, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind YPosition, Mode=OneWay}" ValueChanged="OnYPositionChanged" Grid.Row="1" Grid.Column="2"/>
 
             <TextBlock Text="Size" Grid.Row="2"/>
-            <TextBox IsEnabled="{x:Bind XSize, Converter={StaticResource StringToBooleanConverter}, Mode=OneWay}"
-                     Text="{x:Bind XSize, Mode=OneWay}" LosingFocus="OnXSizeChanged" Grid.Row="2" Grid.Column="1"/>
-            <TextBox IsEnabled="{x:Bind YSize, Converter={StaticResource StringToBooleanConverter}, Mode=OneWay}"
-                     Text="{x:Bind YSize, Mode=OneWay}" LosingFocus="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
+            <controls:NumberBox IsEnabled="{x:Bind XSize, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind XSize, Mode=OneWay}" ValueChanged="OnXSizeChanged" Grid.Row="2" Grid.Column="1"/>
+            <controls:NumberBox IsEnabled="{x:Bind YSize, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind YSize, Mode=OneWay}" ValueChanged="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
         </Grid>
         <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="4">
             <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Transform"/>
@@ -335,7 +336,7 @@
             </Grid.Resources>
 
             <TextBlock Text="Scale"/>
-            <TextBox x:Name="XScaleTextBox" Text="2" Grid.Column="1"/>
+            <controls:NumberBox Value="{x:Bind XScaleFactor, Mode=TwoWay}" Grid.Column="1"/>
             <parts:PairControl x:Name="ScaleButtons" Grid.Column="2">
                 <parts:PairControl.Left>
                     <parts:TwoToneButton Tag="!"
@@ -352,10 +353,10 @@
                 </parts:PairControl.Right>
             </parts:PairControl>
 
-            <TextBox x:Name="YScaleTextBox" Text="2" Grid.Row="1" Grid.Column="1"/>
+            <controls:NumberBox Value="{x:Bind YScaleFactor, Mode=TwoWay}" Grid.Row="1" Grid.Column="1"/>
 
             <TextBlock Text="Rotation" Grid.Row="2"/>
-            <TextBox x:Name="RotationTextBox" Text="40" Grid.Row="2" Grid.Column="1"/>
+            <controls:NumberBox Value="{x:Bind RotationDegree, Mode=TwoWay}" Grid.Row="2" Grid.Column="1"/>
             <parts:PairControl x:Name="RotationButtons" Grid.Row="2" Grid.Column="2">
                 <parts:PairControl.Left>
                     <parts:TwoToneButton Click="OnRotationButtonClick"
@@ -373,7 +374,7 @@
             </parts:PairControl>
 
             <TextBlock Text="Skew" Grid.Row="3"/>
-            <TextBox x:Name="SkewTextBox" Text="6" Grid.Row="3" Grid.Column="1"/>
+            <controls:NumberBox Value="{x:Bind SkewDegree, Mode=TwoWay}" Grid.Row="3" Grid.Column="1"/>
             <parts:PairControl x:Name="SkewButtons" Grid.Row="3" Grid.Column="2">
                 <parts:PairControl.Left>
                     <parts:TwoToneButton Tag="!"

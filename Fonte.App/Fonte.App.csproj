@@ -108,6 +108,7 @@
     <Compile Include="Controls\PreviewCanvas.xaml.cs">
       <DependentUpon>PreviewCanvas.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\DoubleToBooleanConverter.cs" />
     <Compile Include="Pages\PreviewPage.xaml.cs">
       <DependentUpon>PreviewPage.xaml</DependentUpon>
     </Compile>
@@ -159,7 +160,6 @@
       <DependentUpon>IconButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\ObjectToVisibilityConverter.cs" />
-    <Compile Include="Converters\StringToBooleanConverter.cs" />
     <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
     <Compile Include="Delegates\RulerTool.cs" />
@@ -274,16 +274,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AppCenter">
-      <Version>2.6.1</Version>
+      <Version>2.6.2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.AppCenter.Crashes">
-      <Version>2.6.1</Version>
+      <Version>2.6.2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.9</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.3.191107001-prerelease</Version>
+      <Version>2.3.191127001-prerelease</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
