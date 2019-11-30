@@ -151,7 +151,9 @@ namespace Fonte.App.Controls
             ((App)Application.Current).DataChanged -= OnDataChanged;
         }
 
-        void OnDataChanged(object sender, EventArgs args)
+        void OnDataChanged(object sender, EventArgs args) => UpdateUI();
+
+        void UpdateUI()
         {
             var layer = Layer;
             if (_shouldIgnoreNextRefresh || (layer != null && layer.IsEditing))
@@ -215,7 +217,7 @@ namespace Fonte.App.Controls
 
         static void OnLayerChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            ((Sidebar)sender).OnDataChanged(sender, EventArgs.Empty);
+            ((Sidebar)sender).UpdateUI();
         }
 
         /**/
@@ -273,17 +275,24 @@ namespace Fonte.App.Controls
         {
             var layer = Layer;
 
-            if (!_isEditing && layer.SelectionBounds.Width > 0)
+            if (!_isEditing)
             {
-                var wr = (float)args.NewValue / layer.SelectionBounds.Width;
-                using (var group = layer.CreateUndoGroup())
+                if (layer.SelectionBounds.Width > 0)
                 {
-                    Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
-                                    selectionOnly: true);
-                    Outline.RoundSelection(Layer);
-                }
+                    var wr = (float)args.NewValue / layer.SelectionBounds.Width;
+                    using (var group = layer.CreateUndoGroup())
+                    {
+                        Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
+                                        selectionOnly: true);
+                        Outline.RoundSelection(Layer);
+                    }
 
-                ((App)Application.Current).InvalidateData();
+                    ((App)Application.Current).InvalidateData();
+                }
+                else
+                {
+                    UpdateUI();
+                }
             }
         }
 
@@ -291,17 +300,24 @@ namespace Fonte.App.Controls
         {
             var layer = Layer;
 
-            if (!_isEditing && layer.SelectionBounds.Height > 0)
+            if (!_isEditing)
             {
-                var hr = Outline.RoundToGrid((float)args.NewValue) / layer.SelectionBounds.Height;
-                using (var group = layer.CreateUndoGroup())
+                if (layer.SelectionBounds.Height > 0)
                 {
-                    Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
-                                    selectionOnly: true);
-                    Outline.RoundSelection(Layer);
-                }
+                    var hr = Outline.RoundToGrid((float)args.NewValue) / layer.SelectionBounds.Height;
+                    using (var group = layer.CreateUndoGroup())
+                    {
+                        Layer.Transform(Matrix3x2.CreateScale(1, hr, Origin.GetOrigin(Layer)),
+                                        selectionOnly: true);
+                        Outline.RoundSelection(Layer);
+                    }
 
-                ((App)Application.Current).InvalidateData();
+                    ((App)Application.Current).InvalidateData();
+                }
+                else
+                {
+                    UpdateUI();
+                }
             }
         }
 
