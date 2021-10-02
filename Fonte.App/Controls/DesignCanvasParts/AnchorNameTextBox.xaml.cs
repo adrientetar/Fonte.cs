@@ -1,16 +1,18 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Numerics;
+using Windows.Foundation;
+using Windows.System;
+
+
 namespace Fonte.App.Controls.DesignCanvasParts
 {
-    using System;
-    using System.Numerics;
-    using Windows.Foundation;
-    using Windows.System;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
-
     public partial class AnchorNameTextBox : TextBox
     {
         private Data.Anchor _anchor;

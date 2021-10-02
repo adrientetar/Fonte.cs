@@ -2,35 +2,18 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
   -->
-<Page
-    x:Class="Fonte.App.CanvasPage"
+<Window
+    x:Class="Fonte.App.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Fonte.App"
+    xmlns:local="using:Fonte.App.UI"
     xmlns:controls="using:Fonte.App.Controls"
     xmlns:toolbarparts="using:Fonte.App.Controls.ToolbarParts"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:Windows10version1803="http://schemas.microsoft.com/winfx/2006/xaml/presentation?IsApiContractPresent(Windows.Foundation.UniversalApiContract, 6)"
     mc:Ignorable="d"
-    Loaded="OnPageLoaded"
-    Unloaded="OnPageUnloaded"
-    Windows10version1803:KeyboardAcceleratorPlacementMode="Hidden"><!-- <= should probably be the case by default -->
-    <Page.KeyboardAccelerators>
-        <KeyboardAccelerator Modifiers="Control" Key="Z" Invoked="OnUndoInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="Y" Invoked="OnRedoInvoked"/>
-        <KeyboardAccelerator Modifiers="Control,Shift" Key="Z" Invoked="OnRedoInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="A" Invoked="OnSelectAllInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="OnFindGlyphInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="X" Invoked="OnCutInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="C" Invoked="OnCopyInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="V" Invoked="OnPasteInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="Number0" Invoked="OnResetZoomInvoked"/>
-        <KeyboardAccelerator Modifiers="Control" Key="P" Invoked="OnShowSidebarInvoked"/>
-        <KeyboardAccelerator Modifiers="Control,Menu" Key="P" Invoked="OnShowPreviewWindowInvoked"/>
-        <KeyboardAccelerator Key="End" Invoked="OnNextGlyphInvoked"/>
-        <KeyboardAccelerator Key="Home" Invoked="OnPreviousGlyphInvoked"/>
-    </Page.KeyboardAccelerators>
+    Activated="OnWindowActivated"
+    Closed="OnWindowClosed">
 
     <Grid Background="{StaticResource SpacingBrush}" ColumnSpacing="1">
         <Grid.ColumnDefinitions>
@@ -41,12 +24,12 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
-        <Grid RequestedTheme="Dark" Background="{ThemeResource SystemControlChromeMediumLowAcrylicWindowMediumBrush}" Grid.ColumnSpan="2">
+        <Grid Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <controls:TitleBar x:Name="TitleBar" Grid.Row="0"/>
+            <!--controls:TitleBar x:Name="TitleBar" Grid.Row="0"/-->
             <toolbarparts:IconButton Label="Menu" Grid.Row="1">
                 <toolbarparts:IconButton.Icon>
                     <FontIconSource FontSize="16" FontWeight="Medium" Glyph="&#xEA37;"/>
@@ -71,4 +54,4 @@
         <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind Sidebar.Layer, Mode=TwoWay}" Grid.Row="1"/>
         <controls:Sidebar x:Name="Sidebar" Grid.Column="1" Grid.Row="1"/>
     </Grid>
-</Page>
+</Window>

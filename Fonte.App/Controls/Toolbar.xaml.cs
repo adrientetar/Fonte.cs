@@ -1,18 +1,19 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls.ToolbarParts;
+using Fonte.App.Delegates;
+using Fonte.App.Interfaces;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+using System;
+using System.Collections.ObjectModel;
+using Windows.Foundation;
+
+
 namespace Fonte.App.Controls
 {
-    using Fonte.App.Controls.ToolbarParts;
-    using Fonte.App.Delegates;
-    using Fonte.App.Interfaces;
-
-    using System;
-    using System.Collections.ObjectModel;
-    using Windows.Foundation;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-
     public partial class Toolbar : UserControl
     {
         private int _selectedIndex;

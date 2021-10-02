@@ -1,42 +1,40 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
-namespace Fonte.App
+using Fonte.App.Controls;
+using Fonte.App.Dialogs;
+using Fonte.App.Interfaces;
+using Fonte.App.Serialization;
+using Fonte.App.Utilities;
+using Fonte.Data.Utilities;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage;
+using Windows.Storage.AccessCache;
+using Windows.Storage.Pickers;
+using Windows.System;
+using Windows.UI.Core;
+
+
+namespace Fonte.App.UI
 {
-    using Fonte.App.Controls;
-    using Fonte.App.Dialogs;
-    using Fonte.App.Interfaces;
-    using Fonte.App.Serialization;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Utilities;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Windows.ApplicationModel;
-    using Windows.ApplicationModel.DataTransfer;
-    using Windows.Foundation;
-    using Windows.Storage;
-    using Windows.Storage.AccessCache;
-    using Windows.Storage.Pickers;
-    using Windows.System;
-    using Windows.UI.Core;
-    using Windows.UI.Core.Preview;
-    using Windows.UI.WindowManagement;
-    using Windows.UI.WindowManagement.Preview;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Hosting;
-    using Windows.UI.Xaml.Input;
-
-    public sealed partial class CanvasPage : Page
+    public sealed partial class MainWindow : Window
     {
         private StorageFile _file;
-        private AppWindow _previewWindow;
+        private Window _previewWindow;
+        private Data.Font _font;
 
         const string JsonFormatId = "Fonte.App.Json";
 
@@ -55,24 +53,25 @@ namespace Fonte.App
             }
         }
 
-        public static DependencyProperty FontProperty = DependencyProperty.Register(
-            "Font", typeof(Data.Font), typeof(CanvasPage), new PropertyMetadata(null, OnFontChanged));
+        //public static DependencyProperty FontProperty = DependencyProperty.Register(
+        //    "Font", typeof(Data.Font), typeof(MainWindow), new PropertyMetadata(null, OnFontChanged));
 
         public Data.Font Font
         {
-            get => (Data.Font)GetValue(FontProperty);
+            get => _font;
             private set
             {
-                SetValue(FontProperty, value);
+                _font = value;
+                OnFontChanged();
                 UpdateTitle();
             }
         }
 
-        public CanvasPage()
+        public MainWindow()
         {
             InitializeComponent();
 
-            Font = GetNewFont();
+            Font = CreateNewFont();
         }
 
         public async Task OpenFontAsync()
@@ -136,11 +135,11 @@ namespace Fonte.App
                 result = await dialog.ShowAsync();
             }
 
-            if (result.HasFlag(ContentDialogResult.Primary) && await SaveFontAsync())
+            if (result == ContentDialogResult.Primary && await SaveFontAsync())
             {
                 return true;
             }
-            else if (result.HasFlag(ContentDialogResult.Secondary))
+            else if (result == ContentDialogResult.Secondary)
             {
                 return true;
             }
@@ -166,40 +165,30 @@ namespace Fonte.App
             Font = JsonConvert.DeserializeObject<Data.Font>(json);
         }
 
-        void OnPageLoaded(object sender, RoutedEventArgs args)
+        void OnWindowActivated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
             if (!DesignMode.DesignMode2Enabled)
             {
                 ((App)Application.Current).DataChanged += OnDataChanged;
             }
 
-            Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
-
-            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnCloseRequested;
+            //Window.Current.CoreWindow.KeyDown += OnWindowKeyDown;
         }
 
-        void OnPageUnloaded(object sender, RoutedEventArgs args)
+        async void OnWindowClosed(object sender, WindowEventArgs args)
         {
             if (!DesignMode.DesignMode2Enabled)
             {
                 ((App)Application.Current).DataChanged -= OnDataChanged;
             }
 
-            Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
-
-            SystemNavigationManagerPreview.GetForCurrentView().CloseRequested -= OnCloseRequested;
-        }
-
-        async void OnCloseRequested(object sender, SystemNavigationCloseRequestedPreviewEventArgs args)
-        {
-            var deferral = args.GetDeferral();
+            //Window.Current.CoreWindow.KeyDown -= OnWindowKeyDown;
 
             if (!await CanDiscardAsync())
             {
                 // Decline window close
                 args.Handled = true;
             }
-            deferral.Complete();
         }
 
         void OnDataChanged(object sender, EventArgs args)
@@ -210,7 +199,7 @@ namespace Fonte.App
         void OnWindowKeyDown(CoreWindow sender, KeyEventArgs args)
         {
 #if DEBUG
-            var ctrl = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
+            var ctrl = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Control);
             if (ctrl.HasFlag(CoreVirtualKeyStates.Down) && args.VirtualKey == VirtualKey.D)
             {
                 try
@@ -414,25 +403,17 @@ namespace Fonte.App
             args.Handled = true;
         }
 
-        async void OnShowPreviewWindowInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        void OnShowPreviewWindowInvoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             args.Handled = true;
 
             if (_previewWindow == null)
             {
-                var frame = new Frame();
-                frame.Navigate(typeof(PreviewPage));
-                ((PreviewPage)frame.Content).Font = Font;
-
-                _previewWindow = await AppWindow.TryCreateAsync();
-                _previewWindow.Closed += delegate { _previewWindow = null; frame.Content = null; };
-
-                WindowManagementPreview.SetPreferredMinSize(_previewWindow, new Size(500, 120));
-                _previewWindow.RequestSize(new Size(1200, 500));
-                ElementCompositionPreview.SetAppWindowContent(_previewWindow, frame);
+                //_previewWindow = new PreviewWindow();
+                //_previewWindow.Font = Font;
             }
 
-            await _previewWindow.TryShowAsync();
+            //_previewWindow.Activate();
         }
 
         /**/
@@ -466,7 +447,7 @@ namespace Fonte.App
 
         static void OnFontChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
-            ((CanvasPage)sender).OnFontChanged();
+            ((MainWindow)sender).OnFontChanged();
         }
 
         void OnToolbarItemChanged(Toolbar sender, object args)
@@ -480,7 +461,7 @@ namespace Fonte.App
 
         const string BaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ";
 
-        static Data.Font GetNewFont()
+        static Data.Font CreateNewFont()
         {
             var glyphs = new List<Data.Glyph>();
 
@@ -503,11 +484,11 @@ namespace Fonte.App
         {
             if (Font.IsModified)
             {
-                TitleBar.UserTitle = $"*{Font.FamilyName}";
+                Title = $"*{Font.FamilyName}";
             }
             else
             {
-                TitleBar.UserTitle = Font.FamilyName;
+                Title = Font.FamilyName;
             }
         }
     }

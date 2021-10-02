@@ -1,29 +1,31 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls;
+using Fonte.App.Interfaces;
+using Fonte.App.Utilities;
+using Fonte.Data.Interfaces;
+using Fonte.Data.Utilities;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Numerics;
+using Windows.Foundation;
+using Windows.System;
+using Windows.UI;
+using Windows.UI.Core;
+
+
 namespace Fonte.App.Delegates
 {
-    using Fonte.App.Controls;
-    using Fonte.App.Interfaces;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Interfaces;
-    using Fonte.Data.Utilities;
-    using Microsoft.Graphics.Canvas;
-    using Microsoft.Graphics.Canvas.Geometry;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Numerics;
-    using Windows.Foundation;
-    using Windows.System;
-    using Windows.UI;
-    using Windows.UI.Core;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
-
     public class SelectionTool : BaseTool
     {
         enum StretchConstraint
@@ -564,7 +566,7 @@ namespace Fonte.App.Delegates
 
         Point? GetClampPoint(Data.Layer layer, Data.Point point)
         {
-            var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+            var shift = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Shift);
             if (shift.HasFlag(CoreVirtualKeyStates.Down))
             {
                 // If the target point is an offcurve, we clamp against its oncurve sibling.

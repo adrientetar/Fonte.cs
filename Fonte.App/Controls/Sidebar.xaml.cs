@@ -1,23 +1,23 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Commands;
+using Fonte.App.Utilities;
+using Fonte.Data.Utilities;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Numerics;
+using System.Windows.Input;
+using Windows.ApplicationModel;
+
+
 namespace Fonte.App.Controls
 {
-    using Fonte.App.Commands;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Utilities;
-    using Microsoft.UI.Xaml.Controls;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Collections.ObjectModel;
-    using System.Linq;
-    using System.Numerics;
-    using System.Windows.Input;
-    using Windows.ApplicationModel;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-
     public partial class Sidebar : UserControl
     {
         private bool _isEditing;
@@ -249,7 +249,7 @@ namespace Fonte.App.Controls
 
         void OnXPositionChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
-            if (!_isEditing)
+            if (!_isEditing && Layer != null)
             {
                 var refDelta = .5f * (float)XSize * Origin.HorizontalIndex;
                 var dx = Outline.RoundToGrid((float)args.NewValue - refDelta) + refDelta - Origin.GetOrigin(Layer).X;
@@ -261,7 +261,7 @@ namespace Fonte.App.Controls
 
         void OnYPositionChanged(object sender, NumberBoxValueChangedEventArgs args)
         {
-            if (!_isEditing)
+            if (!_isEditing && Layer != null)
             {
                 var refDelta = .5f * (float)YSize * Origin.VerticalIndex;
                 var dy = Outline.RoundToGrid((float)args.NewValue - refDelta) + refDelta - Origin.GetOrigin(Layer).Y;
@@ -275,7 +275,7 @@ namespace Fonte.App.Controls
         {
             var layer = Layer;
 
-            if (!_isEditing)
+            if (!_isEditing && layer != null)
             {
                 if (layer.SelectionBounds.Width > 0)
                 {
@@ -300,7 +300,7 @@ namespace Fonte.App.Controls
         {
             var layer = Layer;
 
-            if (!_isEditing)
+            if (!_isEditing && layer != null)
             {
                 if (layer.SelectionBounds.Height > 0)
                 {

@@ -1,27 +1,27 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Delegates;
+using Fonte.App.Interfaces;
+using Fonte.App.Utilities;
+using Fonte.Data.Interfaces;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Numerics;
+using Windows.ApplicationModel;
+using Windows.Foundation;
+using Windows.UI;
+using Windows.UI.Core;
+using Windows.System;
+
+
 namespace Fonte.App.Controls
 {
-    using Fonte.App.Delegates;
-    using Fonte.App.Interfaces;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Interfaces;
-    using Microsoft.Graphics.Canvas.UI.Xaml;
-    using muxc = Microsoft.UI.Xaml.Controls;
-    using muxp = Microsoft.UI.Xaml.Controls.Primitives;
-
-    using System;
-    using System.Numerics;
-    using Windows.ApplicationModel;
-    using Windows.Foundation;
-    using Windows.UI;
-    using Windows.UI.Core;
-    using Windows.System;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
-
     public partial class DesignCanvas : UserControl
     {
         internal const string DrawAlignmentZonesKey = "DrawAlignmentZones";
@@ -186,16 +186,16 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnScrollerStateChanged(muxp.Scroller sender, object args)
+        void OnScrollerStateChanged(ScrollPresenter sender, object args)
         {
-            if (sender.State == muxc.InteractionState.Idle)
+            if (sender.State == ScrollingInteractionState.Idle)
             {
                 OnZoomRealized();
             }
         }
 
         // This is fired when doing non-animated programmatic view changes, otherwise it's on StateChanged.
-        void OnScrollerZoomCompleted(muxp.Scroller sender, object args)
+        void OnScrollerZoomCompleted(ScrollPresenter sender, object args)
         {
             OnZoomRealized();
         }
@@ -208,18 +208,18 @@ namespace Fonte.App.Controls
 
         void OnPointerEntered(object sender, PointerRoutedEventArgs args)
         {
-            _previousCursor = Window.Current.CoreWindow.PointerCursor;
+            //_previousCursor = Window.Current.CoreWindow.PointerCursor;
 
-            Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
+            //Window.Current.CoreWindow.PointerCursor = Tool.Cursor;
         }
 
         void OnPointerExited(object sender, PointerRoutedEventArgs args)
         {
             if (_previousCursor != null)
             {
-                Window.Current.CoreWindow.PointerCursor = _previousCursor;
+                //Window.Current.CoreWindow.PointerCursor = _previousCursor;
 
-                _previousCursor = null;
+                //_previousCursor = null;
             }
         }
 
@@ -476,36 +476,31 @@ namespace Fonte.App.Controls
         public void ScrollTo(double x, double y, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingScrollOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ScrollTo(x, y, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
         public void ScrollBy(double dx, double dy, bool animated = false)
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingScrollOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ScrollBy(dx, dy, options);
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
         public void ZoomTo(float scale, bool animated = false)
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ZoomOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingZoomOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ZoomTo(scale, null, options);
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
 
         public void ViewTo(double? horizontalOffset, double? verticalOffset, float? zoomFactor, bool animated)
         {
-#pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
             double targetHorizontalOffset = horizontalOffset == null ? Scroller.HorizontalOffset : (double)horizontalOffset;
             double targetVerticalOffset = verticalOffset == null ? Scroller.VerticalOffset : (double)verticalOffset;
             float targetZoomFactor = zoomFactor == null ? Scroller.ZoomFactor : (float)Math.Max(Math.Min((double)zoomFactor, Scroller.MaxZoomFactor), Scroller.MinZoomFactor);
@@ -525,9 +520,9 @@ namespace Fonte.App.Controls
                 Scroller.ScrollTo(
                     targetHorizontalOffset,
                     targetVerticalOffset,
-                    new muxc.ScrollOptions(
-                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                        muxc.SnapPointsMode.Ignore));
+                    new ScrollingScrollOptions(
+                        animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                        ScrollingSnapPointsMode.Ignore));
             }
             else
             {
@@ -538,11 +533,10 @@ namespace Fonte.App.Controls
                 Scroller.ZoomTo(
                     targetZoomFactor,
                     centerPoint,
-                    new muxc.ZoomOptions(
-                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                        muxc.SnapPointsMode.Default));
+                    new ScrollingZoomOptions(
+                        animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                        ScrollingSnapPointsMode.Default));
             }
-#pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
     }
 }

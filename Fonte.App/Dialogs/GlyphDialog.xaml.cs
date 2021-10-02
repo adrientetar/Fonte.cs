@@ -1,17 +1,19 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.System;
+
+
 namespace Fonte.App.Dialogs
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Windows.System;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
-
     public partial class GlyphDialog : ContentDialog
     {
         public ContentDialogResult Result { get; set; }
@@ -52,7 +54,7 @@ namespace Fonte.App.Dialogs
 
         void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            Glyph = List.SelectedIndex switch
+            Glyph = ListView.SelectedIndex switch
             {
                 var ix when ix < 0 => CurrentGlyphs.FirstOrDefault(),
                 var ix when ix < CurrentGlyphs.Count => CurrentGlyphs[ix],
@@ -74,20 +76,20 @@ namespace Fonte.App.Dialogs
             }
             else if (args.Key == VirtualKey.Up)
             {
-                var idx = List.SelectedIndex;
+                var idx = ListView.SelectedIndex;
 
                 if (idx > 0)
                 {
-                    List.SelectedIndex = --idx;
+                    ListView.SelectedIndex = --idx;
                 }
             }
             else if (args.Key == VirtualKey.Down)
             {
-                var idx = List.SelectedIndex;
+                var idx = ListView.SelectedIndex;
 
-                if (idx < List.Items.Count - 1)
+                if (idx < ListView.Items.Count - 1)
                 {
-                    List.SelectedIndex = ++idx;
+                    ListView.SelectedIndex = ++idx;
                 }
             }
             else
@@ -105,9 +107,9 @@ namespace Fonte.App.Dialogs
             CurrentGlyphs = Glyphs.Where(glyph => glyph.Name.StartsWith(text))
                                   .ToArray();
 
-            if (List.Items.Count > 0)
+            if (ListView.Items.Count > 0)
             {
-                List.SelectedIndex = 0;
+                ListView.SelectedIndex = 0;
             }
         }
     }

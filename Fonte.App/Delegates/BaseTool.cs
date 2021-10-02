@@ -1,24 +1,28 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls;
+using Fonte.App.Interfaces;
+using Fonte.App.Utilities;
+using Fonte.Data.Utilities;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Linq;
+using System.Numerics;
+using Windows.Foundation;
+using Windows.System;
+using Windows.System.Threading;
+using Windows.UI;
+using Windows.UI.Core;
+
+
 namespace Fonte.App.Delegates
 {
-    using Fonte.App.Controls;
-    using Fonte.App.Interfaces;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Utilities;
-
-    using System;
-    using System.Linq;
-    using System.Numerics;
-    using Windows.Foundation;
-    using Windows.System;
-    using Windows.System.Threading;
-    using Windows.UI;
-    using Windows.UI.Core;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
+    using Commands = Utilities.Commands;
 
     public class BaseTool : ICanvasDelegate, IToolbarItem
     {
@@ -93,7 +97,7 @@ namespace Fonte.App.Delegates
 
         public virtual void OnKeyDown(DesignCanvas canvas, KeyRoutedEventArgs args)
         {
-            var control = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
+            var control = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Control);
 
             // TODO: batch and use the undoGroup reset thing on close enough keyboard moves
             if (args.Key == VirtualKey.Left ||
@@ -118,7 +122,7 @@ namespace Fonte.App.Delegates
                 {
                     dy = -1;
                 }
-                var shift = Window.Current.CoreWindow.GetKeyState(VirtualKey.Shift);
+                var shift = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Shift);
                 if (shift.HasFlag(CoreVirtualKeyStates.Down))
                 {
                     dx *= 10;
@@ -151,7 +155,7 @@ namespace Fonte.App.Delegates
             else if (args.Key == VirtualKey.Back ||
                      args.Key == VirtualKey.Delete)
             {
-                var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
+                var alt = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Menu);
 
                 Outline.DeleteSelection(canvas.Layer, breakPaths: alt.HasFlag(CoreVirtualKeyStates.Down));
             }
@@ -392,8 +396,8 @@ namespace Fonte.App.Delegates
 
         protected static MoveMode GetMoveMode()
         {
-            var alt = Window.Current.CoreWindow.GetKeyState(VirtualKey.Menu);
-            var windows = Window.Current.CoreWindow.GetKeyState(VirtualKey.LeftWindows);
+            var alt = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.Menu);
+            var windows = KeyboardInput.GetKeyStateForCurrentThread(VirtualKey.LeftWindows);
 
             return (windows.HasFlag(CoreVirtualKeyStates.Down), alt.HasFlag(CoreVirtualKeyStates.Down)) switch
             {

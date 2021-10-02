@@ -1,12 +1,13 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Newtonsoft.Json;
+
+using System.IO;
+
+
 namespace Fonte.App.Serialization
 {
-    using Newtonsoft.Json;
-
-    using System.IO;
-
     public static class JsonBroker
     {
         public static string SerializeFont(Data.Font font)

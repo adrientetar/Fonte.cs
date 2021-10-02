@@ -1,16 +1,17 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls;
+using Fonte.App.Utilities;
+using Microsoft.UI.Xaml;
+
+using System;
+using System.Windows.Input;
+using Windows.Foundation;
+
+
 namespace Fonte.App.Commands
 {
-    using Fonte.App.Controls;
-    using Fonte.App.Utilities;
-
-    using System;
-    using System.Windows.Input;
-    using Windows.Foundation;
-    using Windows.UI.Xaml;
-
     public class AddGuidelineCommand : ICommand
     {
 #pragma warning disable CS0067

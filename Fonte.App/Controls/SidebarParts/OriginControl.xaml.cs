@@ -1,12 +1,15 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+using System;
+using System.Numerics;
+
+
 namespace Fonte.App.Controls.SidebarParts
 {
-    using System;
-    using System.Numerics;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
 
     public partial class OriginControl : UserControl
     {

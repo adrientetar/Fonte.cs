@@ -1,18 +1,19 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.Data.Geometry;
+using Fonte.Data.Interfaces;
+using Fonte.Data.Utilities;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using Point = Windows.Foundation.Point;
+
+
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Geometry;
-    using Fonte.Data.Interfaces;
-    using Fonte.Data.Utilities;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Numerics;
-    using Point = Windows.Foundation.Point;
-
     public class SnapResult
     {
         public Vector2 Position { get; }

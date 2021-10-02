@@ -1,15 +1,15 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+
+using System.Collections;
+using System.Reflection;
+
+
 namespace Fonte.App.Serialization
 {
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
-
-    using System;
-    using System.Collections;
-    using System.Reflection;
-
     public class ElidingContractResolver : DefaultContractResolver
     {
         public static readonly ElidingContractResolver Instance = new ElidingContractResolver();

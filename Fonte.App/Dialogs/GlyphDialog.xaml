@@ -30,7 +30,7 @@
                  TextChanged="OnTextBoxTextChanged"
                  PreviewKeyDown="OnTextBoxKeyDown"/>
 
-        <ListView x:Name="List" ItemsSource="{x:Bind CurrentGlyphs, Mode=OneWay}" Grid.Row="1">
+        <ListView x:Name="ListView" ItemsSource="{x:Bind CurrentGlyphs, Mode=OneWay}" Grid.Row="1">
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:Glyph">
                     <Grid>

@@ -1,11 +1,12 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls.Primitives;
+
+
 namespace Fonte.App.Controls.SidebarParts
 {
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls.Primitives;
-
     [TemplatePart(Name = "CheckedContent", Type = typeof(object))]
     [TemplatePart(Name = "UncheckedContent", Type = typeof(object))]
     public partial class IconToggleButton : ToggleButton

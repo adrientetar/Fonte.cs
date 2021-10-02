@@ -1,12 +1,14 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI.Xaml;
+
+using System;
+using System.Windows.Input;
+
+
 namespace Fonte.App.Commands
 {
-    using System;
-    using System.Windows.Input;
-    using Windows.UI.Xaml;
-
     public class ReversePathCommand : ICommand
     {
 #pragma warning disable CS0067

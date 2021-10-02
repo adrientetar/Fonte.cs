@@ -1,34 +1,25 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.UI;
+using Microsoft.UI.Xaml;
+
+using System;
+
+
 namespace Fonte.App
 {
-    using Fonte.App.Utilities;
-    using Microsoft.AppCenter;
-    using Microsoft.AppCenter.Crashes;
-
-    using System;
-    using System.Linq;
-    using Windows.ApplicationModel;
-    using Windows.ApplicationModel.Activation;
-    using Windows.Storage;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Navigation;
-    using UnhandledExceptionEventArgs = Windows.UI.Xaml.UnhandledExceptionEventArgs;
-
-    sealed partial class App : Application
+    public partial class App : Application
     {
         public event EventHandler DataChanged;
+
+        private Window _window;
 
         public App()
         {
             InitializeComponent();
 
-            AppCenter.Start(Constants.AppId, typeof(Crashes));
-
-            Suspending += OnSuspending;
-            UnhandledException += OnUnhandledException;
+            //AppCenter.Start(Constants.AppId, typeof(Crashes));
         }
 
         public void InvalidateData()
@@ -36,82 +27,15 @@ namespace Fonte.App
             DataChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        protected override void OnFileActivated(FileActivatedEventArgs args)
-        {
-            base.OnFileActivated(args);
-
-            if (args.Files.Count == 1)
-            {
-                Launch(args.Files.First());
-            }
-        }
-
+        /// <summary>
+        /// Invoked when the application is launched normally by the end user.  Other entry points
+        /// will be used such as when the application is launched to open a specific file.
+        /// </summary>
+        /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-#if DEBUG
-            if (System.Diagnostics.Debugger.IsAttached)
-            {
-                DebugSettings.EnableFrameRateCounter = true;
-            }
-#endif
-            Launch(args.Arguments,
-                   loadApplicationState: args.PreviousExecutionState == ApplicationExecutionState.Terminated,
-                   prelaunchActivated: args.PrelaunchActivated);
-        }
-
-        void OnNavigationFailed(object sender, NavigationFailedEventArgs args)
-        {
-            throw new Exception($"Failed to load Page {args.SourcePageType.FullName}.");
-        }
-
-        void OnSuspending(object sender, SuspendingEventArgs args)
-        {
-            var deferral = args.SuspendingOperation.GetDeferral();
-            // TODO: save application state
-            deferral.Complete();
-        }
-
-        async void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
-        {
-            // TODO: pop a dialog, ask to do this
-            if (Window.Current.Content is Frame frame && frame?.Content is CanvasPage page)
-            {
-                await page.SaveFontAsync();
-            }
-        }
-
-        void Launch(object parameter, bool loadApplicationState = false, bool prelaunchActivated = false)
-        {
-            var rootFrame = Window.Current.Content as Frame;
-
-            if (rootFrame == null)
-            {
-                rootFrame = new Frame();
-
-                rootFrame.NavigationFailed += OnNavigationFailed;
-
-                if (loadApplicationState)
-                {
-                    // TODO: load application state
-                }
-
-                Window.Current.Content = rootFrame;
-            }
-
-            if (!prelaunchActivated)
-            {
-                if (rootFrame.Content == null)
-                {
-                    rootFrame.Navigate(typeof(CanvasPage), parameter as string);
-
-                    if (parameter is StorageFile file)
-                    {
-                        ((CanvasPage)rootFrame.Content).File = file;
-                    }
-                }
-
-                Window.Current.Activate();
-            }
+            _window = new MainWindow();
+            _window.Activate();
         }
     }
 }

@@ -1,15 +1,15 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls;
+using Microsoft.Graphics.Canvas;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using Windows.UI.Core;
+
 namespace Fonte.App.Interfaces
 {
-    using Fonte.App.Controls;
-    using Microsoft.Graphics.Canvas;
-
-    using System;
-    using Windows.UI.Core;
-    using Windows.UI.Xaml.Input;
-
     public enum ActivationKind
     {
         Other = 0,

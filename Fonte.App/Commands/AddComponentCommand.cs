@@ -1,15 +1,16 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Dialogs;
+using Microsoft.UI.Xaml;
+
+using System;
+using System.Linq;
+using System.Windows.Input;
+
+
 namespace Fonte.App.Commands
 {
-    using Fonte.App.Dialogs;
-
-    using System;
-    using System.Linq;
-    using System.Windows.Input;
-    using Windows.UI.Xaml;
-
     public class AddComponentCommand : ICommand
     {
 #pragma warning disable CS0067

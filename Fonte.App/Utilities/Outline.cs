@@ -1,17 +1,18 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.Data.Utilities;
+using PointType = Fonte.Data.PointType;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Diagnostics;
+
+
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Utilities;
-    using PointType = Data.PointType;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Numerics;
-    using System.Diagnostics;
-
     public enum MoveMode
     {
         Normal = 0,

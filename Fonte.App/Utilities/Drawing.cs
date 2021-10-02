@@ -1,21 +1,22 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.Data.Utilities;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Brushes;
+using Microsoft.Graphics.Canvas.Geometry;
+using Microsoft.Graphics.Canvas.Text;
+using Microsoft.UI;
+
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using Windows.Foundation;
+using Windows.UI;
+
+
 namespace Fonte.App.Utilities
 {
-    using Fonte.Data.Utilities;
-    using Microsoft.Graphics.Canvas;
-    using Microsoft.Graphics.Canvas.Brushes;
-    using Microsoft.Graphics.Canvas.Geometry;
-    using Microsoft.Graphics.Canvas.Text;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Numerics;
-    using Windows.Foundation;
-    using Windows.UI;
-
     public static class Drawing
     {
         const float PI_1_8 = 1f / 8 * MathF.PI;

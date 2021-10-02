@@ -1,16 +1,19 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+using System;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using Windows.UI.ViewManagement;
+
+
 namespace Fonte.App.Controls
 {
-    using System;
-    using Windows.ApplicationModel;
-    using Windows.ApplicationModel.Core;
-    using Windows.UI;
-    using Windows.UI.Core;
-    using Windows.UI.ViewManagement;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
 
     public partial class TitleBar : UserControl
     {
@@ -63,9 +66,9 @@ namespace Fonte.App.Controls
             Window.Current.Activated -= OnCurrentWindowActivated;
         }
 
-        void OnCurrentWindowActivated(object sender, WindowActivatedEventArgs args)
+        void OnCurrentWindowActivated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
-            if (args.WindowActivationState != CoreWindowActivationState.Deactivated)
+            if (args.WindowActivationState != WindowActivationState.Deactivated)
             {
                 AppTitleBar.Opacity = 1;
             }
@@ -118,7 +121,6 @@ namespace Fonte.App.Controls
         {
             if (userTitle == null) throw new ArgumentNullException(nameof(userTitle));
 
-            ApplicationView.GetForCurrentView().Title = userTitle;
             Title = string.IsNullOrEmpty(userTitle) switch
             {
                 false => $"{userTitle} – {Package.Current.DisplayName}",

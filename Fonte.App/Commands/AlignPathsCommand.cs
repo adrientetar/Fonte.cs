@@ -1,16 +1,18 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.Data.Geometry;
+using Microsoft.UI.Xaml;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using System.Windows.Input;
+
+
 namespace Fonte.App.Commands
 {
-    using Fonte.Data.Geometry;
-
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Numerics;
-    using System.Windows.Input;
-    using Windows.UI.Xaml;
 
     public abstract class AlignPathsCommand : ICommand
     {

@@ -1,14 +1,14 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Commands;
+using Microsoft.UI.Xaml.Input;
+
+using System.Windows.Input;
+
+
 namespace Fonte.App.Utilities
 {
-    using Fonte.App.Commands;
-
-    using System.Windows.Input;
-    using Windows.System;
-    using Windows.UI.Xaml.Input;
-
     public static class Commands
     {
         public static ICommand AddAnchorCommand { get; } = MakeUICommand("Add Anchor", new AddAnchorCommand());

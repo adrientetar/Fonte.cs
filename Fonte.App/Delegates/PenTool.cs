@@ -1,24 +1,25 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Fonte.App.Controls;
+using Fonte.App.Interfaces;
+using Fonte.App.Utilities;
+using Fonte.Data.Collections;
+using Fonte.Data.Interfaces;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
+using System;
+using System.Linq;
+using System.Numerics;
+using Windows.Foundation;
+using Windows.System;
+using Windows.UI.Core;
+
+
 namespace Fonte.App.Delegates
 {
-    using Fonte.App.Controls;
-    using Fonte.App.Interfaces;
-    using Fonte.App.Utilities;
-    using Fonte.Data.Collections;
-    using Fonte.Data.Interfaces;
-
-    using System;
-    using System.Linq;
-    using System.Numerics;
-    using Windows.Foundation;
-    using Windows.System;
-    using Windows.UI.Core;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Input;
-
     public class PenTool : BaseTool
     {
         private Data.Path _path;

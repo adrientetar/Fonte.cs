@@ -1,16 +1,19 @@
 ﻿// This Source Code Form is subject to the terms of the Mozilla Public License v2.0.
 // See https://spdx.org/licenses/MPL-2.0.html for license information.
 
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Path = Microsoft.UI.Xaml.Shapes.Path;
+
+using System.Collections.Generic;
+using System.Linq;
+using Windows.UI;
+
+
 namespace Fonte.App.Controls.SidebarParts
 {
-    using System.Collections.Generic;
-    using System.Linq;
-    using Windows.UI;
-    using Windows.UI.Xaml;
-    using Windows.UI.Xaml.Controls;
-    using Windows.UI.Xaml.Media;
-    using Path = Windows.UI.Xaml.Shapes.Path;
-
     public partial class TwoToneButton : Button
     {
         public static DependencyProperty AlphaScaleProperty = DependencyProperty.Register(

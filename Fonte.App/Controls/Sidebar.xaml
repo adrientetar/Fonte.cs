@@ -20,9 +20,9 @@
     Unloaded="OnControlUnloaded">
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
+            <!--ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="ms-appx:///Microsoft.UI.Xaml/DensityStyles/Compact.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
+            </ResourceDictionary.MergedDictionaries-->
 
             <x:Int32 x:Key="FixedColumnSize">58</x:Int32>
             <GridLength x:Key="FixedColumnLength">66</GridLength>
