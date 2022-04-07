@@ -26,6 +26,7 @@ namespace Fonte.App.Commands
             return false;
         }
 
+        // TODO: points + anchor => align anchor in the middle
         public void Execute(object parameter)
         {
             var layer = (Data.Layer)parameter;

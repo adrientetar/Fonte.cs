@@ -218,19 +218,6 @@ namespace Fonte.Data
         /**/
 
         [JsonIgnore]
-        public string ActualName
-        {
-            get
-            {
-                if (IsMasterLayer)
-                {
-                    return Master.Name;
-                }
-                return Name;
-            }
-        }
-
-        [JsonIgnore]
         public float? BottomMargin
         {
             get
@@ -309,6 +296,19 @@ namespace Fonte.Data
                     _closedCanvasPath = CollectPaths(path => !path.IsOpen);
                 }
                 return _closedCanvasPath;
+            }
+        }
+
+        [JsonIgnore]
+        public string DisplayName
+        {
+            get
+            {
+                if (IsMasterLayer)
+                {
+                    return Master.Name;
+                }
+                return Name;
             }
         }
 

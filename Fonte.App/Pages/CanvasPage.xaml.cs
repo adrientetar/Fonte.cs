@@ -20,6 +20,7 @@ namespace Fonte.App
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.DataTransfer;
     using Windows.Foundation;
+    using Windows.Foundation.Metadata;
     using Windows.Storage;
     using Windows.Storage.AccessCache;
     using Windows.Storage.Pickers;
@@ -508,6 +509,14 @@ namespace Fonte.App
             else
             {
                 TitleBar.UserTitle = Font.FamilyName;
+            }
+        }
+
+        async void OnExecuteClicked(object sender, RoutedEventArgs args)
+        {
+            if (ApiInformation.IsApiContractPresent("Windows.ApplicationModel.FullTrustAppContract", 1, 0))
+            {
+                await FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
             }
         }
     }

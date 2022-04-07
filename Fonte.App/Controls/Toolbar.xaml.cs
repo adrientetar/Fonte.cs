@@ -54,6 +54,9 @@ namespace Fonte.App.Controls
                 new ShapesTool(),
                 new KnifeTool(),
                 new RulerTool(),
+#if DEBUG && false
+                new DrawingTool(),
+#endif
             };
         }
 

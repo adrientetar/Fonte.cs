@@ -9,7 +9,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml"
     xmlns:local="using:Fonte.App.Controls"
-    xmlns:muxprimitives="using:Microsoft.UI.Xaml.Controls.Primitives"
+    xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives"
     xmlns:parts="using:Fonte.App.Controls.DesignCanvasParts"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -45,15 +45,15 @@
     </UserControl.Resources>
 
     <Grid>
-        <muxprimitives:Scroller x:Name="Scroller"
-                                Background="White"
-                                HorizontalScrollRailingMode="Disabled"
-                                VerticalScrollRailingMode="Disabled"
-                                ZoomMode="Enabled"
-                                MinZoomFactor="0.01"
-                                MaxZoomFactor="10"
-                                StateChanged="OnScrollerStateChanged"
-                                ZoomCompleted="OnScrollerZoomCompleted">
+        <primitives:ScrollPresenter x:Name="Scroller"
+                                    Background="White"
+                                    HorizontalScrollRailMode="Disabled"
+                                    VerticalScrollRailMode="Disabled"
+                                    ZoomMode="Enabled"
+                                    MinZoomFactor="0.01"
+                                    MaxZoomFactor="10"
+                                    StateChanged="OnScrollerStateChanged"
+                                    ZoomCompleted="OnScrollerZoomCompleted">
             <!-- Using a very large size to give an "infinite canvas" feel. If a truly infinite canvas is needed then extra work would be required to detect when a user approaches 
                  the current extent, waits for the Scroller state to hit Idle, and then rebase the content and viewport offset so that the user can continue.  Using 800k as the max 
                  physical size will avoid the strange rendering artifacts that can occur as things approach the precision of floats while also being large enough that rebasing will
@@ -64,6 +64,7 @@
                                          Width="600000"
                                          RegionsInvalidated="OnRegionsInvalidated"
                                          IsTabStop="True"
+                                         IsHitTestVisible="True"
                                          KeyDown="OnKeyDown"
                                          KeyUp="OnKeyUp"
                                          DoubleTapped="OnDoubleTapped"
@@ -74,7 +75,7 @@
                                          PointerPressed="OnPointerPressed"
                                          PointerMoved="OnPointerMoved"
                                          PointerReleased="OnPointerReleased"/>
-        </muxprimitives:Scroller>
+        </primitives:ScrollPresenter>
         <parts:AnchorNameTextBox x:Name="AnchorTextBox"
                                  HorizontalAlignment="Left"
                                  VerticalAlignment="Top"

@@ -257,6 +257,8 @@
                 <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
@@ -310,6 +312,37 @@
                                 Value="{x:Bind XSize, Mode=OneWay}" ValueChanged="OnXSizeChanged" Grid.Row="2" Grid.Column="1"/>
             <controls:NumberBox IsEnabled="{x:Bind YSize, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
                                 Value="{x:Bind YSize, Mode=OneWay}" ValueChanged="OnYSizeChanged" Grid.Row="2" Grid.Column="2"/>
+
+            <TextBlock Text="LMargins" Grid.Row="3"/>
+            <controls:NumberBox IsEnabled="{x:Bind LLeftMargin, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind LLeftMargin, Mode=OneWay}" ValueChanged="OnLLeftMarginChanged" Grid.Row="3" Grid.Column="1"/>
+            <controls:NumberBox IsEnabled="{x:Bind LRightMargin, Converter={StaticResource DoubleToBooleanConverter}, Mode=OneWay}"
+                                Value="{x:Bind LRightMargin, Mode=OneWay}" ValueChanged="OnLRightMarginChanged" Grid.Row="3" Grid.Column="2"/>
+
+            <Grid ColumnSpacing="4" Margin="4" Grid.ColumnSpan="3" Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.Resources>
+                    <Style TargetType="parts:TwoToneButton">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                    </Style>
+                </Grid.Resources>
+
+                <parts:TwoToneButton Grid.Column="0" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>0</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="1" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>1</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="2" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>2</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="3" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>3</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="4" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>4</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="5" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>5</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+                <parts:TwoToneButton Grid.Column="6" Click="OnStretchButtonClick"><parts:TwoToneButton.Tag><x:Int32>6</x:Int32></parts:TwoToneButton.Tag></parts:TwoToneButton>
+            </Grid>
         </Grid>
         <Grid Style="{StaticResource HeaderGridStyle}" Grid.Row="4">
             <TextBlock Style="{StaticResource HeaderTextBlockStyle}" Text="Transform"/>
@@ -410,6 +443,11 @@
                   ItemClick="OnLayersItemClick"
                   ItemsSource="{x:Bind Layers, Mode=OneWay}"
                   Grid.Row="7">
+            <ListView.ContextFlyout>
+                <MenuFlyout>
+                    <MenuFlyoutItem Text="Delete" Command="{x:Bind DeleteLayerCommand}"/>
+                </MenuFlyout>
+            </ListView.ContextFlyout>
             <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -445,7 +483,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Text="{x:Bind ActualName}"/>
+                        <TextBlock Text="{x:Bind DisplayName}"/>
                         <parts:IconToggleButton IsChecked="{x:Bind IsVisible, Mode=TwoWay}" Toggled="OnLayerVisibilityChanged" Grid.Column="1">
                             <parts:IconToggleButton.CheckedContent>
                                 <FontIcon FontSize="12" Glyph="&#xe7b3;"/>

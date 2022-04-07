@@ -11,6 +11,7 @@ namespace Fonte.App.Utilities
     using System.Linq;
     using System.Numerics;
     using System.Diagnostics;
+    using Fonte.Data.Geometry;
 
     public enum MoveMode
     {
@@ -304,6 +305,68 @@ namespace Fonte.App.Utilities
             }
         }
 
+        public static void StretchCurve(Data.Layer layer, IList<Data.Point> curve, float stretchFactor)
+        {
+            Debug.Assert(curve.Count == 4);
+            var p0 = curve[0].ToVector2();
+            var p1 = curve[1].ToVector2();
+            var p2 = curve[2].ToVector2();
+            var p3 = curve[3].ToVector2();
+
+            if (GetHandlesConvergencePoint(p0, p1, p2, p3) is Vector2 point)
+            {
+                using var group = layer.CreateUndoGroup();
+
+                curve[1].X = RoundToGrid(p0.X + (point.X - p0.X) * stretchFactor);
+                curve[1].Y = RoundToGrid(p0.Y + (point.Y - p0.Y) * stretchFactor);
+
+                curve[2].X = RoundToGrid(p3.X + (point.X - p3.X) * stretchFactor);
+                curve[2].Y = RoundToGrid(p3.Y + (point.Y - p3.Y) * stretchFactor);
+            }
+        }
+
+        public static (float, float)? GetHandlesPercentage(IList<Data.Point> curve)
+        {
+            Debug.Assert(curve.Count == 4);
+            var p0 = curve[0].ToVector2();
+            var p1 = curve[1].ToVector2();
+            var p2 = curve[2].ToVector2();
+            var p3 = curve[3].ToVector2();
+
+            if (GetHandlesConvergencePoint(p0, p1, p2, p3) is Vector2 point)
+            {
+                var percentLeft = (p1 - p0).Length() / (point - p0).Length();
+                var percentRight = (p2 - p3).Length() / (point - p3).Length();
+
+                return (percentLeft, percentRight);
+            }
+
+            return null;
+        }
+
+        static Vector2? GetHandlesConvergencePoint(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)
+        {
+            if (p0 != p1 && p2 != p3)
+            {
+                var result = Data.Utilities.BezierMath.IntersectLines(p0, p1, p2, p3, shi: float.MaxValue, tlo: float.MinValue);
+
+                if (result?.Item1 is Vector2 loc)
+                {
+                    var leftVector = p1 - p0;
+                    var rightVector = p2 - p3;
+
+                    // Exclude near-collinear case
+                    // TODO: when vectors are near collinear, but facing eachother, we need to take the middle point between them
+                    // as intersecting will not work reliably -- this needs visual debugging
+                    if (MathF.Abs(Ops.AngleBetween(-leftVector, -rightVector)) > MathF.PI / 5)
+                    {
+                        return loc;
+                    }
+                }
+            }
+            return null;
+        }
+
         public static void RoundSelection(Data.Layer layer)
         {
             using var group = layer.CreateUndoGroup();
@@ -339,6 +402,8 @@ namespace Fonte.App.Utilities
             }
             foreach (var path in layer.Paths)
             {
+                var bounds = path.Bounds;
+
                 foreach (var point in path.Points)
                 {
                     if (point.IsSelected)
@@ -423,7 +488,7 @@ namespace Fonte.App.Utilities
 
         /**/
 
-        static bool AnyOffCurveSelected(Data.Segment segment)
+        public static bool AnyOffCurveSelected(Data.Segment segment)
         {
             return Enumerable.Any(segment.OffCurves, point => point.IsSelected);
         }

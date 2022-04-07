@@ -14,7 +14,16 @@ namespace Fonte.App.Utilities
         public static ICommand AddAnchorCommand { get; } = MakeUICommand("Add Anchor", new AddAnchorCommand());
         public static ICommand AddComponentCommand { get; } = MakeUICommand("Add Component…", new AddComponentCommand());
         public static ICommand AddGuidelineCommand { get; } = MakeUICommand("Add Guideline", new AddGuidelineCommand());
-        public static ICommand AlignSelectionCommand { get; } = MakeUICommand("Align Selection", new AlignSelectionCommand());
+        public static ICommand AlignSelectionCommand { get; } = MakeUICommand("Align Selection", new AlignSelectionCommand(), new KeyboardAccelerator()
+        {
+            Modifiers = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift,
+            Key = VirtualKey.A,
+        });
+        public static ICommand BalanceHandlesCommand { get; } = MakeUICommand("Balance Handles", new BalanceHandlesCommand(), new KeyboardAccelerator()
+        {
+            Modifiers = VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift,
+            Key = VirtualKey.H,
+        });
         public static ICommand DecomposeComponentCommand { get; } = MakeUICommand("Decompose", new DecomposeComponentCommand());
         public static ICommand MakeGuidelineGlobalCommand { get; } = MakeUICommand("Make Guideline Global", new MakeGuidelineGlobalCommand());
         public static ICommand MakeGuidelineLocalCommand { get; } = MakeUICommand("Make Guideline Local", new MakeGuidelineLocalCommand());

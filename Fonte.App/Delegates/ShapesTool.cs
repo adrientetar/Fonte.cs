@@ -195,6 +195,7 @@ namespace Fonte.App.Delegates
 
             if (_origin.HasValue)
             {
+                // TODO: snap to vmetrics
                 var pos = canvas.FromClientPosition(args.GetCurrentPoint(canvas).Position);
                 if (_shouldMoveOrigin)
                 {

@@ -105,6 +105,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Commands\DeleteLayerCommand.cs" />
     <Compile Include="Controls\PreviewCanvas.xaml.cs">
       <DependentUpon>PreviewCanvas.xaml</DependentUpon>
     </Compile>
@@ -116,6 +117,7 @@
       <DependentUpon>CanvasPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Commands\AlignPathsCommand.cs" />
+    <Compile Include="Commands\BalanceHandlesCommand.cs" />
     <Compile Include="Commands\AlignSelectionCommand.cs" />
     <Compile Include="Commands\BinaryBooleanOpCommand.cs" />
     <Compile Include="Commands\UnitePathsCommand.cs" />
@@ -162,6 +164,7 @@
     <Compile Include="Converters\ObjectToVisibilityConverter.cs" />
     <Compile Include="Converters\IndexToActiveConverter.cs" />
     <Compile Include="Delegates\BaseTool.cs" />
+    <Compile Include="Delegates\DrawingTool.cs" />
     <Compile Include="Delegates\RulerTool.cs" />
     <Compile Include="Delegates\PenTool.cs" />
     <Compile Include="Delegates\KnifeTool.cs" />
@@ -180,6 +183,7 @@
     <Compile Include="Serialization\LayerSelectionConverter.cs" />
     <Compile Include="Utilities\Commands.cs" />
     <Compile Include="Utilities\Constants.cs" />
+    <Compile Include="Utilities\Hobby.cs" />
     <Compile Include="Utilities\BooleanOps.cs" />
     <Compile Include="Utilities\Cursors.cs" />
     <Compile Include="Utilities\MenuFlyoutBuilder.cs" />
@@ -197,6 +201,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\Resource.res" />
+    <Content Include="Assets\tfont-converter.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -274,22 +281,22 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AppCenter">
-      <Version>2.6.2</Version>
+      <Version>4.4.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.AppCenter.Crashes">
-      <Version>2.6.2</Version>
+      <Version>4.4.0</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.9</Version>
+      <Version>6.2.12</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.3.191127001-prerelease</Version>
+      <Version>2.8.0-prerelease.210927001</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>12.0.3</Version>
+      <Version>13.0.1</Version>
     </PackageReference>
     <PackageReference Include="Win2D.uwp">
-      <Version>1.24.0</Version>
+      <Version>1.26.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
@@ -297,6 +304,11 @@
       <Project>{B6B99945-512A-4CC1-BA20-3808A8F9631A}</Project>
       <Name>Fonte.Data</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <SDKReference Include="WindowsDesktop, Version=10.0.18362.0">
+      <Name>Windows Desktop Extensions for the UWP</Name>
+    </SDKReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

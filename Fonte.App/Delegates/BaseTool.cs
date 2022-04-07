@@ -278,6 +278,7 @@ namespace Fonte.App.Delegates
             builder.TryAddSeparator();
 
             builder.TryAddItem(Commands.AlignSelectionCommand, canvas.Layer);
+            builder.TryAddItem(Commands.BalanceHandlesCommand, canvas.Layer);
 
             builder.TryAddSeparator();
 

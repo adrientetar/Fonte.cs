@@ -66,6 +66,11 @@
                     </MenuFlyout>
                 </toolbarparts:IconButton.Flyout>
             </toolbarparts:IconButton>
+            <toolbarparts:IconButton HorizontalAlignment="Right" Label="Execute" Click="OnExecuteClicked" Grid.Row="1">
+                <toolbarparts:IconButton.Icon>
+                    <FontIconSource FontSize="16" FontWeight="Medium" Glyph="&#xEA37;"/>
+                </toolbarparts:IconButton.Icon>
+            </toolbarparts:IconButton>
             <controls:Toolbar HorizontalAlignment="Center" CurrentItemChanged="OnToolbarItemChanged" Grid.Row="1"/>
         </Grid>
         <controls:DesignCanvas x:Name="Canvas" Layer="{x:Bind Sidebar.Layer, Mode=TwoWay}" Grid.Row="1"/>

@@ -76,6 +76,24 @@ namespace Fonte.App.Controls
             set { SetValue(YSizeProperty, value); }
         }
 
+        public static DependencyProperty LLeftMarginProperty = DependencyProperty.Register(
+            "LLeftMargin", typeof(double), typeof(Sidebar), null);
+
+        public double LLeftMargin
+        {
+            get => (double)GetValue(LLeftMarginProperty);
+            set { SetValue(LLeftMarginProperty, value); }
+        }
+
+        public static DependencyProperty LRightMarginProperty = DependencyProperty.Register(
+            "LRightMargin", typeof(double), typeof(Sidebar), null);
+
+        public double LRightMargin
+        {
+            get => (double)GetValue(LRightMarginProperty);
+            set { SetValue(LRightMarginProperty, value); }
+        }
+
         public static DependencyProperty XScaleFactorProperty = DependencyProperty.Register(
             "XScaleFactor", typeof(double), typeof(Sidebar), new PropertyMetadata(2.0));
 
@@ -118,6 +136,8 @@ namespace Fonte.App.Controls
         public ICommand AlignTopCommand { get; } = new AlignTopCommand();
         public ICommand CenterVerticallyCommand { get; } = new CenterVerticallyCommand();
         public ICommand AlignBottomCommand { get; } = new AlignBottomCommand();
+
+        public ICommand DeleteLayerCommand { get; } = new DeleteLayerCommand();
 
         public ICommand UnitePathsCommand { get; } = new UnitePathsCommand();
         public ICommand SubtractPathsCommand { get; } = new SubtractPathsCommand();
@@ -179,6 +199,8 @@ namespace Fonte.App.Controls
                 {
                     XPosition = YPosition = XSize = YSize = double.NaN;
                 }
+                LLeftMargin = layer.LeftMargin != null ? Math.Round(layer.LeftMargin.Value, 2) : double.NaN;
+                LRightMargin = layer.RightMargin != null ? Math.Round(layer.RightMargin.Value, 2) : double.NaN;
             }
             finally
             {
@@ -282,9 +304,9 @@ namespace Fonte.App.Controls
                     var wr = (float)args.NewValue / layer.SelectionBounds.Width;
                     using (var group = layer.CreateUndoGroup())
                     {
-                        Layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(Layer)),
+                        layer.Transform(Matrix3x2.CreateScale(wr, 1, Origin.GetOrigin(layer)),
                                         selectionOnly: true);
-                        Outline.RoundSelection(Layer);
+                        Outline.RoundSelection(layer);
                     }
 
                     ((App)Application.Current).InvalidateData();
@@ -319,6 +341,55 @@ namespace Fonte.App.Controls
                     UpdateUI();
                 }
             }
+        }
+
+        void OnLLeftMarginChanged(object sender, NumberBoxValueChangedEventArgs args)
+        {
+            var value = args.NewValue;
+
+            if (!_isEditing && !double.IsNaN(value))
+            {
+                Layer.LeftMargin = (float)value;
+
+                ((App)Application.Current).InvalidateData();
+            }
+        }
+
+        void OnLRightMarginChanged(object sender, NumberBoxValueChangedEventArgs args)
+        {
+            var value = args.NewValue;
+
+            if (!_isEditing && !double.IsNaN(value))
+            {
+                Layer.RightMargin = (float)value;
+
+                ((App)Application.Current).InvalidateData();
+            }
+        }
+
+        void OnStretchButtonClick(object sender, RoutedEventArgs args)
+        {
+            var layer = Layer;
+            var ok = false;
+            var lo = .6f;
+            var hi = .8f;
+            var ix = (int)((Control)sender).Tag;
+            var count = 6;
+            var stretchFactor = lo + (hi - lo) * ((float)ix / count);
+
+            foreach (var path in layer.Paths)
+            {
+                foreach (var segment in path.Segments)
+                {
+                    if (Outline.AnyOffCurveSelected(segment))
+                    {
+                        Outline.StretchCurve(layer, segment.PointsInclusive, stretchFactor);
+                        ok = true;
+                    }
+                }
+            }
+
+            if (ok) ((App)Application.Current).InvalidateData();
         }
 
         void OnRotationButtonClick(object sender, RoutedEventArgs args)

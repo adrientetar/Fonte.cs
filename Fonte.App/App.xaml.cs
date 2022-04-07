@@ -11,6 +11,7 @@ namespace Fonte.App
     using System.Linq;
     using Windows.ApplicationModel;
     using Windows.ApplicationModel.Activation;
+    using Windows.ApplicationModel.Core;
     using Windows.Storage;
     using Windows.UI.Xaml;
     using Windows.UI.Xaml.Controls;
@@ -73,14 +74,14 @@ namespace Fonte.App
 
         async void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
         {
-            // TODO: pop a dialog, ask to do this
+            // TODO: saveas recovered file to documents folder
             if (Window.Current.Content is Frame frame && frame?.Content is CanvasPage page)
             {
                 await page.SaveFontAsync();
             }
         }
 
-        void Launch(object parameter, bool loadApplicationState = false, bool prelaunchActivated = false)
+        void Launch(object parameter, bool loadApplicationState = false, bool? prelaunchActivated = null)
         {
             var rootFrame = Window.Current.Content as Frame;
 
@@ -98,8 +99,10 @@ namespace Fonte.App
                 Window.Current.Content = rootFrame;
             }
 
-            if (!prelaunchActivated)
+            if (prelaunchActivated != true)
             {
+                if (prelaunchActivated == false) CoreApplication.EnablePrelaunch(true);
+
                 if (rootFrame.Content == null)
                 {
                     rootFrame.Navigate(typeof(CanvasPage), parameter as string);

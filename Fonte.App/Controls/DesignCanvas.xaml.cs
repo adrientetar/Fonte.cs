@@ -8,8 +8,8 @@ namespace Fonte.App.Controls
     using Fonte.App.Utilities;
     using Fonte.Data.Interfaces;
     using Microsoft.Graphics.Canvas.UI.Xaml;
-    using muxc = Microsoft.UI.Xaml.Controls;
-    using muxp = Microsoft.UI.Xaml.Controls.Primitives;
+    using Microsoft.UI.Xaml.Controls;
+    using Microsoft.UI.Xaml.Controls.Primitives;
 
     using System;
     using System.Numerics;
@@ -186,16 +186,16 @@ namespace Fonte.App.Controls
         }
 
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-        void OnScrollerStateChanged(muxp.Scroller sender, object args)
+        void OnScrollerStateChanged(ScrollPresenter sender, object args)
         {
-            if (sender.State == muxc.InteractionState.Idle)
+            if (sender.State == ScrollingInteractionState.Idle)
             {
                 OnZoomRealized();
             }
         }
 
         // This is fired when doing non-animated programmatic view changes, otherwise it's on StateChanged.
-        void OnScrollerZoomCompleted(muxp.Scroller sender, object args)
+        void OnScrollerZoomCompleted(ScrollPresenter sender, object args)
         {
             OnZoomRealized();
         }
@@ -476,9 +476,9 @@ namespace Fonte.App.Controls
         public void ScrollTo(double x, double y, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingScrollOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ScrollTo(x, y, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
@@ -486,9 +486,9 @@ namespace Fonte.App.Controls
         public void ScrollBy(double dx, double dy, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ScrollOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingScrollOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ScrollBy(dx, dy, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
@@ -496,9 +496,9 @@ namespace Fonte.App.Controls
         public void ZoomTo(float scale, bool animated = false)
         {
 #pragma warning disable CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
-            var options = new muxc.ZoomOptions(
-                animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                muxc.SnapPointsMode.Ignore);
+            var options = new ScrollingZoomOptions(
+                animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                ScrollingSnapPointsMode.Ignore);
             Scroller.ZoomTo(scale, null, options);
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
@@ -525,9 +525,9 @@ namespace Fonte.App.Controls
                 Scroller.ScrollTo(
                     targetHorizontalOffset,
                     targetVerticalOffset,
-                    new muxc.ScrollOptions(
-                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                        muxc.SnapPointsMode.Ignore));
+                    new ScrollingScrollOptions(
+                        animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                        ScrollingSnapPointsMode.Ignore));
             }
             else
             {
@@ -538,9 +538,9 @@ namespace Fonte.App.Controls
                 Scroller.ZoomTo(
                     targetZoomFactor,
                     centerPoint,
-                    new muxc.ZoomOptions(
-                        animated ? muxc.AnimationMode.Auto : muxc.AnimationMode.Disabled,
-                        muxc.SnapPointsMode.Default));
+                    new ScrollingZoomOptions(
+                        animated ? ScrollingAnimationMode.Auto : ScrollingAnimationMode.Disabled,
+                        ScrollingSnapPointsMode.Default));
             }
 #pragma warning restore CS8305 // Scroller is for evaluation purposes only and is subject to change or removal in future updates.
         }
